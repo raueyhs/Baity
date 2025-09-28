@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "baity",
+  "version": "1.0.3",
+  "name": "Baity",
+  "description": "A visual mod currently in development mainly for hypixel skyblock",
+  "authors": ["shyeuar"],
+  "contact": {},
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": ["com.shyeuar.baity.BaityClient"]
+  },
+  "mixins": [
+    "baity.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.0",
+    "minecraft": ">=1.21.5",
+    "fabric": ">=0.128.0"
+  }
+}
+
+

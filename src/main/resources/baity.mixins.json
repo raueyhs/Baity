@@ -1,0 +1,20 @@
+{
+  "required": true,
+  "package": "com.shyeuar.baity.mixins",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "SmolPeopleMixin$SmolNameTagMixin",
+    "SmolPeopleMixin$SmolPlayerEntityRendererMixin",
+    "SmolPeopleMixin$SmolPlayerRendererMixin",
+    "CrosshairMixin"
+  ],
+  "client": [
+    "SmolPeopleMixin$SmolNameTagMixin",
+    "SmolPeopleMixin$SmolPlayerEntityRendererMixin",
+    "SmolPeopleMixin$SmolPlayerRendererMixin",
+    "CrosshairMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
