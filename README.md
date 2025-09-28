@@ -1,1 +1,2 @@
-"# Baity" 
+
+A visual mod currently in development mainly for hypixel skyblock.
