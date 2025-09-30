@@ -6,13 +6,15 @@
     "SmolPeopleMixin$SmolNameTagMixin",
     "SmolPeopleMixin$SmolPlayerEntityRendererMixin",
     "SmolPeopleMixin$SmolPlayerRendererMixin",
-    "CrosshairMixin"
+    "CrosshairMixin",
+    "BlockAnimationMixin$MixinHeldItemRenderer"
   ],
   "client": [
     "SmolPeopleMixin$SmolNameTagMixin",
     "SmolPeopleMixin$SmolPlayerEntityRendererMixin",
     "SmolPeopleMixin$SmolPlayerRendererMixin",
-    "CrosshairMixin"
+    "CrosshairMixin",
+    "BlockAnimationMixin$MixinHeldItemRenderer"
   ],
   "injectors": {
     "defaultRequire": 1

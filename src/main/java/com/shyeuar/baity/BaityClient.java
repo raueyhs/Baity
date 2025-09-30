@@ -15,7 +15,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class BaityClient implements ClientModInitializer {
-    public static boolean baityMode = false;
+    public static boolean smolpeopleMode = false;
+    public static boolean blockAnimationMode = false;
     private static final String CONFIG_FILE = "baity_config.txt";
 
     @Override
@@ -27,7 +28,7 @@ public class BaityClient implements ClientModInitializer {
             .then(ClientCommandManager.literal("smolpeople")
                 .then(ClientCommandManager.literal("on")
                     .executes(ctx -> {
-                        baityMode = true;
+                        smolpeopleMode = true;
                         saveConfig();
                         sendBaityMessage("SmolPeople enabled!");
                         return Command.SINGLE_SUCCESS;
@@ -35,9 +36,27 @@ public class BaityClient implements ClientModInitializer {
                 )
                 .then(ClientCommandManager.literal("off")
                     .executes(ctx -> {
-                        baityMode = false;
+                        smolpeopleMode = false;
                         saveConfig();
                         sendBaityMessage("SmolPeople disabled!");
+                        return Command.SINGLE_SUCCESS;
+                    })
+                )
+            )
+            .then(ClientCommandManager.literal("blockanimation")
+                .then(ClientCommandManager.literal("on")
+                    .executes(ctx -> {
+                        blockAnimationMode = true;
+                        saveConfig();
+                        sendBaityMessage("BlockAnimation enabled!");
+                        return Command.SINGLE_SUCCESS;
+                    })
+                )
+                .then(ClientCommandManager.literal("off")
+                    .executes(ctx -> {
+                        blockAnimationMode = false;
+                        saveConfig();
+                        sendBaityMessage("BlockAnimation disabled!");
                         return Command.SINGLE_SUCCESS;
                     })
                 )
@@ -59,7 +78,8 @@ public class BaityClient implements ClientModInitializer {
     private static void saveConfig() {
         try {
             Path configPath = Paths.get(CONFIG_FILE);
-            Files.write(configPath, String.valueOf(baityMode).getBytes());
+            String config = smolpeopleMode + "\n" + blockAnimationMode;
+            Files.write(configPath, config.getBytes());
         } catch (IOException e) {
             System.err.println("Failed to save Baity config: " + e.getMessage());
         }
@@ -70,7 +90,13 @@ public class BaityClient implements ClientModInitializer {
             Path configPath = Paths.get(CONFIG_FILE);
             if (Files.exists(configPath)) {
                 String content = Files.readString(configPath).trim();
-                baityMode = Boolean.parseBoolean(content);
+                String[] lines = content.split("\n");
+                if (lines.length >= 1) {
+                    smolpeopleMode = Boolean.parseBoolean(lines[0]);
+                }
+                if (lines.length >= 2) {
+                    blockAnimationMode = Boolean.parseBoolean(lines[1]);
+                }
             }
         } catch (IOException e) {
             System.err.println("Failed to load Baity config: " + e.getMessage());
