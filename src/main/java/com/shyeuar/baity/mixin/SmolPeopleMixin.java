@@ -1,6 +1,6 @@
-package com.shyeuar.baity.mixins;
+package com.shyeuar.baity.mixin;
 
-import com.shyeuar.baity.BaityClient;
+import com.shyeuar.baity.config.BaityConfig;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.render.entity.model.PlayerEntityModel;
@@ -21,16 +21,16 @@ public class SmolPeopleMixin {
         
         @Inject(method = "renderLabelIfPresent(Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("HEAD"))
         private void baity$adjustNameTagHeight(PlayerEntityRenderState playerEntityRenderState, Text text, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo ci) {
-            if (BaityClient.smolpeopleMode && playerEntityRenderState.name != null &&
+            if (BaityConfig.smolpeopleMode && playerEntityRenderState.name != null &&
                 playerEntityRenderState.name.equals(MinecraftClient.getInstance().getSession().getUsername())) {
                 matrixStack.push();
-                matrixStack.translate(0, -0.5, 0);
+                matrixStack.translate(0, -0.4, 0); // 根据最开始降0.5格，现在下降0.45格
             }
         }
         
         @Inject(method = "renderLabelIfPresent(Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("RETURN"))
         private void baity$restoreNameTagHeight(PlayerEntityRenderState playerEntityRenderState, Text text, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo ci) {
-            if (BaityClient.smolpeopleMode && playerEntityRenderState.name != null && 
+            if (BaityConfig.smolpeopleMode && playerEntityRenderState.name != null && 
                 playerEntityRenderState.name.equals(MinecraftClient.getInstance().getSession().getUsername())) {
                 matrixStack.pop();
             }
@@ -43,7 +43,7 @@ public class SmolPeopleMixin {
         
         @Inject(method = "scale(Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;)V", at = @At("TAIL"))
         private void baity$additionalScale(PlayerEntityRenderState playerEntityRenderState, MatrixStack matrixStack, CallbackInfo ci) {
-            if (BaityClient.smolpeopleMode && playerEntityRenderState.name != null &&
+            if (BaityConfig.smolpeopleMode && playerEntityRenderState.name != null &&
                 playerEntityRenderState.name.equals(MinecraftClient.getInstance().getSession().getUsername())) {
                 // 整体缩小到1/2
                 matrixStack.scale(0.5f, 0.5f, 0.5f);
@@ -57,7 +57,7 @@ public class SmolPeopleMixin {
         
         @Inject(method = "setAngles(Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;)V", at = @At("TAIL"))
         private void baity$modifyModel(PlayerEntityRenderState playerEntityRenderState, CallbackInfo ci) {
-            if (BaityClient.smolpeopleMode && playerEntityRenderState.name != null &&
+            if (BaityConfig.smolpeopleMode && playerEntityRenderState.name != null &&
                 playerEntityRenderState.name.equals(MinecraftClient.getInstance().getSession().getUsername())) {
                 
                 PlayerEntityModel model = (PlayerEntityModel) (Object) this;

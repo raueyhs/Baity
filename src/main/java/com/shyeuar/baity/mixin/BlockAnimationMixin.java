@@ -1,6 +1,6 @@
-package com.shyeuar.baity.mixins;
+package com.shyeuar.baity.mixin;
 
-import com.shyeuar.baity.blockanimation.BlockAnimationUtils;
+import com.shyeuar.baity.utils.BlockAnimationUtils;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.item.HeldItemRenderer;

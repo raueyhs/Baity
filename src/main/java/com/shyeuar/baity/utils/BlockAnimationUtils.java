@@ -1,17 +1,20 @@
-package com.shyeuar.baity.blockanimation;
+package com.shyeuar.baity.utils;
 
-import com.shyeuar.baity.BaityClient;
+import com.shyeuar.baity.config.BaityConfig;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
 
+@Environment(EnvType.CLIENT)
 public final class BlockAnimationUtils {
     private BlockAnimationUtils() {}
 
     public static boolean isEntityBlocking(LivingEntity entity) {
-        if (!BaityClient.blockAnimationMode || entity == null) return false;
+        if (!BaityConfig.blockAnimationMode || entity == null) return false;
         if (!entity.getWorld().isClient) return false;
         return isPlayerRightClicking() && canSwordBlock(entity);
     }
@@ -23,7 +26,7 @@ public final class BlockAnimationUtils {
     }
 
     public static boolean canSwordBlock(LivingEntity entity) {
-        if (!BaityClient.blockAnimationMode) return false;
+        if (!BaityConfig.blockAnimationMode) return false;
         Item mainHandItem = entity.getMainHandStack().getItem();
         Item offHandItem = entity.getOffHandStack().getItem();
         return isSword(mainHandItem) || isSword(offHandItem);
@@ -43,5 +46,3 @@ public final class BlockAnimationUtils {
         return isSword(entity.getMainHandStack().getItem()) ? Hand.MAIN_HAND : Hand.OFF_HAND;
     }
 }
-
-

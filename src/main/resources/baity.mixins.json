@@ -1,20 +1,24 @@
 {
   "required": true,
-  "package": "com.shyeuar.baity.mixins",
+  "package": "com.shyeuar.baity.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "SmolPeopleMixin$SmolNameTagMixin",
     "SmolPeopleMixin$SmolPlayerEntityRendererMixin",
     "SmolPeopleMixin$SmolPlayerRendererMixin",
     "CrosshairMixin",
-    "BlockAnimationMixin$MixinHeldItemRenderer"
+    "PlayerNameLabelHideMixin",
+    "BlockAnimationMixin$MixinHeldItemRenderer",
+    "TotemAnimationMixin"
   ],
   "client": [
     "SmolPeopleMixin$SmolNameTagMixin",
     "SmolPeopleMixin$SmolPlayerEntityRendererMixin",
     "SmolPeopleMixin$SmolPlayerRendererMixin",
     "CrosshairMixin",
-    "BlockAnimationMixin$MixinHeldItemRenderer"
+    "PlayerNameLabelHideMixin",
+    "BlockAnimationMixin$MixinHeldItemRenderer",
+    "TotemAnimationMixin"
   ],
   "injectors": {
     "defaultRequire": 1
