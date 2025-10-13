@@ -14,7 +14,7 @@ src/main/java/com/shyeuar/baity/mixin/macro/** filter=remove-macro
 src/main/resources/assets/baity/textures/macro/** filter=remove-macro
 src/main/resources/assets/baity/sounds/macro/** filter=remove-macro
 
-# 标记整个Config文件为私有（完全过滤）
+# 标记包含macro字样的文件为私有（过滤macro内容）
 src/main/java/com/shyeuar/baity/config/Config.java filter=remove-macro
 src/main/java/com/shyeuar/baity/gui/modules/ModuleManager.java filter=remove-macro
 

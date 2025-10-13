@@ -41,6 +41,3 @@ replay_*.log
 
 # private development scripts
 scripts/
-
-# private config files
-src/main/java/com/shyeuar/baity/config/Config.java
