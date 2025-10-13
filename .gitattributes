@@ -7,3 +7,16 @@
 # These are Windows script files and should use crlf
 *.bat           text eol=crlf
 
+# 标记macro相关文件为私有
+src/main/java/com/shyeuar/baity/features/macro/** filter=remove-macro
+src/main/java/com/shyeuar/baity/gui/modules/macro/** filter=remove-macro
+src/main/java/com/shyeuar/baity/mixin/macro/** filter=remove-macro
+src/main/resources/assets/baity/textures/macro/** filter=remove-macro
+src/main/resources/assets/baity/sounds/macro/** filter=remove-macro
+
+# 标记整个Config文件为私有（完全过滤）
+src/main/java/com/shyeuar/baity/config/Config.java filter=remove-macro
+src/main/java/com/shyeuar/baity/gui/modules/ModuleManager.java filter=remove-macro
+
+# 忽略私有开发脚本
+scripts/ export-ignore

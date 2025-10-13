@@ -1,6 +1,7 @@
 package com.shyeuar.baity.client;
 
 import com.shyeuar.baity.config.BaityConfig;
+import com.shyeuar.baity.config.Config;
 import com.shyeuar.baity.gui.ClickGui;
 import com.shyeuar.baity.gui.modules.ModuleManager;
 import com.shyeuar.baity.gui.modules.Module;
@@ -24,6 +25,9 @@ public class Baity implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
+        // 打印配置信息
+        Config.printConfig();
+        
         // 注册自定义图腾
         CustomTotemItem.register();
         CustomTotemModelProvider.register();

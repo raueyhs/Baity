@@ -38,3 +38,9 @@ hs_err_*.log
 replay_*.log
 *.hprof
 *.jfr
+
+# private development scripts
+scripts/
+
+# private config files
+src/main/java/com/shyeuar/baity/config/Config.java

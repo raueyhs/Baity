@@ -27,8 +27,6 @@ public class ModuleManager {
         Module clickGUI = new Module("ClickGUI", "ClickGUI", ModuleCategory.HUD);
         clickGUI.setEnabled(true); 
         modules.add(clickGUI);
-        
-                // Macro 分类暂时没有功能模块
 
         Module playerEspModule = new Module("PlayerESP", "PlayerESP", ModuleCategory.RENDER);
         playerEspModule.addValue(new Option("show distance", "show distance", true, ModuleCategory.RENDER)); 
@@ -53,3 +51,4 @@ public class ModuleManager {
                 .orElse(null);
     }
 }
+
