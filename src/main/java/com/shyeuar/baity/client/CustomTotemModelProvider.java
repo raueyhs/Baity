@@ -14,3 +14,4 @@ public class CustomTotemModelProvider {
         System.out.println("custom totem model provider registered");
     }
 }
+

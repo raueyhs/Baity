@@ -7,7 +7,7 @@ import net.fabricmc.api.Environment;
 public enum ModuleCategory {
     FUN("Fun"),
     RENDER("Render"),
-    MACRO("Macro"),
+    
     HUD("Hud");
     
     private final String displayName;
@@ -20,3 +20,4 @@ public enum ModuleCategory {
         return displayName;
     }
 }
+

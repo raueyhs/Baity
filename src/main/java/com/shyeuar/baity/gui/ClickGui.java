@@ -27,6 +27,10 @@ public class ClickGui extends Screen {
     private static float windowX = 200, windowY = 200;
     private static final float width = 500, height = 310;
     
+    private float guiScale = 1.0f;
+    // 基准缩放比例（GUI缩放为3时）
+    private static final float BASE_GUI_SCALE = 3.0f;
+    
     // 选择状态
     private static ModuleCategory modCategory = ModuleCategory.FUN;
     
@@ -38,8 +42,7 @@ public class ClickGui extends Screen {
     private String currentKeyDisplay = "Right Ctrl";
     
     private final java.util.Map<String, Float> moduleExpandAnimations = new java.util.HashMap<>();
-    
-    
+
     private String hoveredTooltip = null;
     private int tooltipX = 0, tooltipY = 0;
 
@@ -58,16 +61,23 @@ public class ClickGui extends Screen {
         if (ModuleManager.getModules().isEmpty()) {
             ModuleManager.init();
         }
-        
-        
+
+        // 获取GUI缩放
+        if (this.client != null) {
+            this.guiScale = this.client.options.getGuiScale().getValue();
+        }
         
         syncModuleStates();
 
+        // 计算缩放比例
+        float scaleRatio = BASE_GUI_SCALE / guiScale;
+        
+        // 居中计算（基于固定尺寸）
         if (this.client != null && this.client.getWindow() != null) {
             float screenW = this.client.getWindow().getScaledWidth();
             float screenH = this.client.getWindow().getScaledHeight();
-            windowX = (screenW - width) / 2f;
-            windowY = (screenH - height) / 2f;
+            windowX = (screenW - width * scaleRatio) / 2f;
+            windowY = (screenH - height * scaleRatio) / 2f;
         }
     }
 
@@ -270,14 +280,26 @@ public class ClickGui extends Screen {
 
         hoveredTooltip = null;
 
+        // 计算缩放比例
+        float scaleRatio = BASE_GUI_SCALE / guiScale;
         
-        // 绘制主窗口
-        RenderUtil.drawRoundedRect(context, windowX, windowY, windowX + width, windowY + height, 6, theme.BG.getRGB());
-        RenderUtil.stroke1px(context, windowX, windowY, windowX + width, windowY + height, new java.awt.Color(255,255,255,20).getRGB());
+        // 应用矩阵变换，保持固定尺寸
+        context.getMatrices().push();
+        context.getMatrices().translate(windowX, windowY, 0);
+        context.getMatrices().scale(scaleRatio, scaleRatio, 1.0f);
+        
+        // 转换鼠标坐标到固定坐标系
+        float scaledMouseX = ((float)mouseX - windowX) / scaleRatio;
+        float scaledMouseY = ((float)mouseY - windowY) / scaleRatio;
+        
+        // 绘制主窗口（使用固定坐标系）
+        RenderUtil.drawRoundedRect(context, 0, 0, width, height, 6, theme.BG.getRGB());
+        RenderUtil.stroke1px(context, 0, 0, width, height, new java.awt.Color(255,255,255,20).getRGB());
 
-        float cateX = windowX + 20;
-        float cateY = windowY + 30;
+        float cateX = 20;
+        float cateY = 30;
         for (ModuleCategory category : ModuleCategory.values()) {
+
             boolean active = category == modCategory;
             String label = category.getDisplayName();
             int w = client.textRenderer.getWidth(label);
@@ -297,8 +319,8 @@ public class ClickGui extends Screen {
             cateX += w + 28;
         }
 
-        float visibleTop = windowY + listTopPadding;
-        float visibleBottom = windowY + height - 20; 
+        float visibleTop = listTopPadding;
+        float visibleBottom = height - 20; 
         float visibleHeight = Math.max(0, visibleBottom - visibleTop);
         float contentHeight = 0f;
         
@@ -324,31 +346,31 @@ public class ClickGui extends Screen {
         if (scrollOffset < 0) scrollOffset = 0;
         if (scrollOffset > maxScroll) scrollOffset = maxScroll;
         
-        float modY = windowY + 60 - scrollOffset;
+        float modY = 60 - scrollOffset;
         
         // 检查当前分类是否有模块，如果没有则显示占位文本
         List<Module> currentModules = ModuleManager.getModulesByCategory(modCategory);
         if (currentModules.isEmpty()) {
             String placeholderText = "not coming soon~~~";
             int textWidth = client.textRenderer.getWidth(placeholderText);
-            int textX = (int)(windowX + (width - textWidth) / 2);
+            int textX = (int)((width - textWidth) / 2);
             int textY = (int)(modY + 50);
                 context.drawText(client.textRenderer, placeholderText, textX, textY, theme.FONT.getRGB(), false);
             modY += 100; 
         }
         
-        context.enableScissor((int)windowX, (int)visibleTop, (int)(windowX + width), (int)visibleBottom);
+        context.enableScissor(0, (int)listTopPadding, (int)width, (int)(height - 20));
         
         for (Module module : ModuleManager.getModulesByCategory(modCategory)) {
-            boolean hovered = RenderUtil.isHovered(windowX + 20, modY, windowX + width - 20, modY + 25, (float)mouseX, (float)mouseY);
+            boolean hovered = RenderUtil.isHovered(20, modY, width - 20, modY + 25, (float)scaledMouseX, (float)scaledMouseY);
             int enabledBg = new java.awt.Color(54, 42, 150).getRGB();
             int cardBg = module.isEnabled() ? enabledBg : theme.Modules.getRGB();
-            RenderUtil.drawRoundedRect(context, windowX + 20, modY, windowX + width - 20, modY + 25, 6, cardBg);
+            RenderUtil.drawRoundedRect(context, 20, modY, width - 20, modY + 25, 6, cardBg);
             if (hovered && !"ClickGUI".equals(module.getName())) {
                 int hi = new java.awt.Color(255,255,255,24).getRGB();
-                int lx = (int)(windowX + 21);
+                int lx = (int)(21);
                 int ty = (int)(modY + 1);
-                int rx = (int)(windowX + width - 21);
+                int rx = (int)(width - 21);
                 int by = (int)(modY + 24);
                 context.fill(lx, ty, rx, by, hi);
             }
@@ -357,14 +379,16 @@ public class ClickGui extends Screen {
             if ("ClickGUI".equals(module.getName())) {
                 displayName = "ClickGUI";
             }
-            context.drawText(client.textRenderer, displayName, (int)(windowX + 30), (int)(modY + 8), theme.FONT_C.getRGB(), false);
+            context.drawText(client.textRenderer, displayName, (int)(30), (int)(modY + 8), theme.FONT_C.getRGB(), false);
             
-            if (RenderUtil.isHovered(windowX + 20, modY, windowX + width - 20, modY + 25, (float)mouseX, (float)mouseY)) {
+            if (RenderUtil.isHovered(20, modY, width - 20, modY + 25, (float)scaledMouseX, (float)scaledMouseY)) {
                 String tooltip = getTooltipText(module.getName());
                 if (tooltip != null) {
                     hoveredTooltip = tooltip;
-                    tooltipX = (int)mouseX + 10;
-                    tooltipY = (int)mouseY - 10;
+                    // 根据GUI缩放调整tooltip与鼠标的距离
+                    float tooltipOffset = 10f * (BASE_GUI_SCALE / guiScale);
+                    tooltipX = (int)(mouseX + tooltipOffset);
+                    tooltipY = (int)(mouseY - tooltipOffset);
                 }
             }
             
@@ -374,24 +398,24 @@ public class ClickGui extends Screen {
             }
             if (hasChildren && !module.getName().equals("ClickGUI")) {
                 String arrow = module.isExpanded() ? "▼" : "▶";
-                context.drawText(client.textRenderer, arrow, (int)(windowX + width - 40), (int)(modY + 8), theme.FONT_C.getRGB(), false);
+                context.drawText(client.textRenderer, arrow, (int)(width - 40), (int)(modY + 8), theme.FONT_C.getRGB(), false);
             }
             
             if (module.getName().equals("ClickGUI")) {
                 int keyTextWidth = client.textRenderer.getWidth("Right Shift");
                 int keyBoxWidth = keyTextWidth + 20; 
                 
-                boolean keyHovered = RenderUtil.isHovered(windowX + width - keyBoxWidth - 50, modY, windowX + width - 50, modY + 20, (float)mouseX, (float)mouseY);
+                boolean keyHovered = RenderUtil.isHovered(width - keyBoxWidth - 50, modY, width - 50, modY + 20, (float)scaledMouseX, (float)scaledMouseY);
                 int keyBgColor = isListeningForKey ? theme.BG_3.getRGB() : (keyHovered ? new java.awt.Color(255,255,255,24).getRGB() : theme.BG_2.getRGB());
-                int kx1 = (int)(windowX + width - keyBoxWidth - 49);
+                int kx1 = (int)(width - keyBoxWidth - 49);
                 int ky1 = (int)(modY + 6);
-                int kx2 = (int)(windowX + width - 51);
+                int kx2 = (int)(width - 51);
                 int ky2 = (int)(modY + 19);
                 context.fill(kx1, ky1, kx2, ky2, keyBgColor);
                 
                 String keyText = isListeningForKey ? "Press a key..." : currentKeyDisplay;
                 int keyColor = isListeningForKey ? theme.FONT_C.getRGB() : theme.FONT.getRGB();
-                context.drawText(client.textRenderer, keyText, (int)(windowX + width - keyBoxWidth - 40), (int)(modY + 8), keyColor, false);
+                context.drawText(client.textRenderer, keyText, (int)(width - keyBoxWidth - 40), (int)(modY + 8), keyColor, false);
             }
 
             modY += 30;
@@ -414,9 +438,9 @@ public class ClickGui extends Screen {
                     containerHeight = (int)(containerHeight * expandProgress); // 应用动画
                     
                     int containerBg = new java.awt.Color(30, 30, 30, 200).getRGB();
-                    int containerX1 = (int)(windowX + 30);
+                    int containerX1 = (int)(30);
                     int containerY1 = (int)(modY);
-                    int containerX2 = (int)(windowX + width - 30);
+                    int containerX2 = (int)(width - 30);
                     int containerY2 = (int)(modY + containerHeight);
 
                     context.fill(containerX1, containerY1, containerX2, containerY2, containerBg);
@@ -438,14 +462,16 @@ public class ClickGui extends Screen {
                             float localAlphaF = Math.min(1f, Math.max(0f, (innerVisible - renderedCount * subOptionHeight) / (float) subOptionHeight));
                             int localAlpha = (int)(255 * expandProgress * localAlphaF);
 
-                            boolean subHovered = RenderUtil.isHovered(containerX1 + 4, (int)subModY, containerX2 - 4, (int)(subModY + subOptionHeight), (float)mouseX, (float)mouseY);
+                            boolean subHovered = RenderUtil.isHovered(containerX1 + 4, (int)subModY, containerX2 - 4, (int)(subModY + subOptionHeight), (float)scaledMouseX, (float)scaledMouseY);
                             int baseValueColor = subHovered ? new java.awt.Color(60, 60, 60, 80).getRGB() : new java.awt.Color(40, 40, 40, 50).getRGB();
                             int valueColor = (baseValueColor & 0x00FFFFFF) | (localAlpha << 24);
                             
                             if (subHovered && "show own nametag".equals(value.getName())) {
                                 hoveredTooltip = "Due to skill issue,you should switch off all the other nametag functions before using this feature,or the game will crash!";
-                                tooltipX = (int)mouseX + 10;
-                                tooltipY = (int)mouseY - 10;
+                                // 根据GUI缩放调整tooltip与鼠标的距离
+                                float tooltipOffset = 10f * (BASE_GUI_SCALE / guiScale);
+                                tooltipX = (int)(mouseX + tooltipOffset);
+                                tooltipY = (int)(mouseY - tooltipOffset);
                             }
 
                             int subX1 = containerX1 + 4;
@@ -506,18 +532,52 @@ public class ClickGui extends Screen {
         }
         
         context.disableScissor();
+
+        if (contentHeight > visibleHeight) {
+            float ratio = visibleHeight / contentHeight;
+            float barHeight = Math.max(10, visibleHeight * ratio); 
+            float travel = visibleHeight - barHeight;
+            float progress = maxScroll == 0 ? 0 : (scrollOffset / maxScroll);
+            float barY = visibleTop + travel * progress;
+            float barX1 = width - 6;
+            float barX2 = width - 2;
+            RenderUtil.drawRoundedRect(context, barX1, barY, barX2, barY + barHeight, 2, theme.BG_2.getRGB());
+        }
+
+        String watermark = "Baity by 11YearCookieBuff (AKA raueyhs , shyeuar)";
+        int wmRawWidth = client.textRenderer.getWidth(watermark);
+        float wmScale = 0.70f;
+        float scaledWidth = wmScale * wmRawWidth;
         
+        float baseX = width - scaledWidth - 8; 
+        float baseY = 8; 
+        
+        context.getMatrices().push();
+        context.getMatrices().scale(wmScale, wmScale, 1f);
+        int wmColor = new java.awt.Color(120, 124, 132).getRGB();
+        context.drawText(client.textRenderer, watermark, (int)(baseX / wmScale), (int)(baseY / wmScale), wmColor, false);
+        context.getMatrices().pop();
+        
+        // 恢复矩阵变换
+        context.getMatrices().pop();
+        
+        // 渲染tooltip（在矩阵变换之外，使用屏幕坐标）
         if (hoveredTooltip != null) {
-            float tipScale = 0.75f;
+            // 计算tooltip缩放比例，保持固定尺寸
+            float tooltipScaleRatio = BASE_GUI_SCALE / guiScale;
+            float tipScale = 0.75f * tooltipScaleRatio;
+            
             int rawTextWidth = client.textRenderer.getWidth(hoveredTooltip);
             int bgPadding = 10;
             int rawFontHeight = 9; // vanilla text height近似
             int tooltipWidth = (int)(rawTextWidth * tipScale) + bgPadding;
             int tooltipHeight = (int)(rawFontHeight * tipScale) + 8;
             
+            // 使用原始鼠标坐标计算tooltip位置
             int finalTooltipX = tooltipX;
             int finalTooltipY = tooltipY;
             
+            // 边界检查
             if (finalTooltipX + tooltipWidth > client.getWindow().getScaledWidth()) {
                 finalTooltipX = tooltipX - tooltipWidth - 20;
             }
@@ -543,37 +603,17 @@ public class ClickGui extends Screen {
             context.drawText(client.textRenderer, hoveredTooltip, textDrawX, textDrawY, tooltipColor, false);
             context.getMatrices().pop();
         }
-
-        if (contentHeight > visibleHeight) {
-            float ratio = visibleHeight / contentHeight;
-            float barHeight = Math.max(10, visibleHeight * ratio); 
-            float travel = visibleHeight - barHeight;
-            float progress = maxScroll == 0 ? 0 : (scrollOffset / maxScroll);
-            float barY = visibleTop + travel * progress;
-            float barX1 = windowX + width - 6;
-            float barX2 = windowX + width - 2;
-            RenderUtil.drawRoundedRect(context, barX1, barY, barX2, barY + barHeight, 2, theme.BG_2.getRGB());
-        }
-
-        String watermark = "Baity by 11YearCookieBuff (AKA raueyhs , shyeuar)";
-        int wmRawWidth = client.textRenderer.getWidth(watermark);
-        float wmScale = 0.70f;
-        float scaledWidth = wmScale * wmRawWidth;
-        
-        float baseX = windowX + width - scaledWidth - 8; 
-        float baseY = windowY + 8; 
-        
-        context.getMatrices().push();
-        context.getMatrices().scale(wmScale, wmScale, 1f);
-        int wmColor = new java.awt.Color(120, 124, 132).getRGB();
-        context.drawText(client.textRenderer, watermark, (int)(baseX / wmScale), (int)(baseY / wmScale), wmColor, false);
-        context.getMatrices().pop();
     }
 
             @Override
             public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-                if (RenderUtil.isHovered(windowX, windowY + listTopPadding, windowX + width, windowY + height - 20, (float)mouseX, (float)mouseY)) {
-            float modY = windowY + 60 - scrollOffset;
+                // 转换鼠标坐标到固定坐标系
+                float scaleRatio = BASE_GUI_SCALE / guiScale;
+                float scaledMouseX = ((float)mouseX - windowX) / scaleRatio;
+                float scaledMouseY = ((float)mouseY - windowY) / scaleRatio;
+                
+                if (RenderUtil.isHovered(0, listTopPadding, width, height - 20, scaledMouseX, scaledMouseY)) {
+            float modY = 60 - scrollOffset;
             for (Module module : ModuleManager.getModulesByCategory(modCategory)) {
                 if (module.isExpanded()) {
                     int subOptionCount = 0;
@@ -586,15 +626,15 @@ public class ClickGui extends Screen {
                         int subOptionHeight = 20;
                         int containerHeight = subOptionCount * subOptionHeight + containerPadding * 2;
                         
-                        int containerX1 = (int)(windowX + 30);
-                        int containerX2 = (int)(windowX + width - 30);
+                        int containerX1 = (int)(30);
+                        int containerX2 = (int)(width - 30);
                         
                         float subModY = modY + containerPadding;
                         for (Value value : module.getValues()) {
                             if (value.getName().equals("enabled")) continue;
                             
                             if (value.getValue() instanceof Double && 
-                                RenderUtil.isHovered(containerX1 + 4, (int)subModY, containerX2 - 4, (int)(subModY + subOptionHeight), (float)mouseX, (float)mouseY)) {
+                                RenderUtil.isHovered(containerX1 + 4, (int)subModY, containerX2 - 4, (int)(subModY + subOptionHeight), scaledMouseX, scaledMouseY)) {
                                 
                                 double currentValue = (Double) value.getValue();
                                 double increment = 0.1; 
@@ -611,7 +651,7 @@ public class ClickGui extends Screen {
                                 return true;
                             }
                             
-                    if (RenderUtil.isHovered(containerX1, (int)subModY, containerX2, (int)(subModY + subOptionHeight), (float)mouseX, (float)mouseY)) {
+                    if (RenderUtil.isHovered(containerX1, (int)subModY, containerX2, (int)(subModY + subOptionHeight), scaledMouseX, scaledMouseY)) {
                         float delta = (float)(-verticalAmount * 20);
                         scrollOffset += delta;
                         return true;
@@ -635,24 +675,30 @@ public class ClickGui extends Screen {
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && RenderUtil.isHovered(windowX, windowY, windowX + width, windowY + 20, (float)mouseX, (float)mouseY)) {
+        // 转换鼠标坐标到固定坐标系
+        float scaleRatio = BASE_GUI_SCALE / guiScale;
+        float scaledMouseX = ((float)mouseX - windowX) / scaleRatio;
+        float scaledMouseY = ((float)mouseY - windowY) / scaleRatio;
+        
+        if (button == 0 && RenderUtil.isHovered(0, 0, width, 20, scaledMouseX, scaledMouseY)) {
             if (dragX == 0 && dragY == 0) {
-                dragX = (float)mouseX - windowX;
-                dragY = (float)mouseY - windowY;
+                dragX = scaledMouseX;
+                dragY = scaledMouseY;
             } else {
-                windowX = (float)mouseX - dragX;
-                windowY = (float)mouseY - dragY;
+                windowX = (float)mouseX - dragX * scaleRatio;
+                windowY = (float)mouseY - dragY * scaleRatio;
             }
             drag = true;
             return true;
         }
         
-        float cateX = windowX + 20;
-        float cateY = windowY + 30;
+        float cateX = 20;
+        float cateY = 30;
         for (ModuleCategory category : ModuleCategory.values()) {
+
             assert client != null;
             int textWidth = client.textRenderer.getWidth(category.getDisplayName());
-            if (button == 0 && RenderUtil.isHovered(cateX, cateY, cateX + textWidth, cateY + 12, (float)mouseX, (float)mouseY) && valuetimer.delay(100)) {
+            if (button == 0 && RenderUtil.isHovered(cateX, cateY, cateX + textWidth, cateY + 12, scaledMouseX, scaledMouseY) && valuetimer.delay(100)) {
                 modCategory = category;
                 valuetimer.reset();
                 return true;
@@ -660,17 +706,17 @@ public class ClickGui extends Screen {
             cateX += textWidth + 28;
         }
         
-        float modY = windowY + 60 - scrollOffset;
+        float modY = 60 - scrollOffset;
         List<Module> modules = ModuleManager.getModulesByCategory(modCategory);
         
         for (Module module : modules) {
-            if (RenderUtil.isHovered(windowX + 20, modY, windowX + width - 20, modY + 25, (float)mouseX, (float)mouseY) && valuetimer.delay(100)) {
+            if (RenderUtil.isHovered(20, modY, width - 20, modY + 25, scaledMouseX, scaledMouseY) && valuetimer.delay(100)) {
                 if (module.getName().equals("ClickGUI")) {
                     assert client != null;
                     int keyTextWidth = client.textRenderer.getWidth("Right Shift");
                     int keyBoxWidth = keyTextWidth + 20;
                     
-                    if (button == 0 && RenderUtil.isHovered(windowX + width - keyBoxWidth - 50, modY, windowX + width - 50, modY + 25, (float)mouseX, (float)mouseY)) {
+                    if (button == 0 && RenderUtil.isHovered(width - keyBoxWidth - 50, modY, width - 50, modY + 25, scaledMouseX, scaledMouseY)) {
                         isListeningForKey = true;
                     }
                 } else {
@@ -680,7 +726,7 @@ public class ClickGui extends Screen {
                     }
 
                     if (button == 0) {
-                        if (hasChildrenClick && RenderUtil.isHovered(windowX + width - 50, modY, windowX + width - 20, modY + 25, (float)mouseX, (float)mouseY) && valuetimer.delay(100)) {
+                        if (hasChildrenClick && RenderUtil.isHovered(width - 50, modY, width - 20, modY + 25, scaledMouseX, scaledMouseY) && valuetimer.delay(100)) {
                             module.toggleExpanded();
                         } else {
                 module.toggle();
@@ -725,8 +771,8 @@ public class ClickGui extends Screen {
                     int subOptionHeight = 20;
                     int containerHeight = subOptionCount * subOptionHeight + containerPadding * 2;
                     
-                    int containerX1 = (int)(windowX + 30);
-                    int containerX2 = (int)(windowX + width - 30);
+                    int containerX1 = (int)(30);
+                    int containerX2 = (int)(width - 30);
                     
                     float subModY = modY + containerPadding;
                     int innerVisible = Math.max(0, containerHeight - containerPadding * 2);
@@ -736,7 +782,7 @@ public class ClickGui extends Screen {
                         if (value.getName().equals("enabled")) continue;
                         if (renderedCount >= maxVisibleOptions) break;
 
-                        if (button == 0 && RenderUtil.isHovered(containerX1 + 4, (int)subModY, containerX2 - 4, (int)(subModY + subOptionHeight), (float)mouseX, (float)mouseY) && valuetimer.delay(100)) {
+                        if (button == 0 && RenderUtil.isHovered(containerX1 + 4, (int)subModY, containerX2 - 4, (int)(subModY + subOptionHeight), scaledMouseX, scaledMouseY) && valuetimer.delay(100)) {
                             if (value.getValue() instanceof Boolean) {
                                 value.setValue(!((Boolean)value.getValue()));
                                 if (value.getName().equals("crosshair")) {
@@ -779,8 +825,11 @@ public class ClickGui extends Screen {
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
         if (drag) {
-            windowX = (float)mouseX - dragX;
-            windowY = (float)mouseY - dragY;
+            // 转换鼠标坐标到固定坐标系
+            float scaleRatio = BASE_GUI_SCALE / guiScale;
+            
+            windowX = (float)mouseX - dragX * scaleRatio;
+            windowY = (float)mouseY - dragY * scaleRatio;
         }
         super.mouseMoved(mouseX, mouseY);
     }
@@ -818,6 +867,19 @@ public class ClickGui extends Screen {
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+    
+    @Override
+    public void resize(MinecraftClient client, int width, int height) {
+        super.resize(client, width, height);
+        // 重新计算居中位置
+        if (this.client != null && this.client.getWindow() != null) {
+            float scaleRatio = BASE_GUI_SCALE / guiScale;
+            float screenW = this.client.getWindow().getScaledWidth();
+            float screenH = this.client.getWindow().getScaledHeight();
+            windowX = (screenW - ClickGui.width * scaleRatio) / 2f;
+            windowY = (screenH - ClickGui.height * scaleRatio) / 2f;
+        }
     }
     
     @Override

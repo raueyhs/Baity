@@ -25,3 +25,4 @@ public class CustomTotemItem {
         System.out.println("custom totem item registered: " + CUSTOM_TOTEM);
     }
 }
+

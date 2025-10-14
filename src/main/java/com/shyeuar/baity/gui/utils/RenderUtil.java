@@ -22,8 +22,7 @@ public class RenderUtil {
     public static void divider(DrawContext context, float x, float y, float x2, float y2, int color) {
         context.fill((int)x, (int)y, (int)x2, (int)y2, color);
     }
-    
-    
+
     public static boolean isHovered(float x, float y, float x1, float y1, float mouseX, float mouseY) {
         return mouseX > x && mouseY > y && mouseX < x1 && mouseY < y1;
     }

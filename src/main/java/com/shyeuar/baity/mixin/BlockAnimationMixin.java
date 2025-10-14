@@ -71,3 +71,4 @@ public abstract class BlockAnimationMixin {
     }
 
 }
+

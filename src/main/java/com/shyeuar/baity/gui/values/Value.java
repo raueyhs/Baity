@@ -11,3 +11,4 @@ public interface Value {
     void setValue(Object value);
     ModuleCategory getCategory();
 }
+

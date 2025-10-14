@@ -163,8 +163,7 @@ public class PepCat {
     private static ItemStack createCustomCatItem() {
         return new ItemStack(com.shyeuar.baity.item.CustomTotemItem.CUSTOM_TOTEM);
     }
-    
-    
+
     private static void sendEncouragementMessage(ClientPlayerEntity player) {
         MutableText prefix = MessageUtils.createBaityPrefix();
         MutableText mainText = MessageUtils.createColoredText("它张嘴大笑，似乎在笑你的失误，又或嘲笑死神的无能", Formatting.AQUA);
@@ -176,3 +175,4 @@ public class PepCat {
         MessageUtils.sendCustomMessage(fullMessage);
     }
 }
+

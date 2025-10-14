@@ -10,17 +10,14 @@ import net.minecraft.util.Formatting;
 
 @Environment(EnvType.CLIENT)
 public class MessageUtils {
-    
 
     public static MutableText createColoredText(String text, Formatting color) {
         return Text.literal(text).setStyle(Style.EMPTY.withColor(color));
     }
-    
 
     public static MutableText appendText(MutableText first, MutableText second) {
         return first.append(second);
     }
-    
 
     public static MutableText createBaityPrefix() {
         MutableText leftBracket = createColoredText("[", Formatting.DARK_GRAY);
@@ -28,7 +25,6 @@ public class MessageUtils {
         MutableText rightBracket = createColoredText("] ", Formatting.DARK_GRAY);
         return leftBracket.append(baityText).append(rightBracket);
     }
-    
 
     public static void sendBaityMessage(String message) {
         if (MinecraftClient.getInstance().player != null) {
@@ -38,7 +34,6 @@ public class MessageUtils {
             MinecraftClient.getInstance().inGameHud.getChatHud().addMessage(fullMessage);
         }
     }
-    
 
     public static void sendCustomMessage(MutableText message) {
         if (MinecraftClient.getInstance().player != null) {
@@ -46,3 +41,4 @@ public class MessageUtils {
         }
     }
 }
+

@@ -19,3 +19,4 @@ public class CrosshairMixin {
         return original;
     }
 }
+

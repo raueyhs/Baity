@@ -32,3 +32,4 @@ public class Option implements Value {
     @Override
     public ModuleCategory getCategory() { return category; }
 }
+

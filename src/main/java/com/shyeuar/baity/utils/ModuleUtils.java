@@ -32,8 +32,7 @@ public class ModuleUtils {
         }
         return def;
     }
-    
-    
+
     /**
      * 从模块中获取字符串选项值
      * @param module 模块
@@ -55,3 +54,4 @@ public class ModuleUtils {
         return def;
     }
 }
+
