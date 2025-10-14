@@ -697,7 +697,8 @@ public class ClickGui extends Screen {
         for (ModuleCategory category : ModuleCategory.values()) {
 
             assert client != null;
-            int textWidth = client.textRenderer.getWidth(category.getDisplayName());
+            String label = category.getDisplayName();
+            int textWidth = client.textRenderer.getWidth(label);
             if (button == 0 && RenderUtil.isHovered(cateX, cateY, cateX + textWidth, cateY + 12, scaledMouseX, scaledMouseY) && valuetimer.delay(100)) {
                 modCategory = category;
                 valuetimer.reset();
