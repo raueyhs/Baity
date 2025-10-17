@@ -8,6 +8,7 @@ import com.shyeuar.baity.gui.theme.Theme;
 import com.shyeuar.baity.gui.utils.TimerUtil;
 import com.shyeuar.baity.gui.values.ModuleCategory;
 import com.shyeuar.baity.gui.values.Value;
+import com.shyeuar.baity.utils.MessageUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -17,9 +18,18 @@ import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
+import java.util.Set;
 
 @Environment(EnvType.CLIENT)
 public class ClickGui extends Screen {
+    
+    private static final Set<String> SMOLPEOPLE_OPTIONS = Set.of("crosshair");
+    private static final Set<String> PLAYERESP_OPTIONS = Set.of("show distance", "show own nametag");
+    private static final Set<String> REMINDER_OPTIONS = Set.of(
+        "cookie buff reminder", 
+        "god potion reminder", 
+        "meowalert"
+    );
     
     private float dragX, dragY;
     private boolean drag = false;
@@ -28,10 +38,8 @@ public class ClickGui extends Screen {
     private static final float width = 500, height = 310;
     
     private float guiScale = 1.0f;
-    // 基准缩放比例（GUI缩放为3时）
     private static final float BASE_GUI_SCALE = 3.0f;
     
-    // 选择状态
     private static ModuleCategory modCategory = ModuleCategory.FUN;
     
     private final TimerUtil valuetimer = new TimerUtil();
@@ -44,6 +52,7 @@ public class ClickGui extends Screen {
     private final java.util.Map<String, Float> moduleExpandAnimations = new java.util.HashMap<>();
 
     private String hoveredTooltip = null;
+    private net.minecraft.text.Text hoveredTooltipText = null;
     private int tooltipX = 0, tooltipY = 0;
 
     private float scrollOffset = 0f;
@@ -57,22 +66,19 @@ public class ClickGui extends Screen {
     @Override
     protected void init() {
         super.init();
-        theme.setDark(); // Set default theme
+        theme.setDark(); 
         if (ModuleManager.getModules().isEmpty()) {
             ModuleManager.init();
         }
 
-        // 获取GUI缩放
         if (this.client != null) {
             this.guiScale = this.client.options.getGuiScale().getValue();
         }
         
         syncModuleStates();
 
-        // 计算缩放比例
         float scaleRatio = BASE_GUI_SCALE / guiScale;
         
-        // 居中计算（基于固定尺寸）
         if (this.client != null && this.client.getWindow() != null) {
             float screenW = this.client.getWindow().getScaledWidth();
             float screenH = this.client.getWindow().getScaledHeight();
@@ -144,13 +150,44 @@ public class ClickGui extends Screen {
         moduleExpandAnimations.put(moduleName, newValue);
     }
     
-    private String getTooltipText(String moduleName) {
-        return switch (moduleName) {
-            case "SmolPeople" -> "Make your character smaller and cuter";
-            case "BlockAnimation" -> "Restored the blocking animation of version 1.8";
-            case "PepCat" -> "Play an animation and give pep talk when you died. It's a skill issue!";
+    private static class TooltipInfo {
+        final String text;
+        final net.minecraft.text.Text coloredText;
+        
+        TooltipInfo(String text, int color) {
+            this.text = text;
+            this.coloredText = net.minecraft.text.Text.literal(text).styled(style -> style.withColor(color));
+        }
+        
+        TooltipInfo(String text, net.minecraft.text.Text coloredText) {
+            this.text = text;
+            this.coloredText = coloredText;
+        }
+    }
+    
+    private TooltipInfo getTooltipInfo(String name) {
+        return switch (name) {
+            case "SmolPeople" -> new TooltipInfo("Make your character smaller and cuter", 0xFFFFFF);
+            case "BlockAnimation" -> new TooltipInfo("Restored the blocking animation of version 1.8", 0xFFFFFF);
+            case "PepCat" -> new TooltipInfo("Play an animation and give pep talk when you died. It's a skill issue!", 0xFFFFFF);
+            case "show own nametag" -> new TooltipInfo("Due to skill issue,you should switch off all the other nametag functions before using this feature,or the game will crash!", com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR);
+            case "meowalert" -> new TooltipInfo("play a ᯠ₋ ̫ ₋.ᯄ ੭meow~ when you are mentioned in chat", 
+                MessageUtils.createColoredText("play a ", 0xFFFFFF)
+                    .append(MessageUtils.createColoredText("ᯠ₋ ̫ ₋.ᯄ ੭", 0xFFC0CB))
+                    .append(MessageUtils.createColoredText("meow~", 0xFFC0CB))
+                    .append(MessageUtils.createColoredText(" when you are mentioned in chat", 0xFFFFFF)));
             default -> null;
         };
+    }
+    
+    private String getTooltipText(String name) {
+        TooltipInfo info = getTooltipInfo(name);
+        return info != null ? info.text : null;
+    }
+    
+    private net.minecraft.text.Text getTooltipTextWithColors(String name) {
+        TooltipInfo info = getTooltipInfo(name);
+        return info != null ? info.coloredText : null;
     }
     
     private void updateKeyDisplay() {
@@ -279,20 +316,17 @@ public class ClickGui extends Screen {
         updateModuleExpandAnimations();
 
         hoveredTooltip = null;
+        hoveredTooltipText = null;
 
-        // 计算缩放比例
         float scaleRatio = BASE_GUI_SCALE / guiScale;
         
-        // 应用矩阵变换，保持固定尺寸
         context.getMatrices().push();
         context.getMatrices().translate(windowX, windowY, 0);
         context.getMatrices().scale(scaleRatio, scaleRatio, 1.0f);
         
-        // 转换鼠标坐标到固定坐标系
         float scaledMouseX = ((float)mouseX - windowX) / scaleRatio;
         float scaledMouseY = ((float)mouseY - windowY) / scaleRatio;
         
-        // 绘制主窗口（使用固定坐标系）
         RenderUtil.drawRoundedRect(context, 0, 0, width, height, 6, theme.BG.getRGB());
         RenderUtil.stroke1px(context, 0, 0, width, height, new java.awt.Color(255,255,255,20).getRGB());
 
@@ -348,7 +382,6 @@ public class ClickGui extends Screen {
         
         float modY = 60 - scrollOffset;
         
-        // 检查当前分类是否有模块，如果没有则显示占位文本
         List<Module> currentModules = ModuleManager.getModulesByCategory(modCategory);
         if (currentModules.isEmpty()) {
             String placeholderText = "not coming soon~~~";
@@ -385,7 +418,7 @@ public class ClickGui extends Screen {
                 String tooltip = getTooltipText(module.getName());
                 if (tooltip != null) {
                     hoveredTooltip = tooltip;
-                    // 根据GUI缩放调整tooltip与鼠标的距离
+                    hoveredTooltipText = getTooltipTextWithColors(module.getName());
                     float tooltipOffset = 10f * (BASE_GUI_SCALE / guiScale);
                     tooltipX = (int)(mouseX + tooltipOffset);
                     tooltipY = (int)(mouseY - tooltipOffset);
@@ -428,14 +461,13 @@ public class ClickGui extends Screen {
             if (subOptionCount > 0) {
                 float expandProgress = getModuleExpandProgress(module.getName());
                 
-                // 只有当动画进度大于0时才渲染（展开或收回动画中）
                 if (expandProgress > 0.0f) {
-                    int containerPadding = 8; // 大框内边距
-                    int subOptionHeight = 20; // 每个子选项高度
-                    int maxContainerHeight = (int)(visibleHeight - 80); // 限制最大高度，比GUI底部短80px
+                    int containerPadding = 8; 
+                    int subOptionHeight = 20; 
+                    int maxContainerHeight = (int)(visibleHeight - 80); 
                     int fullContainerHeight = subOptionCount * subOptionHeight + containerPadding * 2;
                     int containerHeight = Math.min(fullContainerHeight, maxContainerHeight);
-                    containerHeight = (int)(containerHeight * expandProgress); // 应用动画
+                    containerHeight = (int)(containerHeight * expandProgress); 
                     
                     int containerBg = new java.awt.Color(30, 30, 30, 200).getRGB();
                     int containerX1 = (int)(30);
@@ -447,8 +479,6 @@ public class ClickGui extends Screen {
                     RenderUtil.stroke1px(context, containerX1, containerY1, containerX2, containerY2, new java.awt.Color(255,255,255,40).getRGB());
 
                     int innerVisible = Math.max(0, containerHeight - containerPadding * 2);
-                    // 如果内部可见高度太小，不渲染子项，避免早期闪烁
-                    // 提高显示阈值：至少达到半个子项高度才开始渲染首项
                     if (innerVisible >= subOptionHeight / 2) {
                         float subModY = modY + containerPadding;
                         int maxVisibleOptions = Math.max(0, innerVisible / subOptionHeight);
@@ -458,7 +488,6 @@ public class ClickGui extends Screen {
                             if (value.getName().equals("enabled")) continue;
                             if (renderedCount >= maxVisibleOptions) break;
 
-                            // 针对当前项的局部透明度（项的可见部分占比，缓解项出现/消失边缘的突变）
                             float localAlphaF = Math.min(1f, Math.max(0f, (innerVisible - renderedCount * subOptionHeight) / (float) subOptionHeight));
                             int localAlpha = (int)(255 * expandProgress * localAlphaF);
 
@@ -466,12 +495,15 @@ public class ClickGui extends Screen {
                             int baseValueColor = subHovered ? new java.awt.Color(60, 60, 60, 80).getRGB() : new java.awt.Color(40, 40, 40, 50).getRGB();
                             int valueColor = (baseValueColor & 0x00FFFFFF) | (localAlpha << 24);
                             
-                            if (subHovered && "show own nametag".equals(value.getName())) {
-                                hoveredTooltip = "Due to skill issue,you should switch off all the other nametag functions before using this feature,or the game will crash!";
-                                // 根据GUI缩放调整tooltip与鼠标的距离
-                                float tooltipOffset = 10f * (BASE_GUI_SCALE / guiScale);
-                                tooltipX = (int)(mouseX + tooltipOffset);
-                                tooltipY = (int)(mouseY - tooltipOffset);
+                            if (subHovered) {
+                                String tooltip = getTooltipText(value.getName());
+                                if (tooltip != null) {
+                                    hoveredTooltip = tooltip;
+                                    hoveredTooltipText = getTooltipTextWithColors(value.getName());
+                                    float tooltipOffset = 10f * (BASE_GUI_SCALE / guiScale);
+                                    tooltipX = (int)(mouseX + tooltipOffset);
+                                    tooltipY = (int)(mouseY - tooltipOffset);
+                                }
                             }
 
                             int subX1 = containerX1 + 4;
@@ -482,7 +514,6 @@ public class ClickGui extends Screen {
 
                             int textColor = (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
                             
-                            // 添加警告标识，由于技术问题，需要关闭其他nametag功能，否则游戏会崩溃
                             String displayText = value.getDisplayName();
                             int warningTextColor = textColor;
                             if ("show own nametag".equals(value.getName())) {
@@ -522,6 +553,7 @@ public class ClickGui extends Screen {
                             context.drawText(client.textRenderer, status, statusX, (int)(subModY + 6), statusColor, false);
 
                             subModY += subOptionHeight;
+                            
                             renderedCount++;
                         }
                     }
@@ -558,12 +590,9 @@ public class ClickGui extends Screen {
         context.drawText(client.textRenderer, watermark, (int)(baseX / wmScale), (int)(baseY / wmScale), wmColor, false);
         context.getMatrices().pop();
         
-        // 恢复矩阵变换
         context.getMatrices().pop();
         
-        // 渲染tooltip（在矩阵变换之外，使用屏幕坐标）
         if (hoveredTooltip != null) {
-            // 计算tooltip缩放比例，保持固定尺寸
             float tooltipScaleRatio = BASE_GUI_SCALE / guiScale;
             float tipScale = 0.75f * tooltipScaleRatio;
             
@@ -573,11 +602,9 @@ public class ClickGui extends Screen {
             int tooltipWidth = (int)(rawTextWidth * tipScale) + bgPadding;
             int tooltipHeight = (int)(rawFontHeight * tipScale) + 8;
             
-            // 使用原始鼠标坐标计算tooltip位置
             int finalTooltipX = tooltipX;
             int finalTooltipY = tooltipY;
             
-            // 边界检查
             if (finalTooltipX + tooltipWidth > client.getWindow().getScaledWidth()) {
                 finalTooltipX = tooltipX - tooltipWidth - 20;
             }
@@ -597,17 +624,23 @@ public class ClickGui extends Screen {
             int textDrawX = (int)((bgLeft + 5) / tipScale);
             int textDrawY = (int)(((bgTop + 4)) / tipScale);
             
-            // 为"show own nametag"的tooltip使用浅红色
-            int tooltipColor = hoveredTooltip.contains("Due to skill issue") ? 
-                com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR : theme.FONT_C.getRGB();
-            context.drawText(client.textRenderer, hoveredTooltip, textDrawX, textDrawY, tooltipColor, false);
+            if (hoveredTooltipText != null) {
+                context.drawText(client.textRenderer, hoveredTooltipText, textDrawX, textDrawY, 0xFFFFFF, false);
+            } else {
+                int tooltipColor;
+                if (hoveredTooltip.contains("Due to skill issue")) {
+                    tooltipColor = com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR;
+                } else {
+                    tooltipColor = theme.FONT_C.getRGB();
+                }
+                context.drawText(client.textRenderer, hoveredTooltip, textDrawX, textDrawY, tooltipColor, false);
+            }
             context.getMatrices().pop();
         }
     }
 
             @Override
             public boolean mouseScrolled(double mouseX, double mouseY, double horizontalAmount, double verticalAmount) {
-                // 转换鼠标坐标到固定坐标系
                 float scaleRatio = BASE_GUI_SCALE / guiScale;
                 float scaledMouseX = ((float)mouseX - windowX) / scaleRatio;
                 float scaledMouseY = ((float)mouseY - windowY) / scaleRatio;
@@ -644,7 +677,6 @@ public class ClickGui extends Screen {
                                     currentValue -= increment;
                                 }
                                 
-                                // 数值范围限制（简化实现）
                                 currentValue = Math.max(0.0, Math.min(100.0, currentValue));
                                 
                                 value.setValue(currentValue);
@@ -675,7 +707,6 @@ public class ClickGui extends Screen {
     
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // 转换鼠标坐标到固定坐标系
         float scaleRatio = BASE_GUI_SCALE / guiScale;
         float scaledMouseX = ((float)mouseX - windowX) / scaleRatio;
         float scaledMouseY = ((float)mouseY - windowY) / scaleRatio;
@@ -748,6 +779,10 @@ public class ClickGui extends Screen {
                                     BaityConfig.pepCatEnabled = module.isEnabled();
                                     BaityConfig.saveConfig();
                                 }
+                                case "Reminder" -> {
+                                    BaityConfig.reminderEnabled = module.isEnabled();
+                                    BaityConfig.saveConfig();
+                                }
                             }
                         }
                     }
@@ -786,15 +821,25 @@ public class ClickGui extends Screen {
                         if (button == 0 && RenderUtil.isHovered(containerX1 + 4, (int)subModY, containerX2 - 4, (int)(subModY + subOptionHeight), scaledMouseX, scaledMouseY) && valuetimer.delay(100)) {
                             if (value.getValue() instanceof Boolean) {
                                 value.setValue(!((Boolean)value.getValue()));
-                                if (value.getName().equals("crosshair")) {
-                                    BaityConfig.crosshairMode = (Boolean)value.getValue();
+                                if (SMOLPEOPLE_OPTIONS.contains(value.getName())) {
+                                    switch (value.getName()) {
+                                        case "crosshair" -> BaityConfig.crosshairMode = (Boolean)value.getValue();
+                                    }
                                     BaityConfig.saveConfig();
-                                } else if (value.getName().equals("show distance")) {
-                                    BaityConfig.playerEspShowDistance = (Boolean)value.getValue();
+                                } else if (PLAYERESP_OPTIONS.contains(value.getName())) {
+                                    switch (value.getName()) {
+                                        case "show distance" -> BaityConfig.playerEspShowDistance = (Boolean)value.getValue();
+                                        case "show own nametag" -> BaityConfig.playerEspShowOwnNametag = (Boolean)value.getValue();
+                                    }
                                     BaityConfig.saveConfig();
-                                } else if (value.getName().equals("show own nametag")) {
-                                    BaityConfig.playerEspShowOwnNametag = (Boolean)value.getValue();
+                                } else if (REMINDER_OPTIONS.contains(value.getName())) {
+                                    switch (value.getName()) {
+                                        case "cookie buff reminder" -> BaityConfig.cookieBuffReminderEnabled = (Boolean)value.getValue();
+                                        case "god potion reminder" -> BaityConfig.godPotionReminderEnabled = (Boolean)value.getValue();
+                                        case "meowalert" -> BaityConfig.meowAlertEnabled = (Boolean)value.getValue();
+                                    }
                                     BaityConfig.saveConfig();
+                                    com.shyeuar.baity.features.game.Reminder.updateSettings();
                                 }
                             }
                             valuetimer.reset();
@@ -826,7 +871,6 @@ public class ClickGui extends Screen {
     @Override
     public void mouseMoved(double mouseX, double mouseY) {
         if (drag) {
-            // 转换鼠标坐标到固定坐标系
             float scaleRatio = BASE_GUI_SCALE / guiScale;
             
             windowX = (float)mouseX - dragX * scaleRatio;
@@ -849,13 +893,6 @@ public class ClickGui extends Screen {
             updateKeyDisplay();
             isListeningForKey = false;
             
-            // 重新注册按键绑定
-            try {
-                // 这里需要重新创建keybinding，但fabric的限制使得这比较复杂
-                // 暂时只更新配置，重启后生效
-            } catch (Exception e) {
-                // 忽略错误
-            }
             return true;
         }
         
@@ -873,7 +910,6 @@ public class ClickGui extends Screen {
     @Override
     public void resize(MinecraftClient client, int width, int height) {
         super.resize(client, width, height);
-        // 重新计算居中位置
         if (this.client != null && this.client.getWindow() != null) {
             float scaleRatio = BASE_GUI_SCALE / guiScale;
             float screenW = this.client.getWindow().getScaledWidth();
@@ -888,3 +924,5 @@ public class ClickGui extends Screen {
         return false;
     }
 }
+
+

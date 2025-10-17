@@ -15,18 +15,21 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.MinecraftClient;
 import org.lwjgl.glfw.GLFW;
+import java.util.Set;
 
 @Environment(EnvType.CLIENT)
 public class Baity implements ClientModInitializer {
+    
+    private static final Set<String> SMOLPEOPLE_OPTIONS = Set.of("crosshair");
+    private static final Set<String> PLAYERESP_OPTIONS = Set.of("show distance", "show own nametag");
+    private static final Set<String> REMINDER_OPTIONS = Set.of("cookie buff reminder", "god potion reminder", "meowalert");
     
     private static long lastKeyPressTime = 0;
     public static boolean openGuiNextTick = false;
 
     @Override
     public void onInitializeClient() {
-        // 注册自定义图腾
         CustomTotemItem.register();
-        CustomTotemModelProvider.register();
         
         BaityConfig.loadConfig();
 
@@ -34,24 +37,23 @@ public class Baity implements ClientModInitializer {
             ModuleManager.init();
         }
         
-        // 初始化SmolPeople模块状态
         Module smolPeople = ModuleManager.getModuleByName("SmolPeople");
         if (smolPeople != null) {
             smolPeople.setEnabled(BaityConfig.smolpeopleMode);
             for (Value v : smolPeople.getValues()) {
-                if ("crosshair".equals(v.getName())) {
-                    v.setValue(BaityConfig.crosshairMode);
+                if (SMOLPEOPLE_OPTIONS.contains(v.getName())) {
+                    switch (v.getName()) {
+                        case "crosshair" -> v.setValue(BaityConfig.crosshairMode);
+                    }
                 }
             }
         }
         
-        // 初始化BlockAnimation模块状态
         Module blockAnimation = ModuleManager.getModuleByName("BlockAnimation");
         if (blockAnimation != null) {
             blockAnimation.setEnabled(BaityConfig.blockAnimationMode);
         }
         
-        // 初始化PepCat模块状态
         Module pepCat = ModuleManager.getModuleByName("PepCat");
         if (pepCat != null) {
             pepCat.setEnabled(BaityConfig.pepCatEnabled);
@@ -59,16 +61,32 @@ public class Baity implements ClientModInitializer {
         
         com.shyeuar.baity.features.game.PepCat.init();
         
-        // 注册自定义音效事件
+        Module reminder = ModuleManager.getModuleByName("Reminder");
+        if (reminder != null) {
+            reminder.setEnabled(BaityConfig.reminderEnabled);
+            for (Value v : reminder.getValues()) {
+                if (REMINDER_OPTIONS.contains(v.getName())) {
+                    switch (v.getName()) {
+                        case "cookie buff reminder" -> v.setValue(BaityConfig.cookieBuffReminderEnabled);
+                        case "god potion reminder" -> v.setValue(BaityConfig.godPotionReminderEnabled);
+                        case "meowalert" -> v.setValue(BaityConfig.meowAlertEnabled);
+                    }
+                }
+            }
+        }
+        
+        com.shyeuar.baity.features.game.Reminder.init();
+        
         registerCustomSounds();
         Module playerEsp = ModuleManager.getModuleByName("PlayerESP");
         if (playerEsp != null) {
             playerEsp.setEnabled(BaityConfig.playerEspEnabled);
             for (Value v : playerEsp.getValues()) {
-                if ("show distance".equals(v.getName())) {
-                    v.setValue(BaityConfig.playerEspShowDistance);
-                } else if ("show own nametag".equals(v.getName())) {
-                    v.setValue(BaityConfig.playerEspShowOwnNametag);
+                if (PLAYERESP_OPTIONS.contains(v.getName())) {
+                    switch (v.getName()) {
+                        case "show distance" -> v.setValue(BaityConfig.playerEspShowDistance);
+                        case "show own nametag" -> v.setValue(BaityConfig.playerEspShowOwnNametag);
+                    }
                 }
             }
         }
@@ -80,7 +98,6 @@ public class Baity implements ClientModInitializer {
                 return;
             }
             if (client.currentScreen == null && GLFW.glfwGetKey(client.getWindow().getHandle(), BaityConfig.guiKeyCode) == GLFW.GLFW_PRESS) {
-                // 防重复触发
                 if (System.currentTimeMillis() - lastKeyPressTime > 200) {
                     MinecraftClient.getInstance().setScreen(new ClickGui());
                     lastKeyPressTime = System.currentTimeMillis();

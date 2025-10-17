@@ -1,0 +1,42 @@
+Baity
+Copyright (C) 2024 Baity Contributors
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+---
+
+本项目包含以下第三方组件：
+
+* CaribouStonks (部分代码)
+  - 许可证: GNU Lesser General Public License v3.0
+  - 版权所有者: Siroz555
+  - 来源: https://github.com/Siroz555/CaribouStonks
+  - 使用的组件:
+    * TickScheduler - 定时任务调度系统
+    * Ticks - 时间单位转换工具类
+
+* Minecraft Fabric API
+  - 许可证: Apache License 2.0
+  - 版权所有者: FabricMC
+  - 来源: https://github.com/FabricMC/fabric
+
+* fastutil
+  - 许可证: Apache License 2.0
+  - 版权所有者: Sebastiano Vigna
+  - 来源: https://github.com/vigna/fastutil
+
+---
+
+本项目的完整许可证信息请参阅 LICENSE 文件。
+第三方组件的完整许可证文本请参阅各自的许可证文件。

@@ -7,6 +7,7 @@ import net.fabricmc.api.Environment;
 public enum ModuleCategory {
     FUN("Fun"),
     RENDER("Render"),
+    QOL("Qol"),
     
     HUD("Hud");
     

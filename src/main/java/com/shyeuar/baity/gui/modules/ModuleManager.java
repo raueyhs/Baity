@@ -14,7 +14,7 @@ public class ModuleManager {
     
     public static void init() {
         Module smolPeopleModule = new Module("SmolPeople", "SmolPeople", ModuleCategory.FUN);
-        smolPeopleModule.addValue(new Option("crosshair", "render third-person-back crosshair", true, ModuleCategory.FUN));
+        smolPeopleModule.addValue(new Option("render third-person-back crosshair", "render third-person-back crosshair", true, ModuleCategory.FUN));
         modules.add(smolPeopleModule);
         
         Module blockAnimationModule = new Module("BlockAnimation", "BlockAnimation", ModuleCategory.FUN);
@@ -23,6 +23,12 @@ public class ModuleManager {
         Module pepCatModule = new Module("PepCat", "PepCat", ModuleCategory.FUN);
         pepCatModule.setEnabled(true); 
         modules.add(pepCatModule);
+        
+        Module reminderModule = new Module("Reminder", "Reminder", ModuleCategory.QOL);
+        reminderModule.addValue(new Option("cookie buff reminder", "cookie buff reminder", true, ModuleCategory.QOL));
+        reminderModule.addValue(new Option("god potion reminder", "god potion reminder", true, ModuleCategory.QOL));
+        reminderModule.addValue(new Option("meowalert", "meowalert", true, ModuleCategory.QOL));
+        modules.add(reminderModule);
         
         Module clickGUI = new Module("ClickGUI", "ClickGUI", ModuleCategory.HUD);
         clickGUI.setEnabled(true); 

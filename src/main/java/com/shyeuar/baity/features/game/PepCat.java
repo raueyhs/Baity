@@ -8,22 +8,20 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 import com.shyeuar.baity.gui.modules.Module;
 import com.shyeuar.baity.gui.modules.ModuleManager;
 import com.shyeuar.baity.config.BaityConfig;
 import com.shyeuar.baity.utils.MessageUtils;
+import java.util.regex.Pattern;
 
 @Environment(EnvType.CLIENT)
 public class PepCat {
     private static boolean hasRegistered = false;
-    private static float lastHealth = -1.0f; // 记录上次血量，初始化为-1表示未初始化
+    private static float lastHealth = -1.0f; 
     private static boolean wasInWorld = false;
-    private static long lastDeathTime = 0; // 记录上次死亡时间，防止重复触发
-    
+    private static long lastDeathTime = 0; 
     public static void init() {
         if (!hasRegistered) {
             ClientTickEvents.END_CLIENT_TICK.register(client -> {
@@ -34,16 +32,12 @@ public class PepCat {
                         float currentHealth = player.getHealth();
                         boolean isInWorld = client.world != null && client.player != null;
                         
-                        // 血量变为0的瞬间检测（适用于原版非立即重生模式）
                         if (wasInWorld && isInWorld) {
-                            // 首次进入世界时，初始化血量
                             if (lastHealth < 0) {
                                 lastHealth = currentHealth;
                             }
-                            // 检测生命值从正数变为0或负数的瞬间
                             else if (lastHealth > 0 && currentHealth <= 0) {
                                 long currentTime = System.currentTimeMillis();
-                                // 使用统一的防重复机制（5秒间隔）
                                 if (currentTime - lastDeathTime > 5000) {
                                     lastDeathTime = currentTime;
                                     onPlayerDeath(player);
@@ -51,24 +45,20 @@ public class PepCat {
                             }
                         }
                         
-                        // 更新状态
                         wasInWorld = isInWorld;
                         lastHealth = currentHealth;
                     } else {
-                        // 玩家为空时重置状态
                         wasInWorld = false;
                         lastHealth = -1.0f; 
                     }
                 }
             });
             
-            // 注册聊天消息检测（适用于Skyblock和立即重生模式）
             ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
                 Module pepCatModule = ModuleManager.getModuleByName("PepCat");
                 if (pepCatModule != null && pepCatModule.isEnabled() && BaityConfig.pepCatEnabled) {
-                    if (isDeathMessage(message) && !overlay) {
+                    if (isCurrentPlayerDeathMessage(message) && !overlay) {
                         long currentTime = System.currentTimeMillis();
-                        // 防止5秒内重复触发
                         if (currentTime - lastDeathTime > 5000) {
                             lastDeathTime = currentTime;
                             ClientPlayerEntity player = MinecraftClient.getInstance().player;
@@ -84,21 +74,39 @@ public class PepCat {
         }
     }
     
-    /**
-     * 检测是否为死亡消息
-     * 支持中英文死亡消息格式
-     */
+    private static boolean isCurrentPlayerDeathMessage(Text message) {
+        MinecraftClient client = MinecraftClient.getInstance();
+        if (client.player == null) return false;
+        
+        String currentPlayerName = client.player.getGameProfile().getName();
+        String messageText = message.getString();
+        
+        if (!isDeathMessage(message)) {
+            return false;
+        }
+        
+        return containsPlayerName(messageText, currentPlayerName);
+    }
+    
+    private static boolean containsPlayerName(String message, String playerName) {
+        if (message == null || playerName == null) return false;
+        
+        String lowerMessage = message.toLowerCase();
+        String lowerPlayerName = playerName.toLowerCase();
+        
+        String pattern = "\\b" + Pattern.quote(lowerPlayerName) + "\\b";
+        return lowerMessage.matches(".*" + pattern + ".*");
+    }
+    
     private static boolean isDeathMessage(Text message) {
         String messageText = message.getString().toLowerCase();
         
-        // 中文死亡消息模式
         String[] chineseDeathPatterns = {
             "死亡", "摔死", "淹死", "烧死", "炸死", "饿死", "被杀死", 
             "被炸死", "被烧死", "被淹死", "被摔死", "被饿死",
             "被", "杀死了", "炸死了", "烧死了", "淹死了", "摔死了", "饿死了"
         };
         
-        // 英文死亡消息模式
         String[] englishDeathPatterns = {
             "died", "death", "killed", "fell", "drowned", "burned", "exploded", 
             "starved", "suffocated", "was slain", "was shot", "was pricked",
@@ -106,14 +114,12 @@ public class PepCat {
             "fell out of the world", "was squashed", "was killed by"
         };
         
-        // 检查中文模式
         for (String pattern : chineseDeathPatterns) {
             if (messageText.contains(pattern)) {
                 return true;
             }
         }
         
-        // 检查英文模式
         for (String pattern : englishDeathPatterns) {
             if (messageText.contains(pattern)) {
                 return true;
@@ -131,27 +137,21 @@ public class PepCat {
     private static void playTotemAnimation(ClientPlayerEntity player) {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player != null && client.world != null) {
-            try {
-                // 使用ClientWorld.playSound播放音效
-                if (client.world instanceof net.minecraft.client.world.ClientWorld) {
-                    net.minecraft.client.world.ClientWorld clientWorld = (net.minecraft.client.world.ClientWorld) client.world;
-                    clientWorld.playSound(
-                        player, 
-                        player.getX(), player.getY(), player.getZ(),
-                        com.shyeuar.baity.client.Baity.LAUGHTER_SOUND,
-                        net.minecraft.sound.SoundCategory.PLAYERS,
-                        1.0f, // 音量
-                        1.0f  // 音高
-                    );
-                } else {
-                    // 备用方案：使用PositionedSoundInstance
-                    net.minecraft.client.sound.PositionedSoundInstance soundInstance = net.minecraft.client.sound.PositionedSoundInstance.master(
-                        com.shyeuar.baity.client.Baity.LAUGHTER_SOUND, 1.0f, 1.0f);
-                    client.getSoundManager().play(soundInstance);
-                }
-            } catch (Exception e) {
-                // 播放原版totem音效作为备用
-                client.player.playSound(SoundEvents.ITEM_TOTEM_USE, 1.0f, 1.0f);
+            if (client.world instanceof net.minecraft.client.world.ClientWorld) {
+                net.minecraft.client.world.ClientWorld clientWorld = (net.minecraft.client.world.ClientWorld) client.world;
+                clientWorld.playSound(
+                    player, 
+                    player.getX(), player.getY(), player.getZ(),
+                    com.shyeuar.baity.client.Baity.LAUGHTER_SOUND,
+                    net.minecraft.sound.SoundCategory.PLAYERS,
+                    1.0f,
+                    1.0f  
+                );
+            } else {
+                // 备用
+                net.minecraft.client.sound.PositionedSoundInstance soundInstance = net.minecraft.client.sound.PositionedSoundInstance.master(
+                    com.shyeuar.baity.client.Baity.LAUGHTER_SOUND, 1.0f, 1.0f);
+                client.getSoundManager().play(soundInstance);
             }
             
             ItemStack catItem = createCustomCatItem();
@@ -165,12 +165,9 @@ public class PepCat {
     }
 
     private static void sendEncouragementMessage(ClientPlayerEntity player) {
-        MutableText prefix = MessageUtils.createBaityPrefix();
-        MutableText mainText = MessageUtils.createColoredText("它张嘴大笑，似乎在笑你的失误，又或嘲笑死神的无能", Formatting.AQUA);
-        MutableText emoji = MessageUtils.createColoredText("눈_눈", Formatting.LIGHT_PURPLE);
-
-        MutableText fullMessage = MessageUtils.appendText(prefix, mainText);
-        fullMessage = MessageUtils.appendText(fullMessage, emoji);
+        MutableText fullMessage = MessageUtils.createBaityPrefix()
+            .append(MessageUtils.createColoredText("它张嘴大笑，似乎在笑你的失误，又或嘲笑死神的无能", 0x00FFFF))
+            .append(MessageUtils.createColoredText("눈_눈", 0xFF80FF));
 
         MessageUtils.sendCustomMessage(fullMessage);
     }

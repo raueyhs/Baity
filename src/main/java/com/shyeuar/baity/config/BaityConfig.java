@@ -10,6 +10,10 @@ public class BaityConfig {
     public static boolean playerEspShowDistance = true;
     public static boolean playerEspShowOwnNametag = false;
     public static boolean pepCatEnabled = true;
+    public static boolean reminderEnabled = false;
+    public static boolean cookieBuffReminderEnabled = true;
+    public static boolean godPotionReminderEnabled = true;
+    public static boolean meowAlertEnabled = true;
     private static final String CONFIG_FILE = "baity_config.txt";
 
     public static void saveConfig() {
@@ -25,6 +29,10 @@ public class BaityConfig {
             config.append("  ShowDistance:").append(playerEspShowDistance).append("\n");
             config.append("  ShowOwnNametag:").append(playerEspShowOwnNametag).append("\n");
             config.append("PepCat:").append(pepCatEnabled).append("\n");
+            config.append("Reminder:").append(reminderEnabled).append("\n");
+            config.append("CookieBuffReminder:").append(cookieBuffReminderEnabled).append("\n");
+            config.append("GodPotionReminder:").append(godPotionReminderEnabled).append("\n");
+            config.append("MeowAlert:").append(meowAlertEnabled).append("\n");
             java.nio.file.Files.write(configPath, config.toString().getBytes());
         } catch (java.io.IOException e) {
             System.err.println("Failed to save Baity config: " + e.getMessage());
@@ -59,6 +67,14 @@ public class BaityConfig {
                         playerEspShowOwnNametag = Boolean.parseBoolean(line.substring("  ShowOwnNametag:".length()));
                     } else if (line.startsWith("PepCat:")) {
                         pepCatEnabled = Boolean.parseBoolean(line.substring("PepCat:".length()));
+                    } else if (line.startsWith("Reminder:")) {
+                        reminderEnabled = Boolean.parseBoolean(line.substring("Reminder:".length()));
+                    } else if (line.startsWith("CookieBuffReminder:")) {
+                        cookieBuffReminderEnabled = Boolean.parseBoolean(line.substring("CookieBuffReminder:".length()));
+                    } else if (line.startsWith("GodPotionReminder:")) {
+                        godPotionReminderEnabled = Boolean.parseBoolean(line.substring("GodPotionReminder:".length()));
+                    } else if (line.startsWith("MeowAlert:")) {
+                        meowAlertEnabled = Boolean.parseBoolean(line.substring("MeowAlert:".length()));
                     }
                 }
             }

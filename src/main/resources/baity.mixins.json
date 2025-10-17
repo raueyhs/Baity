@@ -9,7 +9,8 @@
     "CrosshairMixin",
     "PlayerNameLabelHideMixin",
     "BlockAnimationMixin$MixinHeldItemRenderer",
-    "TotemAnimationMixin"
+    "TotemAnimationMixin",
+    "PlayerListHudAccessor"
   ],
   "client": [
     "SmolPeopleMixin$SmolNameTagMixin",
@@ -18,7 +19,8 @@
     "CrosshairMixin",
     "PlayerNameLabelHideMixin",
     "BlockAnimationMixin$MixinHeldItemRenderer",
-    "TotemAnimationMixin"
+    "TotemAnimationMixin",
+    "PlayerListHudAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
