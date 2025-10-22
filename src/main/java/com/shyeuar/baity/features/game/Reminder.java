@@ -26,6 +26,8 @@ public class Reminder {
     
     private boolean godPotionNotified = false;
     
+    private boolean wasInSkyBlock = false;
+    
     private boolean hasRegisteredMeowAlert = false;
     private long lastMeowTime = 0;
     private static final long MEOW_COOLDOWN_MS = 2000;
@@ -50,6 +52,13 @@ public class Reminder {
     
     private void registerWorldEvents() {
         godPotionTaskId = TickScheduler.getInstance().runRepeating(() -> {
+            boolean currentlyInSkyBlock = isOnSkyBlock();
+            if (currentlyInSkyBlock && !wasInSkyBlock) {
+                cookieNotified = false;
+                godPotionNotified = false;
+            }
+            wasInSkyBlock = currentlyInSkyBlock;
+            
             if (isOnSkyBlock() && !godPotionNotified) {
                 checkGodPotionBuff();
             }
@@ -118,6 +127,13 @@ public class Reminder {
     }
     
     private void update() {
+        boolean currentlyInSkyBlock = isOnSkyBlock();
+        if (currentlyInSkyBlock && !wasInSkyBlock) {
+            cookieNotified = false;
+            godPotionNotified = false;
+        }
+        wasInSkyBlock = currentlyInSkyBlock;
+        
         checkCookieBuff();
     }
     

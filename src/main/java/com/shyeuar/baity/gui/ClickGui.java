@@ -419,9 +419,9 @@ public class ClickGui extends Screen {
                 if (tooltip != null) {
                     hoveredTooltip = tooltip;
                     hoveredTooltipText = getTooltipTextWithColors(module.getName());
-                    float tooltipOffset = 10f * (BASE_GUI_SCALE / guiScale);
+                    float tooltipOffset = 5f;
                     tooltipX = (int)(mouseX + tooltipOffset);
-                    tooltipY = (int)(mouseY - tooltipOffset);
+                    tooltipY = (int)(mouseY + tooltipOffset);
                 }
             }
             
@@ -435,7 +435,8 @@ public class ClickGui extends Screen {
             }
             
             if (module.getName().equals("ClickGUI")) {
-                int keyTextWidth = client.textRenderer.getWidth("Right Shift");
+                String keyText = isListeningForKey ? "Press a key..." : currentKeyDisplay;
+                int keyTextWidth = client.textRenderer.getWidth(keyText);
                 int keyBoxWidth = keyTextWidth + 20; 
                 
                 boolean keyHovered = RenderUtil.isHovered(width - keyBoxWidth - 50, modY, width - 50, modY + 20, (float)scaledMouseX, (float)scaledMouseY);
@@ -446,7 +447,6 @@ public class ClickGui extends Screen {
                 int ky2 = (int)(modY + 19);
                 context.fill(kx1, ky1, kx2, ky2, keyBgColor);
                 
-                String keyText = isListeningForKey ? "Press a key..." : currentKeyDisplay;
                 int keyColor = isListeningForKey ? theme.FONT_C.getRGB() : theme.FONT.getRGB();
                 context.drawText(client.textRenderer, keyText, (int)(width - keyBoxWidth - 40), (int)(modY + 8), keyColor, false);
             }
@@ -598,31 +598,33 @@ public class ClickGui extends Screen {
             
             int rawTextWidth = client.textRenderer.getWidth(hoveredTooltip);
             int bgPadding = 10;
-            int rawFontHeight = 9; // vanilla text height近似
+            int rawFontHeight = 9;
+            
             int tooltipWidth = (int)(rawTextWidth * tipScale) + bgPadding;
             int tooltipHeight = (int)(rawFontHeight * tipScale) + 8;
             
-            int finalTooltipX = tooltipX;
-            int finalTooltipY = tooltipY;
+            int finalTooltipX = (int)(tooltipX);
+            int finalTooltipY = (int)(tooltipY);
             
             if (finalTooltipX + tooltipWidth > client.getWindow().getScaledWidth()) {
-                finalTooltipX = tooltipX - tooltipWidth - 20;
+                finalTooltipX = (int)(tooltipX - tooltipWidth - 10);
             }
             if (finalTooltipY - tooltipHeight < 0) {
-                finalTooltipY = tooltipY + 20;
+                finalTooltipY = (int)(tooltipY + 10);
             }
-            
-            int bgLeft = finalTooltipX;
-            int bgTop = finalTooltipY - tooltipHeight;
-            int bgRight = finalTooltipX + tooltipWidth;
-            int bgBottom = finalTooltipY;
-            
-            RenderUtil.drawRoundedRect(context, bgLeft, bgTop, bgRight, bgBottom, 3, theme.BG_2.getRGB());
             
             context.getMatrices().push();
             context.getMatrices().scale(tipScale, tipScale, 1f);
-            int textDrawX = (int)((bgLeft + 5) / tipScale);
-            int textDrawY = (int)(((bgTop + 4)) / tipScale);
+            
+            int bgLeft = (int)(finalTooltipX / tipScale);
+            int bgTop = (int)((finalTooltipY - tooltipHeight) / tipScale);
+            int bgRight = (int)((finalTooltipX + tooltipWidth) / tipScale);
+            int bgBottom = (int)(finalTooltipY / tipScale);
+            
+            RenderUtil.drawRoundedRect(context, bgLeft, bgTop, bgRight, bgBottom, 3, theme.BG_2.getRGB());
+            
+            int textDrawX = bgLeft + (int)(5 / tipScale);
+            int textDrawY = bgTop + (int)(4 / tipScale);
             
             if (hoveredTooltipText != null) {
                 context.drawText(client.textRenderer, hoveredTooltipText, textDrawX, textDrawY, 0xFFFFFF, false);
@@ -745,7 +747,8 @@ public class ClickGui extends Screen {
             if (RenderUtil.isHovered(20, modY, width - 20, modY + 25, scaledMouseX, scaledMouseY) && valuetimer.delay(100)) {
                 if (module.getName().equals("ClickGUI")) {
                     assert client != null;
-                    int keyTextWidth = client.textRenderer.getWidth("Right Shift");
+                    String keyText = isListeningForKey ? "Press a key..." : currentKeyDisplay;
+                    int keyTextWidth = client.textRenderer.getWidth(keyText);
                     int keyBoxWidth = keyTextWidth + 20;
                     
                     if (button == 0 && RenderUtil.isHovered(width - keyBoxWidth - 50, modY, width - 50, modY + 25, scaledMouseX, scaledMouseY)) {

@@ -95,7 +95,9 @@ public class PepCat {
         String lowerPlayerName = playerName.toLowerCase();
         
         String pattern = "\\b" + Pattern.quote(lowerPlayerName) + "\\b";
-        return lowerMessage.matches(".*" + pattern + ".*");
+        boolean hasPlayerName = lowerMessage.matches(".*" + pattern + ".*");
+        boolean hasYou = lowerMessage.contains("you");
+        return hasPlayerName || hasYou;
     }
     
     private static boolean isDeathMessage(Text message) {

@@ -8,7 +8,6 @@ import net.minecraft.client.gui.DrawContext;
 public class RenderUtil {
     
     public static void drawRoundedRect(DrawContext context, float x, float y, float x2, float y2, float radius, int color) {
-        // 简化为普通矩形实现
         context.fill((int)x, (int)y, (int)x2, (int)y2, color);
     }
 
