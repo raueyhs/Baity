@@ -68,7 +68,8 @@ public class Reminder {
     private void initMeowAlert() {
         if (!hasRegisteredMeowAlert) {
             ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
-                if (com.shyeuar.baity.config.BaityConfig.meowAlertEnabled && sender != null) {
+                if (com.shyeuar.baity.config.BaityConfig.reminderEnabled && 
+                    com.shyeuar.baity.config.BaityConfig.meowAlertEnabled && sender != null) {
                     MinecraftClient client = MinecraftClient.getInstance();
                     if (client.player != null) {
                         String currentPlayerName = client.player.getGameProfile().getName();
@@ -96,13 +97,24 @@ public class Reminder {
         String lowerMessage = message.toLowerCase();
         String lowerPlayerName = playerName.toLowerCase();
         
-        String pattern = "\\b" + java.util.regex.Pattern.quote(lowerPlayerName) + "\\b";
-        return lowerMessage.matches(".*" + pattern + ".*");
+        String regex = "\\b" + java.util.regex.Pattern.quote(lowerPlayerName) + "\\b";
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(regex);
+        java.util.regex.Matcher matcher = pattern.matcher(lowerMessage);
+        
+        if (matcher.find()) {
+            return true;
+        }
+        
+        String looseRegex = "\\b" + java.util.regex.Pattern.quote(lowerPlayerName) + "[a-zA-Z]";
+        java.util.regex.Pattern loosePattern = java.util.regex.Pattern.compile(looseRegex);
+        java.util.regex.Matcher looseMatcher = loosePattern.matcher(lowerMessage);
+        
+        return looseMatcher.find();
     }
     
     private void playMeowSound(net.minecraft.client.network.ClientPlayerEntity player) {
-        player.playSound(net.minecraft.sound.SoundEvents.ENTITY_CAT_AMBIENT, MEOW_VOLUME, MEOW_PITCH);
-        player.playSound(net.minecraft.sound.SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, MEOW_VOLUME, 3.0f);
+        player.playSound(net.minecraft.sound.SoundEvents.ENTITY_CAT_AMBIENT, MEOW_VOLUME * 5.0f, MEOW_PITCH);
+        player.playSound(net.minecraft.sound.SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, MEOW_VOLUME * 5.0f, 5.0f);
     }
     
     private static Reminder instance;
