@@ -1,3 +1,2 @@
 # Git属性文件：定义过滤规则
-# 对Java文件应用macro过滤
 *.java filter=remove-macro
