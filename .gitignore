@@ -42,4 +42,3 @@ replay_*.log
 # private development scripts
 scripts/
 a.bat
-.gitattributes
