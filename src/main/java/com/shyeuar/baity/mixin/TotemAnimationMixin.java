@@ -10,9 +10,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-/**
- * 拦截原版图腾动画，替换为自定义图腾物品
- */
 @Environment(EnvType.CLIENT)
 @Mixin(GameRenderer.class)
 public class TotemAnimationMixin {

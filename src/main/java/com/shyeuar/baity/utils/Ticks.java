@@ -47,4 +47,3 @@ public final class Ticks {
 		return (int) unit.convert((long) ticks * MILLISECONDS_PER_TICK, TimeUnit.MILLISECONDS);
 	}
 }
-

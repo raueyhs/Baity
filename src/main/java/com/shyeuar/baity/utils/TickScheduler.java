@@ -1,4 +1,4 @@
-package com.shyeuar.baity.core.scheduler;
+package com.shyeuar.baity.utils;
 
 /*
  * This file is part of Baity, a Minecraft Fabric mod.
@@ -25,7 +25,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import it.unimi.dsi.fastutil.ints.AbstractInt2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import com.shyeuar.baity.utils.Ticks;
 
 /**
  * The {@code TickScheduler} class is responsible for managing and scheduling tasks
@@ -256,3 +255,5 @@ public final class TickScheduler {
 		}
 	}
 }
+
+

@@ -1,7 +1,7 @@
-package com.shyeuar.baity.gui.modules;
+package com.shyeuar.baity.gui.module;
 
-import com.shyeuar.baity.gui.values.ModuleCategory;
-import com.shyeuar.baity.gui.values.Value;
+import com.shyeuar.baity.gui.value.ModuleCategory;
+import com.shyeuar.baity.gui.value.Value;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 

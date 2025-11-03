@@ -79,9 +79,6 @@ public class AntiBotUtils {
         return !isRealPlayer(player);
     }
     
-    /**
-     * 重置玩家映射
-     */
     public static void reset() {
         playerMap.clear();
         tickCount = 0;

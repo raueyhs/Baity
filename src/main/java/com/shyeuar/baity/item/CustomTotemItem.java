@@ -15,7 +15,6 @@ public class CustomTotemItem {
     public static final Item CUSTOM_TOTEM;
     
     static {
-        // 使用Registry.register方式
         Identifier id = Identifier.of("baity", "custom_totem");
         RegistryKey<Item> registryKey = RegistryKey.of(RegistryKeys.ITEM, id);
         CUSTOM_TOTEM = Registry.register(Registries.ITEM, id, new Item(new Item.Settings().registryKey(registryKey)));

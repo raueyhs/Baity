@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.game;
+package com.shyeuar.baity.features;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -10,9 +10,9 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
-import com.shyeuar.baity.gui.modules.Module;
-import com.shyeuar.baity.gui.modules.ModuleManager;
-import com.shyeuar.baity.config.BaityConfig;
+import com.shyeuar.baity.gui.module.Module;
+import com.shyeuar.baity.gui.module.ModuleManager;
+import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.utils.MessageUtils;
 import java.util.regex.Pattern;
 
@@ -26,7 +26,7 @@ public class PepCat {
         if (!hasRegistered) {
             ClientTickEvents.END_CLIENT_TICK.register(client -> {
                 Module pepCatModule = ModuleManager.getModuleByName("PepCat");
-                if (pepCatModule != null && pepCatModule.isEnabled() && BaityConfig.pepCatEnabled) {
+                if (pepCatModule != null && pepCatModule.isEnabled() && ConfigManager.pepCatEnabled) {
                     ClientPlayerEntity player = client.player;
                     if (player != null) {
                         float currentHealth = player.getHealth();
@@ -56,7 +56,7 @@ public class PepCat {
             
             ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
                 Module pepCatModule = ModuleManager.getModuleByName("PepCat");
-                if (pepCatModule != null && pepCatModule.isEnabled() && BaityConfig.pepCatEnabled) {
+                if (pepCatModule != null && pepCatModule.isEnabled() && ConfigManager.pepCatEnabled) {
                     if (isCurrentPlayerDeathMessage(message) && !overlay) {
                         long currentTime = System.currentTimeMillis();
                         if (currentTime - lastDeathTime > 5000) {
@@ -150,7 +150,6 @@ public class PepCat {
                     1.0f  
                 );
             } else {
-                // 备用
                 net.minecraft.client.sound.PositionedSoundInstance soundInstance = net.minecraft.client.sound.PositionedSoundInstance.master(
                     com.shyeuar.baity.client.Baity.LAUGHTER_SOUND, 1.0f, 1.0f);
                 client.getSoundManager().play(soundInstance);

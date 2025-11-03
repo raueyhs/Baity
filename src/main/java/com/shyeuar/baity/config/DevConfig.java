@@ -11,10 +11,6 @@ public class DevConfig {
     public static final String DEV_PREFIX = "[Dev]";
     public static final int DEV_PREFIX_COLOR = 0xFF6B6B; 
     
-    /**
-     * @param username 要检查的用户名
-     * @return 如果是开发者返回true，否则返回false
-     */
     public static boolean isDeveloper(String username) {
         return DEV_USERNAME.equals(username);
     }

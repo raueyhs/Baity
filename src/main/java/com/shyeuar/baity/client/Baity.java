@@ -1,10 +1,10 @@
 package com.shyeuar.baity.client;
 
-import com.shyeuar.baity.config.BaityConfig;
+import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.gui.ClickGui;
-import com.shyeuar.baity.gui.modules.ModuleManager;
-import com.shyeuar.baity.gui.modules.Module;
-import com.shyeuar.baity.gui.values.Value;
+import com.shyeuar.baity.gui.module.ModuleManager;
+import com.shyeuar.baity.gui.module.Module;
+import com.shyeuar.baity.gui.value.Value;
 import com.shyeuar.baity.item.CustomTotemItem;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
@@ -31,7 +31,7 @@ public class Baity implements ClientModInitializer {
     public void onInitializeClient() {
         CustomTotemItem.register();
         
-        BaityConfig.loadConfig();
+        ConfigManager.loadConfig();
 
         if (ModuleManager.getModules().isEmpty()) {
             ModuleManager.init();
@@ -39,11 +39,11 @@ public class Baity implements ClientModInitializer {
         
         Module smolPeople = ModuleManager.getModuleByName("SmolPeople");
         if (smolPeople != null) {
-            smolPeople.setEnabled(BaityConfig.smolpeopleMode);
+            smolPeople.setEnabled(ConfigManager.smolpeopleMode);
             for (Value v : smolPeople.getValues()) {
                 if (SMOLPEOPLE_OPTIONS.contains(v.getName())) {
                     switch (v.getName()) {
-                        case "crosshair" -> v.setValue(BaityConfig.crosshairMode);
+                        case "crosshair" -> v.setValue(ConfigManager.crosshairMode);
                     }
                 }
             }
@@ -51,41 +51,41 @@ public class Baity implements ClientModInitializer {
         
         Module blockAnimation = ModuleManager.getModuleByName("BlockAnimation");
         if (blockAnimation != null) {
-            blockAnimation.setEnabled(BaityConfig.blockAnimationMode);
+            blockAnimation.setEnabled(ConfigManager.blockAnimationMode);
         }
         
         Module pepCat = ModuleManager.getModuleByName("PepCat");
         if (pepCat != null) {
-            pepCat.setEnabled(BaityConfig.pepCatEnabled);
+            pepCat.setEnabled(ConfigManager.pepCatEnabled);
         }
         
-        com.shyeuar.baity.features.game.PepCat.init();
+        com.shyeuar.baity.features.PepCat.init();
         
         Module reminder = ModuleManager.getModuleByName("Reminder");
         if (reminder != null) {
-            reminder.setEnabled(BaityConfig.reminderEnabled);
+            reminder.setEnabled(ConfigManager.reminderEnabled);
             for (Value v : reminder.getValues()) {
                 if (REMINDER_OPTIONS.contains(v.getName())) {
                     switch (v.getName()) {
-                        case "cookie buff reminder" -> v.setValue(BaityConfig.cookieBuffReminderEnabled);
-                        case "god potion reminder" -> v.setValue(BaityConfig.godPotionReminderEnabled);
-                        case "meowalert" -> v.setValue(BaityConfig.meowAlertEnabled);
+                        case "cookie buff reminder" -> v.setValue(ConfigManager.cookieBuffReminderEnabled);
+                        case "god potion reminder" -> v.setValue(ConfigManager.godPotionReminderEnabled);
+                        case "meowalert" -> v.setValue(ConfigManager.meowAlertEnabled);
                     }
                 }
             }
         }
         
-        com.shyeuar.baity.features.game.Reminder.init();
+        com.shyeuar.baity.features.Reminder.init();
         
         registerCustomSounds();
         Module playerEsp = ModuleManager.getModuleByName("PlayerESP");
         if (playerEsp != null) {
-            playerEsp.setEnabled(BaityConfig.playerEspEnabled);
+            playerEsp.setEnabled(ConfigManager.playerEspEnabled);
             for (Value v : playerEsp.getValues()) {
                 if (PLAYERESP_OPTIONS.contains(v.getName())) {
                     switch (v.getName()) {
-                        case "show distance" -> v.setValue(BaityConfig.playerEspShowDistance);
-                        case "show own nametag" -> v.setValue(BaityConfig.playerEspShowOwnNametag);
+                        case "show distance" -> v.setValue(ConfigManager.playerEspShowDistance);
+                        case "show own nametag" -> v.setValue(ConfigManager.playerEspShowOwnNametag);
                     }
                 }
             }
@@ -97,7 +97,7 @@ public class Baity implements ClientModInitializer {
                 MinecraftClient.getInstance().setScreen(new ClickGui());
                 return;
             }
-            if (client.currentScreen == null && GLFW.glfwGetKey(client.getWindow().getHandle(), BaityConfig.guiKeyCode) == GLFW.GLFW_PRESS) {
+            if (client.currentScreen == null && GLFW.glfwGetKey(client.getWindow().getHandle(), ConfigManager.guiKeyCode) == GLFW.GLFW_PRESS) {
                 if (System.currentTimeMillis() - lastKeyPressTime > 200) {
                     MinecraftClient.getInstance().setScreen(new ClickGui());
                     lastKeyPressTime = System.currentTimeMillis();
@@ -111,7 +111,7 @@ public class Baity implements ClientModInitializer {
                 return 1;
             })));
 
-        WorldRenderEvents.AFTER_TRANSLUCENT.register(new com.shyeuar.baity.features.render.PlayerESPRenderer());
+        WorldRenderEvents.AFTER_TRANSLUCENT.register(new com.shyeuar.baity.features.PlayerESPRenderer());
     }
     
     public static final net.minecraft.sound.SoundEvent LAUGHTER_SOUND = registerSoundEvent("sounds.laughter");
@@ -126,4 +126,5 @@ public class Baity implements ClientModInitializer {
     }
 
 }
+
 

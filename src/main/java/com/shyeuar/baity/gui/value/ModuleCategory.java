@@ -1,4 +1,4 @@
-package com.shyeuar.baity.gui.values;
+package com.shyeuar.baity.gui.value;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -8,7 +8,6 @@ public enum ModuleCategory {
     FUN("Fun"),
     RENDER("Render"),
     QOL("Qol"),
-    
     HUD("Hud");
     
     private final String displayName;

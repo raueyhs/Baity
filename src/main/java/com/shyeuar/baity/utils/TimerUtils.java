@@ -1,10 +1,10 @@
-package com.shyeuar.baity.gui.utils;
+package com.shyeuar.baity.utils;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
-public class TimerUtil {
+public class TimerUtils {
     public long lastMS;
     
     private long getCurrentMS() {
@@ -27,4 +27,5 @@ public class TimerUtil {
         return System.nanoTime() / 1000000L;
     }
 }
+
 

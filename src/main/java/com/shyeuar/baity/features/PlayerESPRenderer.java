@@ -1,8 +1,8 @@
-package com.shyeuar.baity.features.render;
+package com.shyeuar.baity.features;
 
 import com.shyeuar.baity.config.DevConfig;
-import com.shyeuar.baity.gui.modules.Module;
-import com.shyeuar.baity.gui.modules.ModuleManager;
+import com.shyeuar.baity.gui.module.Module;
+import com.shyeuar.baity.gui.module.ModuleManager;
 import com.shyeuar.baity.utils.ModuleUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -32,26 +32,22 @@ public class PlayerESPRenderer implements WorldRenderEvents.AfterTranslucent {
         if (mc.world == null || mc.player == null) return;
         
         MatrixStack matrices = context.matrixStack();
-        if (matrices == null) return; // 额外的空值检查
+        if (matrices == null) return; 
         
         Vec3d cameraPos = context.camera().getPos();
         float tickDelta = context.tickCounter().getTickProgress(true);
         
-        // 更新缓存（每帧只计算一次）
         updateCache();
         
-        // 更新反机器人检测
         com.shyeuar.baity.utils.AntiBotUtils.updatePlayerMap();
         
         for (PlayerEntity player : mc.world.getPlayers()) {
-            // 反机器人检测：跳过机器人玩家
             if (com.shyeuar.baity.utils.AntiBotUtils.isBot(player)) {
                 continue;
             }
             
             boolean showOwnNametag = ModuleUtils.getOptionBoolean(m, "show own nametag", false);
             if (player == mc.player) {
-                // 在第一视角模式下，永远不显示自己的名称标签
                 if (mc.options.getPerspective().isFirstPerson()) {
                     continue;
                 }
@@ -80,8 +76,7 @@ public class PlayerESPRenderer implements WorldRenderEvents.AfterTranslucent {
         try {
             float heightOffset = player.getHeight() + 0.5f;
             
-            // 检查SmolPeople模式是否启用，如果启用则调整高度（参考原版名称标签的实现）
-            Module smolPeopleModule = com.shyeuar.baity.gui.modules.ModuleManager.getModuleByName("SmolPeople");
+            Module smolPeopleModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("SmolPeople");
             if (smolPeopleModule != null && smolPeopleModule.isEnabled()) {
                 boolean showOwnNametag = ModuleUtils.getOptionBoolean(module, "show own nametag", false);
                 if (player == mc.player && showOwnNametag) {
@@ -158,4 +153,3 @@ public class PlayerESPRenderer implements WorldRenderEvents.AfterTranslucent {
     }
 
 }
-

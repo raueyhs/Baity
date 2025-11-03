@@ -1,6 +1,6 @@
 package com.shyeuar.baity.utils;
 
-import com.shyeuar.baity.config.BaityConfig;
+import com.shyeuar.baity.config.ConfigManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -14,7 +14,7 @@ public final class BlockAnimationUtils {
     private BlockAnimationUtils() {}
 
     public static boolean isEntityBlocking(LivingEntity entity) {
-        if (!BaityConfig.blockAnimationMode || entity == null) return false;
+        if (!ConfigManager.blockAnimationMode || entity == null) return false;
         if (!entity.getWorld().isClient) return false;
         return isPlayerRightClicking() && canSwordBlock(entity);
     }
@@ -26,7 +26,7 @@ public final class BlockAnimationUtils {
     }
 
     public static boolean canSwordBlock(LivingEntity entity) {
-        if (!BaityConfig.blockAnimationMode) return false;
+        if (!ConfigManager.blockAnimationMode) return false;
         Item mainHandItem = entity.getMainHandStack().getItem();
         Item offHandItem = entity.getOffHandStack().getItem();
         return isSword(mainHandItem) || isSword(offHandItem);

@@ -1,4 +1,4 @@
-package com.shyeuar.baity.gui.values;
+package com.shyeuar.baity.gui.value;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -10,5 +10,9 @@ public interface Value {
     Object getValue();
     void setValue(Object value);
     ModuleCategory getCategory();
+    
+    default ValueStyle getStyle() {
+        return ValueStyle.DEFAULT;
+    }
 }
 

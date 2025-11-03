@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.game;
+package com.shyeuar.baity.features;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -9,7 +9,7 @@ import net.minecraft.particle.ParticleTypes;
 import net.minecraft.text.Text;
 import net.minecraft.text.MutableText;
 import net.minecraft.util.Formatting;
-import com.shyeuar.baity.core.scheduler.TickScheduler;
+import com.shyeuar.baity.utils.TickScheduler;
 import com.shyeuar.baity.utils.MessageUtils;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -68,8 +68,8 @@ public class Reminder {
     private void initMeowAlert() {
         if (!hasRegisteredMeowAlert) {
             ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
-                if (com.shyeuar.baity.config.BaityConfig.reminderEnabled && 
-                    com.shyeuar.baity.config.BaityConfig.meowAlertEnabled && sender != null) {
+                if (com.shyeuar.baity.config.ConfigManager.reminderEnabled && 
+                    com.shyeuar.baity.config.ConfigManager.meowAlertEnabled && sender != null) {
                     MinecraftClient client = MinecraftClient.getInstance();
                     if (client.player != null) {
                         String currentPlayerName = client.player.getGameProfile().getName();
@@ -131,11 +131,11 @@ public class Reminder {
     }
     
     private boolean isCookieEnabled() {
-        return isOnSkyBlock() && com.shyeuar.baity.config.BaityConfig.cookieBuffReminderEnabled;
+        return isOnSkyBlock() && com.shyeuar.baity.config.ConfigManager.cookieBuffReminderEnabled;
     }
     
     private boolean isGodPotionEnabled() {
-        return isOnSkyBlock() && com.shyeuar.baity.config.BaityConfig.godPotionReminderEnabled;
+        return isOnSkyBlock() && com.shyeuar.baity.config.ConfigManager.godPotionReminderEnabled;
     }
     
     private void update() {
@@ -306,29 +306,30 @@ public class Reminder {
     }
     
     public static void updateSettings() {
-        com.shyeuar.baity.gui.modules.Module reminderModule = com.shyeuar.baity.gui.modules.ModuleManager.getModuleByName("Reminder");
+        com.shyeuar.baity.gui.module.Module reminderModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("Reminder");
         if (reminderModule == null) return;
         
         Reminder instance = getInstance();
         if (instance == null) return;
         
-        for (com.shyeuar.baity.gui.values.Value value : reminderModule.getValues()) {
-            if ("cookie buff reminder".equals(value.getName())) {
-                instance.setCookieReminderEnabled((boolean) value.getValue());
-            } else if ("god potion reminder".equals(value.getName())) {
-                instance.setGodPotionReminderEnabled((boolean) value.getValue());
-            } else if ("meowalert".equals(value.getName())) {
-                instance.setMeowAlertEnabled((boolean) value.getValue());
-            }
-        }
+        boolean cookieReminderEnabled = com.shyeuar.baity.utils.ModuleUtils.getOptionBoolean(
+            reminderModule, "cookie buff reminder", false);
+        boolean godPotionReminderEnabled = com.shyeuar.baity.utils.ModuleUtils.getOptionBoolean(
+            reminderModule, "god potion reminder", false);
+        boolean meowAlertEnabled = com.shyeuar.baity.utils.ModuleUtils.getOptionBoolean(
+            reminderModule, "meowalert", false);
+        
+        instance.setCookieReminderEnabled(cookieReminderEnabled);
+        instance.setGodPotionReminderEnabled(godPotionReminderEnabled);
+        instance.setMeowAlertEnabled(meowAlertEnabled);
     }
     
     public boolean isCookieReminderEnabled() {
-        return com.shyeuar.baity.config.BaityConfig.cookieBuffReminderEnabled;
+        return com.shyeuar.baity.config.ConfigManager.cookieBuffReminderEnabled;
     }
     
     public void setCookieReminderEnabled(boolean enabled) {
-        com.shyeuar.baity.config.BaityConfig.cookieBuffReminderEnabled = enabled;
+        com.shyeuar.baity.config.ConfigManager.cookieBuffReminderEnabled = enabled;
         if (!enabled) {
             cookieNotified = false;
             if (cookieTaskId != -1) {
@@ -343,11 +344,11 @@ public class Reminder {
     }
     
     public boolean isGodPotionReminderEnabled() {
-        return com.shyeuar.baity.config.BaityConfig.godPotionReminderEnabled;
+        return com.shyeuar.baity.config.ConfigManager.godPotionReminderEnabled;
     }
     
     public void setGodPotionReminderEnabled(boolean enabled) {
-        com.shyeuar.baity.config.BaityConfig.godPotionReminderEnabled = enabled;
+        com.shyeuar.baity.config.ConfigManager.godPotionReminderEnabled = enabled;
         if (!enabled) {
             godPotionNotified = false;
             if (godPotionTaskId != -1) {
@@ -366,11 +367,11 @@ public class Reminder {
     }
     
     public boolean isMeowAlertEnabled() {
-        return com.shyeuar.baity.config.BaityConfig.meowAlertEnabled;
+        return com.shyeuar.baity.config.ConfigManager.meowAlertEnabled;
     }
     
     public void setMeowAlertEnabled(boolean enabled) {
-        com.shyeuar.baity.config.BaityConfig.meowAlertEnabled = enabled;
+        com.shyeuar.baity.config.ConfigManager.meowAlertEnabled = enabled;
     }
 }
 

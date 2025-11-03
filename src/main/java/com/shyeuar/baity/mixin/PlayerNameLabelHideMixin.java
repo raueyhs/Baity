@@ -1,7 +1,7 @@
 package com.shyeuar.baity.mixin;
 
-import com.shyeuar.baity.gui.modules.Module;
-import com.shyeuar.baity.gui.modules.ModuleManager;
+import com.shyeuar.baity.gui.module.Module;
+import com.shyeuar.baity.gui.module.ModuleManager;
 import com.shyeuar.baity.utils.ModuleUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
@@ -25,11 +25,9 @@ public class PlayerNameLabelHideMixin {
             return; 
         }
 
-        // 通过玩家名称获取玩家实体
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null || mc.world == null) return;
         
-        // 从state中获取玩家名称，然后查找对应的玩家实体
         String playerName = state.name;
         if (playerName == null) return;
         
@@ -42,7 +40,6 @@ public class PlayerNameLabelHideMixin {
         }
         if (player == null) return;
 
-        // 反机器人检测：如果是机器人，隐藏原版名称标签
         if (com.shyeuar.baity.utils.AntiBotUtils.isBot(player)) {
             ci.cancel();
             return;
@@ -50,7 +47,6 @@ public class PlayerNameLabelHideMixin {
 
         boolean showOwnNametag = ModuleUtils.getOptionBoolean(m, "show own nametag", false);
         if (player == mc.player) {
-            // 对于自己，只有在启用show own nametag时才隐藏原版标签
             if (showOwnNametag) {
                 ci.cancel();
                 return;
@@ -59,7 +55,6 @@ public class PlayerNameLabelHideMixin {
             return;
         }
 
-        // 对于其他玩家，隐藏原版名称标签，使用自定义渲染
         ci.cancel();
     }
 

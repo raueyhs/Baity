@@ -25,9 +25,9 @@ public class MessageUtils {
     }
     
     public static MutableText createBaityPrefix() {
-        MutableText leftBracket = createColoredText("[", 0x555555);
-        MutableText baityText = createColoredText("baity", 0x800080);
-        MutableText rightBracket = createColoredText("] ", 0x555555);
+        MutableText leftBracket = createColoredText("[",0xAAAAAA);
+        MutableText baityText = createColoredText("baity", 0xC000C0);
+        MutableText rightBracket = createColoredText("] ", 0xAAAAAA);
         return leftBracket.append(baityText).append(rightBracket);
     }
     

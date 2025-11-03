@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 public abstract class BlockAnimationMixin {
 
-    // 渲染第一人称动作
     @Mixin(HeldItemRenderer.class)
     public static abstract class MixinHeldItemRenderer {
 
@@ -31,7 +30,6 @@ public abstract class BlockAnimationMixin {
             return defaultUseAction;
         }
 
-        // 修改使用进度
         @Redirect(method = "renderFirstPersonItem(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/util/Hand;FLnet/minecraft/item/ItemStack;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getItemUseTimeLeft()I"))
         private int blockAnimation$changeUseTimeLeft(AbstractClientPlayerEntity player, @Local(argsOnly = true) Hand hand, @Local(argsOnly = true) ItemStack stack) {
             if (player == null) {
@@ -51,7 +49,6 @@ public abstract class BlockAnimationMixin {
                 return false;
             }
             if (BlockAnimationUtils.isEntityBlocking(player) && BlockAnimationUtils.isSword(stack.getItem())) {
-                // 仅当当前渲染的这只手是我们计算的格挡手时，才把 isUsingItem 视为 true
                 return BlockAnimationUtils.getBlockingHand(player) == hand || player.isUsingItem();
             }
             return player.isUsingItem();
