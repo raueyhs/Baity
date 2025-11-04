@@ -1,4 +1,4 @@
-package com.shyeuar.baity.item;
+package com.shyeuar.baity.items;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -24,4 +24,5 @@ public class CustomTotemItem {
         System.out.println("custom totem item registered: " + CUSTOM_TOTEM);
     }
 }
+
 

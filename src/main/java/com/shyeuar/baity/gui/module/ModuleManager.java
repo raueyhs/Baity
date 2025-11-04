@@ -3,7 +3,7 @@ package com.shyeuar.baity.gui.module;
 import com.shyeuar.baity.gui.value.ModuleCategory;
 import com.shyeuar.baity.gui.value.Option;
 import com.shyeuar.baity.gui.value.ButtonValue;
-import com.shyeuar.baity.gui.config.ConfigSynchronizer;
+import com.shyeuar.baity.gui.sync.ConfigSynchronizer;
 import com.shyeuar.baity.gui.tooltip.TooltipManager;
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.utils.MessageUtils;

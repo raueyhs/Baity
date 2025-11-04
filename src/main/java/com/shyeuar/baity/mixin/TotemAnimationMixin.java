@@ -1,6 +1,6 @@
 package com.shyeuar.baity.mixin;
 
-import com.shyeuar.baity.item.CustomTotemItem;
+import com.shyeuar.baity.items.CustomTotemItem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.GameRenderer;
@@ -26,4 +26,3 @@ public class TotemAnimationMixin {
         return original;
     }
 }
-

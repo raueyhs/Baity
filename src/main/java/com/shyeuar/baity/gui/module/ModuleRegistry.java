@@ -2,7 +2,7 @@ package com.shyeuar.baity.gui.module;
 
 import com.shyeuar.baity.gui.value.ModuleCategory;
 import com.shyeuar.baity.gui.value.Value;
-import com.shyeuar.baity.gui.config.ConfigSynchronizer;
+import com.shyeuar.baity.gui.sync.ConfigSynchronizer;
 import java.util.function.Supplier;
 import java.util.function.Consumer;
 

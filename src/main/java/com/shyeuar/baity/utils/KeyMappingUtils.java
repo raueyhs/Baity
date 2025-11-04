@@ -12,6 +12,8 @@ public class KeyMappingUtils {
         if (keyCode == GLFW.GLFW_MOUSE_BUTTON_4) return "Mouse 4";
         if (keyCode == GLFW.GLFW_MOUSE_BUTTON_5) return "Mouse 5";
         
+        if (keyCode == 47) return null;
+        
         switch (keyCode) {
             // 控制键（基于GLFW键码）
             case GLFW.GLFW_KEY_LEFT_SHIFT: return "Left Shift";
@@ -120,7 +122,6 @@ public class KeyMappingUtils {
             case GLFW.GLFW_KEY_APOSTROPHE: return "'";
             case GLFW.GLFW_KEY_COMMA: return ",";
             case GLFW.GLFW_KEY_PERIOD: return ".";
-            case GLFW.GLFW_KEY_SLASH: return "/";
             
             // 数字小键盘
             case GLFW.GLFW_KEY_KP_0: return "Num 0";
@@ -152,6 +153,9 @@ public class KeyMappingUtils {
             return "☄ NOTSET";
         }
         String keyText = getKeyDisplayText(keyCode);
+        if (keyText == null) {
+            return "☄ NOTSET";
+        }
         return "✎ " + keyText;
     }
     
@@ -168,5 +172,11 @@ public class KeyMappingUtils {
             return GLFW.glfwGetMouseButton(windowHandle, keyCode) == GLFW.GLFW_PRESS;
         }
         return GLFW.glfwGetKey(windowHandle, keyCode) == GLFW.GLFW_PRESS;
+    }
+    
+    public static boolean isKeySupported(int keyCode) {
+        if (keyCode == 0) return false;
+        if (keyCode == 47) return false;
+        return true;
     }
 }

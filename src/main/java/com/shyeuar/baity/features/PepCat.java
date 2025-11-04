@@ -162,7 +162,7 @@ public class PepCat {
     }
     
     private static ItemStack createCustomCatItem() {
-        return new ItemStack(com.shyeuar.baity.item.CustomTotemItem.CUSTOM_TOTEM);
+        return new ItemStack(com.shyeuar.baity.items.CustomTotemItem.CUSTOM_TOTEM);
     }
 
     private static void sendEncouragementMessage(ClientPlayerEntity player) {

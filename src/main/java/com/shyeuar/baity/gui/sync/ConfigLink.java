@@ -1,4 +1,4 @@
-package com.shyeuar.baity.gui.config;
+package com.shyeuar.baity.gui.sync;
 
 import java.util.function.Supplier;
 import java.util.function.Consumer;

@@ -1,4 +1,4 @@
-package com.shyeuar.baity.gui.config;
+package com.shyeuar.baity.gui.sync;
 
 import com.shyeuar.baity.gui.module.Module;
 import com.shyeuar.baity.gui.module.ModuleManager;
@@ -69,6 +69,19 @@ public class ConfigSynchronizer {
         if (config != null) {
             config.setConfigValue(value);
             ConfigManager.saveConfig();
+            
+            Module module = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName(moduleName);
+            if (module != null) {
+                for (com.shyeuar.baity.gui.value.Value v : module.getValues()) {
+                    if (v.getName().equals(valueName) && v instanceof com.shyeuar.baity.gui.value.ButtonValue) {
+                        com.shyeuar.baity.gui.value.ButtonValue buttonValue = (com.shyeuar.baity.gui.value.ButtonValue) v;
+                        if (buttonValue.getButtonValueType() == com.shyeuar.baity.gui.value.ButtonValue.ButtonValueType.KEYBIND) {
+                            com.shyeuar.baity.managers.KeybindManager.markCacheDirty();
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
    

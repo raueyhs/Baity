@@ -5,22 +5,42 @@ import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
 public class ButtonValue implements Value {
+    
+    public enum ButtonValueType {
+        KEYBIND,   
+        TRIGGER    
+    }
+    
     private final String name;
     private final String displayName;
-    private Object value;  // 存储任意类型的值
+    private Object value;  
     private final ModuleCategory category;
-    private final String defaultDisplayText;  // 默认显示的文本（如"🚨NOTSET"）
+    private final String defaultDisplayText; 
+    private final ButtonValueType buttonValueType; 
   
-    public ButtonValue(String name, String displayName, Object defaultValue, String defaultDisplayText, ModuleCategory category) {
+    public ButtonValue(String name, String displayName, Object defaultValue, String defaultDisplayText, ModuleCategory category, ButtonValueType buttonValueType) {
         this.name = name;
         this.displayName = displayName;
         this.value = defaultValue;
         this.defaultDisplayText = defaultDisplayText;
         this.category = category;
+        this.buttonValueType = buttonValueType;
     }
-
+    
+    public ButtonValue(String name, String displayName, Object defaultValue, String defaultDisplayText, ModuleCategory category) {
+        this(name, displayName, defaultValue, defaultDisplayText, category, ButtonValueType.KEYBIND);
+    }
+    
+    public ButtonValue(String name, String displayName, Object defaultValue, ModuleCategory category, ButtonValueType buttonValueType) {
+        this(name, displayName, defaultValue, "NOTSET", category, buttonValueType);
+    }
+    
     public ButtonValue(String name, String displayName, Object defaultValue, ModuleCategory category) {
-        this(name, displayName, defaultValue, "NOTSET", category);
+        this(name, displayName, defaultValue, "NOTSET", category, ButtonValueType.KEYBIND);
+    }
+    
+    public ButtonValueType getButtonValueType() {
+        return buttonValueType;
     }
     
     @Override
