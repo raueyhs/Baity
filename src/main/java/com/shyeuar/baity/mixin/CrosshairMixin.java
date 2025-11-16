@@ -11,7 +11,10 @@ import org.spongepowered.asm.mixin.injection.At;
 public class CrosshairMixin {
     @ModifyExpressionValue(method = "renderCrosshair", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/option/GameOptions;getPerspective()Lnet/minecraft/client/option/Perspective;"))
     private Perspective baity$forceCrosshairInThirdPersonRear(Perspective original) {
-        if (ConfigManager.smolpeopleMode && ConfigManager.crosshairMode && original == Perspective.THIRD_PERSON_BACK) {
+        com.shyeuar.baity.gui.module.Module smolPeopleModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("SmolPeople");
+        boolean crosshairMode = com.shyeuar.baity.utils.ModuleUtils.getOptionBoolean(smolPeopleModule, "crosshair", false);
+        
+        if (ConfigManager.smolpeopleMode && crosshairMode && original == Perspective.THIRD_PERSON_BACK) {
             return Perspective.FIRST_PERSON;
         }
         return original;

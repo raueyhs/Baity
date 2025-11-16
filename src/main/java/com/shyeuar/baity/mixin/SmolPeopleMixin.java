@@ -20,6 +20,10 @@ public class SmolPeopleMixin {
         
         @Inject(method = "renderLabelIfPresent(Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("HEAD"))
         private void baity$adjustNameTagHeight(PlayerEntityRenderState playerEntityRenderState, Text text, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo ci) {
+            com.shyeuar.baity.gui.module.Module smolPeopleModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("SmolPeople");
+            if (smolPeopleModule == null || !smolPeopleModule.isEnabled()) {
+                return;
+            }
             if (ConfigManager.smolpeopleMode && playerEntityRenderState.name != null &&
                 playerEntityRenderState.name.equals(MinecraftClient.getInstance().getSession().getUsername())) {
                 matrixStack.push();
@@ -29,6 +33,10 @@ public class SmolPeopleMixin {
         
         @Inject(method = "renderLabelIfPresent(Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;Lnet/minecraft/text/Text;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("RETURN"))
         private void baity$restoreNameTagHeight(PlayerEntityRenderState playerEntityRenderState, Text text, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo ci) {
+            com.shyeuar.baity.gui.module.Module smolPeopleModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("SmolPeople");
+            if (smolPeopleModule == null || !smolPeopleModule.isEnabled()) {
+                return;
+            }
             if (ConfigManager.smolpeopleMode && playerEntityRenderState.name != null && 
                 playerEntityRenderState.name.equals(MinecraftClient.getInstance().getSession().getUsername())) {
                 matrixStack.pop();
@@ -41,6 +49,10 @@ public class SmolPeopleMixin {
         
         @Inject(method = "scale(Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;)V", at = @At("TAIL"))
         private void baity$additionalScale(PlayerEntityRenderState playerEntityRenderState, MatrixStack matrixStack, CallbackInfo ci) {
+            com.shyeuar.baity.gui.module.Module smolPeopleModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("SmolPeople");
+            if (smolPeopleModule == null || !smolPeopleModule.isEnabled()) {
+                return;
+            }
             if (ConfigManager.smolpeopleMode && playerEntityRenderState.name != null &&
                 playerEntityRenderState.name.equals(MinecraftClient.getInstance().getSession().getUsername())) {
                 matrixStack.scale(0.5f, 0.5f, 0.5f);
@@ -53,6 +65,10 @@ public class SmolPeopleMixin {
         
         @Inject(method = "setAngles(Lnet/minecraft/client/render/entity/state/PlayerEntityRenderState;)V", at = @At("TAIL"))
         private void baity$modifyModel(PlayerEntityRenderState playerEntityRenderState, CallbackInfo ci) {
+            com.shyeuar.baity.gui.module.Module smolPeopleModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("SmolPeople");
+            if (smolPeopleModule == null || !smolPeopleModule.isEnabled()) {
+                return;
+            }
             if (ConfigManager.smolpeopleMode && playerEntityRenderState.name != null &&
                 playerEntityRenderState.name.equals(MinecraftClient.getInstance().getSession().getUsername())) {
                 
