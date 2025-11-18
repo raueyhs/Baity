@@ -1,8 +1,14 @@
 pluginManagement {
 	repositories {
+		maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
+		maven { url 'https://maven.aliyun.com/repository/public/' }
 		maven {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'
+		}
+		maven {
+			name = 'Fabric Snapshots'
+			url = 'https://maven.fabricmc.net/snapshots'
 		}
 		mavenCentral()
 		gradlePluginPortal()

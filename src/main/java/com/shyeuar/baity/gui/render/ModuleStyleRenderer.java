@@ -112,11 +112,11 @@ public class ModuleStyleRenderer {
                int prefixWidth = client.textRenderer.getWidth(prefix);
                net.minecraft.text.Text keyTextObj = net.minecraft.text.Text.literal(keyName);
                context.drawText(client.textRenderer, keyTextObj, baseX + prefixWidth, baseY, keyNameRGB, false);
-           } else if (displayPlainText.startsWith("☄")) {
+            } else if (displayPlainText.startsWith("☄")) {
                String prefix = "☄";
                String notsetText = displayPlainText.substring(1);
-               int prefixRGB = 0xFFFF00;
-               int notsetRGB = 0xAAAAAA;
+                int prefixRGB = 0xFFFF00 | 0xFF000000;
+                int notsetRGB = 0xAAAAAA | 0xFF000000;
 
                net.minecraft.text.Text prefixText = net.minecraft.text.Text.literal(prefix);
                context.drawText(client.textRenderer, prefixText, baseX, baseY, prefixRGB, false);

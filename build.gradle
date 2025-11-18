@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.11-SNAPSHOT'
+   id 'fabric-loom' version '1.13-SNAPSHOT'
 }
 
 version = project.mod_version
@@ -10,6 +10,7 @@ base {
 }
 
 repositories {
+    maven { url 'https://maven.aliyun.com/repository/public/' }
     mavenCentral()
     maven {
         name = 'Fabric'
