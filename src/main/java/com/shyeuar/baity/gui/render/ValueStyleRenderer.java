@@ -123,4 +123,3 @@ public class ValueStyleRenderer {
    }
 }
 
-

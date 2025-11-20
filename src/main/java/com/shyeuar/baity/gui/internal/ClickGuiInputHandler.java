@@ -321,9 +321,6 @@ public class ClickGuiInputHandler {
                         timer.reset();
                         return true;
                     } else if (buttonValue.getButtonValueType() == ButtonValue.ButtonValueType.TRIGGER) {
-                        if (!com.shyeuar.baity.utils.ModuleUtils.shouldExecuteSubModule(module, buttonValue)) {
-                            return false;
-                        }
                         if (onTriggerValueClick != null) {
                             onTriggerValueClick.accept(module, buttonValue);
                         }
@@ -496,5 +493,4 @@ public class ClickGuiInputHandler {
         state.setCurrentKeyDisplay(KeyMappingUtils.formatKeyDisplay(ConfigManager.guiKeyCode, ""));
     }
 }
-
 

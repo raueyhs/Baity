@@ -42,6 +42,7 @@ replay_*.log
 # private development scripts
 scripts/
 a.bat
+git-filter-clean.py
 
 # MACRO_START - 私有macro功能模块（不提交到GitHub）
 src/main/java/com/shyeuar/baity/features/AutoFish.java

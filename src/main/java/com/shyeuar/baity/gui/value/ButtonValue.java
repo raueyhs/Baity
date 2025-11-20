@@ -67,11 +67,6 @@ public class ButtonValue implements Value {
         return defaultDisplayText;
     }
     
-    @Override
-    public boolean isIndependentOfParentModule() {
-        return buttonValueType == ButtonValueType.KEYBIND;
-    }
-    
     public String getDisplayText(java.util.function.Function<Object, String> formatter) {
         if (formatter != null) {
             String formatted = formatter.apply(value);
@@ -84,6 +79,10 @@ public class ButtonValue implements Value {
         }
         return value != null ? value.toString() : defaultDisplayText;
     }
+    
+    @Override
+    public boolean isIndependentOfParentModule() {
+        // KEYBIND 类型的子模块独立于父模块，这样即使主模块关闭也能通过快捷键开启
+        return buttonValueType == ButtonValueType.KEYBIND;
+    }
 }
-
-

@@ -160,4 +160,3 @@ public class ClickGui extends Screen {
         return state.isListeningForInput();
     }
 }
-

@@ -59,3 +59,76 @@ jar {
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
+
+// MACRO_START - 过滤构建配置（不提交到GitHub）
+// 定义需要排除的 MACRO 文件列表
+def macroFiles = [
+    '**/features/AutoFish.java'
+]
+
+// 过滤构建：使用 -PnoMacro 参数时生效
+if (project.hasProperty('noMacro')) {
+    // 创建过滤后的源码目录
+    def filteredSrcDir = file("${buildDir}/filtered-src")
+    
+    // 排除整个 MACRO 文件
+    sourceSets.main.java.exclude(macroFiles)
+    
+    // 创建过滤任务
+    task filterSources {
+        // 输入：原始源文件
+        inputs.files(sourceSets.main.java.srcDirs)
+        // 输出：过滤后的源文件
+        outputs.dir(filteredSrcDir)
+        
+        doLast {
+            // 清空过滤目录，确保每次都是全新的
+            delete filteredSrcDir
+            filteredSrcDir.mkdirs()
+            
+            println "Filtering sources to: ${filteredSrcDir}"
+            
+            // 复制并过滤 Java 源文件
+            sourceSets.main.java.srcDirs.each { srcDir ->
+                fileTree(srcDir).matching { 
+                    include '**/*.java'
+                    exclude macroFiles
+                }.each { file ->
+                    def relativePath = srcDir.toPath().relativize(file.toPath())
+                    def targetFile = new File(filteredSrcDir, relativePath.toString())
+                    targetFile.parentFile.mkdirs()
+                    
+                    def content = file.text
+                    def filtered = content.replaceAll(/(?s)[ \t]*\/\/\s*MACRO_START.*?\/\/\s*MACRO_END[ \t]*\r?\n?/, '')
+                    filtered = filtered.replaceAll(/(?s)[ \t]*\/\/\s*TEST_START.*?\/\/\s*TEST_END[ \t]*\r?\n?/, '')
+                    
+                    targetFile.text = filtered
+                    
+                    if (filtered != content) {
+                        println "  Filtered: ${file.name}"
+                    }
+                }
+            }
+            
+            println "Filtered source preparation complete"
+        }
+    }
+    
+    // 编译时使用过滤后的源码（Java 文件）
+    tasks.compileJava.dependsOn filterSources
+    tasks.compileJava.source = filteredSrcDir
+    
+    // Resources 不需要过滤，继续使用原始路径
+    // sourceSets.main.resources 保持不变
+    
+    // 修改输出文件名以区分版本
+    tasks.jar {
+        archiveClassifier = 'filtered'
+    }
+    
+    // 清理时删除过滤目录
+    tasks.clean.doLast {
+        delete filteredSrcDir
+    }
+}
+// MACRO_END

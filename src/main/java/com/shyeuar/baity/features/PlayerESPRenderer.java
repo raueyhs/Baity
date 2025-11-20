@@ -95,8 +95,7 @@ public class PlayerESPRenderer implements WorldRenderEvents.AfterTranslucent {
             matrices.scale(-breathingScale, -breathingScale, breathingScale);
         
         String baseName = player.getDisplayName() != null ? player.getDisplayName().getString() : player.getName().getString();
-        String playerNameString = player.getName().getString();
-        boolean isDeveloper = DevConfig.isDeveloper(playerNameString);
+        boolean isDeveloper = DevConfig.isDeveloper(player);
         boolean showDistance = ModuleUtils.getOptionBoolean(module, "show distance", true);
         
         TextRenderer textRenderer = mc.textRenderer;
@@ -143,6 +142,7 @@ public class PlayerESPRenderer implements WorldRenderEvents.AfterTranslucent {
             matrices.pop();
         }
     }
+    
 
     private static void updateCache() {
         long currentTime = System.currentTimeMillis();
@@ -151,5 +151,6 @@ public class PlayerESPRenderer implements WorldRenderEvents.AfterTranslucent {
             lastTimeUpdate = currentTime;
         }
     }
+    
 
 }

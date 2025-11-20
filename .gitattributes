@@ -1,2 +1,4 @@
+# MACRO_START
 # Git属性文件：定义过滤规则
 *.java filter=remove-macro
+# MACRO_END

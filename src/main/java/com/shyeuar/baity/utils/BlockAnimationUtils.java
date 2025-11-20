@@ -46,4 +46,3 @@ public final class BlockAnimationUtils {
         return isSword(entity.getMainHandStack().getItem()) ? Hand.MAIN_HAND : Hand.OFF_HAND;
     }
 }
-

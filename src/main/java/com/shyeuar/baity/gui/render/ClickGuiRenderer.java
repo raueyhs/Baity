@@ -253,11 +253,9 @@ public class ClickGuiRenderer {
     private static void renderTooltip(DrawContext context, MinecraftClient client,
                                      Theme theme, ClickGuiState state,
                                      double mouseX, double mouseY) {
-        int tooltipX = (int)(mouseX + 5);
-        int tooltipY = (int)(mouseY + 5);
-        
         float tooltipScaleRatio = ClickGuiState.BASE_GUI_SCALE / state.getGuiScale();
         float tipScale = 0.75f * tooltipScaleRatio;
+        int offsetFromCursor = (int)(3 * tooltipScaleRatio);
         
         int rawTextWidth;
         if (state.getHoveredTooltipText() != null) {
@@ -274,37 +272,42 @@ public class ClickGuiRenderer {
         int scaledTooltipWidth = (int)(rawTooltipWidth * tipScale);
         int scaledTooltipHeight = (int)(rawTooltipHeight * tipScale);
         
-        int finalTooltipX = tooltipX;
-        int finalTooltipY = tooltipY;
+        int screenWidth = client.getWindow().getScaledWidth();
+        int screenHeight = client.getWindow().getScaledHeight();
         
-        if (finalTooltipX + scaledTooltipWidth > client.getWindow().getScaledWidth()) {
-            finalTooltipX = tooltipX - scaledTooltipWidth - 10;
+        int finalTooltipX = (int)mouseX + offsetFromCursor;
+        int finalTooltipY = (int)mouseY - offsetFromCursor - scaledTooltipHeight;
+        
+        if (finalTooltipX + scaledTooltipWidth > screenWidth) {
+            finalTooltipX = (int)mouseX - scaledTooltipWidth - offsetFromCursor;
         }
-        if (finalTooltipY - scaledTooltipHeight < 0) {
-            finalTooltipY = tooltipY + 10;
+        if (finalTooltipY < 2) {
+            finalTooltipY = (int)mouseY + offsetFromCursor;
+        }
+        if (finalTooltipY + scaledTooltipHeight > screenHeight) {
+            finalTooltipY = screenHeight - scaledTooltipHeight - 2;
+        }
+        if (finalTooltipX < 2) {
+            finalTooltipX = 2;
         }
         
-        context.getMatrices().push();
-        context.getMatrices().scale(tipScale, tipScale, 1f);
+        var guiMatrices = context.getMatrices();
+        guiMatrices.push();
+        guiMatrices.translate((float)finalTooltipX, (float)finalTooltipY, 0f);
+        guiMatrices.scale(tipScale, tipScale, 1f);
         
-        int bgLeft = (int)(finalTooltipX / tipScale);
-        int bgTop = (int)((finalTooltipY - scaledTooltipHeight) / tipScale);
-        int bgRight = bgLeft + rawTooltipWidth;
-        int bgBottom = bgTop + rawTooltipHeight;
+        GuiRenderUtil.drawRoundedRect(context, 0, 0, rawTooltipWidth, rawTooltipHeight, 4, theme.BG_2.getRGB());
         
-        GuiRenderUtil.drawRoundedRect(context, bgLeft, bgTop, bgRight, bgBottom, 3, theme.BG_2.getRGB());
-        
-        int textDrawX = bgLeft + 5;
-        int textDrawY = bgTop + 4;
+        int textX = bgPadding / 2;
+        int textY = (rawTooltipHeight - rawFontHeight) / 2;
         
         if (state.getHoveredTooltipText() != null) {
-            context.drawText(client.textRenderer, state.getHoveredTooltipText(), 
-                           textDrawX, textDrawY, 0xFFFFFF, false);
+            context.drawText(client.textRenderer, state.getHoveredTooltipText(), textX, textY, 0xFFFFFFFF, false);
         } else if (state.getHoveredTooltip() != null) {
-            context.drawText(client.textRenderer, state.getHoveredTooltip(), 
-                           textDrawX, textDrawY, theme.FONT_C.getRGB(), false);
+            context.drawText(client.textRenderer, state.getHoveredTooltip(), textX, textY, theme.FONT_C.getRGB() | 0xFF000000, false);
         }
-        context.getMatrices().pop();
+        
+        guiMatrices.pop();
     }
     
     private static void updateModuleExpandAnimations(ClickGuiState state) {
@@ -335,5 +338,3 @@ public class ClickGuiRenderer {
         return state.getModuleExpandAnimations().getOrDefault(moduleName, 0.0f);
     }
 }
-
-

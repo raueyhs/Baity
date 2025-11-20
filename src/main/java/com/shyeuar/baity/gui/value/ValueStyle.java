@@ -9,4 +9,3 @@ public enum ValueStyle {
     BUTTON_LIKE
 }
 
-

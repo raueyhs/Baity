@@ -62,19 +62,22 @@ public class AntiBotUtils {
             }
         }
     }
-
+    
+    
     public static boolean isRealPlayer(PlayerEntity player) {
         if (player == null || player == mc.player) return true; 
         
         String uuid = player.getUuid().toString();
-
+        
+        
         if (playerMap.isEmpty()) {
             return true;
         }
         
         return playerMap.containsKey(uuid);
     }
-
+    
+    
     public static boolean isBot(PlayerEntity player) {
         return !isRealPlayer(player);
     }
@@ -84,4 +87,3 @@ public class AntiBotUtils {
         tickCount = 0;
     }
 }
-

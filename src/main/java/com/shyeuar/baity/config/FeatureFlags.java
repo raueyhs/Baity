@@ -7,4 +7,3 @@ import net.fabricmc.api.Environment;
 public class FeatureFlags {
 }
 
-
