@@ -142,6 +142,7 @@ public class PlayerESPRenderer implements WorldRenderEvents.AfterTranslucent {
             matrices.pop();
         }
     }
+    
 
     private static void updateCache() {
         long currentTime = System.currentTimeMillis();
@@ -150,5 +151,6 @@ public class PlayerESPRenderer implements WorldRenderEvents.AfterTranslucent {
             lastTimeUpdate = currentTime;
         }
     }
+    
 
 }

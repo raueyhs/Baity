@@ -17,8 +17,11 @@ public class ModuleInitializer {
         initializeBlockAnimation();
         initializePepCat();
         initializeReminder();
-        initializeAutoFish();
         initializePlayerESP();
+        
+        com.shyeuar.baity.gui.sync.ConfigSynchronizer.syncModuleStates();
+        
+        com.shyeuar.baity.managers.KeybindManager.markCacheDirty();
     }
     
     private static void initializeSmolPeople() {
@@ -67,8 +70,6 @@ public class ModuleInitializer {
         com.shyeuar.baity.features.Reminder.init();
     }
     
-    private static void initializeAutoFish() {
-    }
     
     private static void initializePlayerESP() {
         Module playerEsp = ModuleManager.getModuleByName("PlayerESP");
@@ -85,5 +86,3 @@ public class ModuleInitializer {
         }
     }
 }
-
-

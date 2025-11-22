@@ -7,4 +7,3 @@ public interface ValueTypeHandler {
     
     Class<?> getValueType();
 }
-

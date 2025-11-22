@@ -32,11 +32,11 @@ public class ButtonValue implements Value {
     }
     
     public ButtonValue(String name, String displayName, Object defaultValue, ModuleCategory category, ButtonValueType buttonValueType) {
-        this(name, displayName, defaultValue, "NOTSET", category, buttonValueType);
+        this(name, displayName, defaultValue, "☄ NOTSET", category, buttonValueType);
     }
     
     public ButtonValue(String name, String displayName, Object defaultValue, ModuleCategory category) {
-        this(name, displayName, defaultValue, "NOTSET", category, ButtonValueType.KEYBIND);
+        this(name, displayName, defaultValue, "☄ NOTSET", category, ButtonValueType.KEYBIND);
     }
     
     public ButtonValueType getButtonValueType() {
@@ -67,11 +67,6 @@ public class ButtonValue implements Value {
         return defaultDisplayText;
     }
     
-    @Override
-    public boolean isIndependentOfParentModule() {
-        return buttonValueType == ButtonValueType.KEYBIND;
-    }
-    
     public String getDisplayText(java.util.function.Function<Object, String> formatter) {
         if (formatter != null) {
             String formatted = formatter.apply(value);
@@ -84,6 +79,9 @@ public class ButtonValue implements Value {
         }
         return value != null ? value.toString() : defaultDisplayText;
     }
+    
+    @Override
+    public boolean isIndependentOfParentModule() {
+        return buttonValueType == ButtonValueType.KEYBIND;
+    }
 }
-
-

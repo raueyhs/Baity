@@ -41,7 +41,8 @@ public class PlayerNameLabelHideMixin {
         if (player == null) return;
 
         if (com.shyeuar.baity.utils.AntiBotUtils.isBot(player)) {
-            return;
+            // ci.cancel(); // 原逻辑错误，会导致 Bot 的原版标签也被隐藏
+            return; // 修正：如果是 Bot，不取消原版标签渲染，让原版逻辑处理（或由其他 Mixin 处理）
         }
 
         boolean showOwnNametag = ModuleUtils.getOptionBoolean(m, "show own nametag", false);
@@ -50,6 +51,7 @@ public class PlayerNameLabelHideMixin {
                 ci.cancel();
                 return;
             }
+            // 如果未启用show own nametag，让原版标签正常渲染（原版行为）
             return;
         }
 
@@ -57,5 +59,3 @@ public class PlayerNameLabelHideMixin {
     }
 
 }
-
-

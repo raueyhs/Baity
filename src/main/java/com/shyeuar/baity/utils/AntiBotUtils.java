@@ -33,17 +33,13 @@ public class AntiBotUtils {
                         continue;
                     }
                     
-                    PlayerEntity worldPlayer = mc.world.getPlayerByUuid(uuid);
-                    // 1.21.5: if (worldPlayer != null && worldPlayer.getStatusEffects().isEmpty()) { continue; }
-                    // 1.21.8 版本后客户端不再可靠同步其他玩家的状态效果，继续使用该判断会把所有玩家标记为 Bot。
-                    // 暂时跳过此过滤，确保 PlayerESP 等功能正常工作。TODO: 引入更可靠的识别方式。
-                    
                     try {
                         UUID.fromString(uuid.toString());
                     } catch (IllegalArgumentException e) {
                         continue; 
                     }
                     
+                    PlayerEntity worldPlayer = mc.world.getPlayerByUuid(uuid);
                     if (worldPlayer != null) {
                         playerMap.put(uuid.toString(), playerName);
                     }
@@ -76,4 +72,3 @@ public class AntiBotUtils {
         tickCount = 0;
     }
 }
-

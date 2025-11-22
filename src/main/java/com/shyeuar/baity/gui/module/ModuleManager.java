@@ -90,6 +90,7 @@ public class ModuleManager {
             () -> ConfigManager.guiEnabled,
             val -> ConfigManager.guiEnabled = val
         );
+        
 
         ModuleRegistry.registerModuleWithValues(
             "PlayerESP", "PlayerESP", ModuleCategory.RENDER,
@@ -145,4 +146,3 @@ public class ModuleManager {
                 .orElse(null);
     }
 }
-

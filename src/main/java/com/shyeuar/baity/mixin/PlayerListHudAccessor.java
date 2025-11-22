@@ -14,4 +14,3 @@ public interface PlayerListHudAccessor {
     @Accessor("footer")
     Text getFooter();
 }
-

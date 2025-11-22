@@ -149,7 +149,7 @@ public class KeyMappingUtils {
     private static final int MODULE_ENABLED_PURPLE = new java.awt.Color(84, 72, 200).getRGB();
     
     public static String formatKeyDisplay(int keyCode, String defaultText) {
-        if (keyCode == 0) {
+        if (keyCode == 0 || keyCode == -1) {
             return "☄ NOTSET";
         }
         String keyText = getKeyDisplayText(keyCode);

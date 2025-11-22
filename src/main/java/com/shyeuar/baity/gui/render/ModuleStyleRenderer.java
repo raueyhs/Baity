@@ -75,6 +75,9 @@ public class ModuleStyleRenderer {
    public static void renderKeybindBoxContent(DrawContext context, MinecraftClient client, Theme theme,
                                               float containerX2, float containerY, float containerHeight,
                                               float mouseX, float mouseY, boolean isListening, String displayText) {
+       if (displayText == null || displayText.isEmpty()) {
+           displayText = "☄ NOTSET";
+       }
        String plainText = displayText.replaceAll("§[0-9a-fklmnor]", "");
        int textWidth = client.textRenderer.getWidth(plainText);
        int boxWidth = textWidth + 16;
@@ -95,8 +98,7 @@ public class ModuleStyleRenderer {
        int baseY = (int)(boxCenterY - 4);
 
        if (isListening) {
-           net.minecraft.text.Text textObj = net.minecraft.text.Text.literal(displayText);
-           context.drawText(client.textRenderer, textObj, baseX, baseY, theme.FONT_C.getRGB(), false);
+           context.drawText(client.textRenderer, displayText, baseX, baseY, 0xFFFFFFFF, false);
        } else {
            String displayPlainText = displayText.replaceAll("§[0-9a-fklmnor]", "");
 
@@ -106,27 +108,23 @@ public class ModuleStyleRenderer {
                int prefixRGB = com.shyeuar.baity.utils.KeyMappingUtils.getModuleEnabledPurpleRGB();
                int keyNameRGB = theme.FONT.getRGB();
 
-               net.minecraft.text.Text prefixText = net.minecraft.text.Text.literal(prefix);
-               context.drawText(client.textRenderer, prefixText, baseX, baseY, prefixRGB, false);
-
+               context.drawText(client.textRenderer, prefix, baseX, baseY, prefixRGB, false);
                int prefixWidth = client.textRenderer.getWidth(prefix);
-               net.minecraft.text.Text keyTextObj = net.minecraft.text.Text.literal(keyName);
-               context.drawText(client.textRenderer, keyTextObj, baseX + prefixWidth, baseY, keyNameRGB, false);
-            } else if (displayPlainText.startsWith("☄")) {
+               context.drawText(client.textRenderer, keyName, baseX + prefixWidth, baseY, keyNameRGB, false);
+           } else if (displayPlainText.startsWith("☄") || 
+                       displayPlainText.toUpperCase().contains("NOTSET") || 
+                       displayPlainText.toUpperCase().contains("NONE") || 
+                       displayPlainText.toUpperCase().contains("UNKNOWN")) {
                String prefix = "☄";
-               String notsetText = displayPlainText.substring(1);
-                int prefixRGB = 0xFFFF00 | 0xFF000000;
-                int notsetRGB = 0xAAAAAA | 0xFF000000;
+               String notsetText = displayPlainText.startsWith("☄") ? displayPlainText.substring(1) : (" " + displayPlainText);
+               int prefixRGB = 0xFFFF00;
+               int notsetRGB = 0xAAAAAA;
 
-               net.minecraft.text.Text prefixText = net.minecraft.text.Text.literal(prefix);
-               context.drawText(client.textRenderer, prefixText, baseX, baseY, prefixRGB, false);
-
+               context.drawText(client.textRenderer, prefix, baseX, baseY, prefixRGB, false);
                int prefixWidth = client.textRenderer.getWidth(prefix);
-               net.minecraft.text.Text notsetTextObj = net.minecraft.text.Text.literal(notsetText);
-               context.drawText(client.textRenderer, notsetTextObj, baseX + prefixWidth, baseY, notsetRGB, false);
+               context.drawText(client.textRenderer, notsetText, baseX + prefixWidth, baseY, notsetRGB, false);
            } else {
-               net.minecraft.text.Text textObj = net.minecraft.text.Text.literal(displayText);
-               context.drawText(client.textRenderer, textObj, baseX, baseY, theme.FONT.getRGB(), false);
+               context.drawText(client.textRenderer, displayText, baseX, baseY, theme.FONT.getRGB(), false);
            }
        }
    }
@@ -137,5 +135,3 @@ public class ModuleStyleRenderer {
        public int x, y;
    }
 }
-
-

@@ -122,5 +122,3 @@ public class ValueStyleRenderer {
        ModuleStyleRenderer.renderKeybindBoxContent(context, client, theme, x2, y, subOptionHeight, mouseX, mouseY, isListeningThis, boxText);
    }
 }
-
-

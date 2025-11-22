@@ -345,5 +345,3 @@ public class ClickGuiRenderer {
         return state.getModuleExpandAnimations().getOrDefault(moduleName, 0.0f);
     }
 }
-
-

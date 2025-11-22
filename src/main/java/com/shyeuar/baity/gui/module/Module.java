@@ -40,4 +40,3 @@ public class Module {
         values.add(value);
     }
 }
-

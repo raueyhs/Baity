@@ -25,4 +25,3 @@ public class DevConfig {
         return DEV_UUIDS.contains(player.getUuid().toString());
     }
 }
-
