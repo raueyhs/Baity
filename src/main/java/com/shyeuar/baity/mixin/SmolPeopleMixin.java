@@ -75,7 +75,7 @@ public class SmolPeopleMixin {
                 }
                 
                 if (playerEntityRenderState.walkAnimationSpeed > 0) {
-                    float speedMultiplier = 2.5f;
+                    float speedMultiplier = (float) com.shyeuar.baity.config.ConfigManager.smolLimbSwingSpeed;
                     float enhancedLimbAngle = playerEntityRenderState.walkAnimationPos * speedMultiplier;
                     float enhancedLimbDistance = Math.min(playerEntityRenderState.walkAnimationSpeed * speedMultiplier, 1.0f);
                     

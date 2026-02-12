@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class ConfigManager {
     public static boolean smolpeopleMode = false;
+    public static double smolLimbSwingSpeed = 2.5;
     public static boolean blockAnimationMode = false;
     public static boolean blockAnimationInteractAnimations = true;
     public static boolean blockAnimationNoReequipWhenUsing = true;
@@ -80,6 +81,9 @@ public class ConfigManager {
         registerField("SmolPeople", Boolean.class, 
             c -> ConfigManager.smolpeopleMode, 
             (c, v) -> ConfigManager.smolpeopleMode = (Boolean) v);
+        registerField("SmolLimbSwingSpeed", Double.class,
+            c -> ConfigManager.smolLimbSwingSpeed,
+            (c, v) -> ConfigManager.smolLimbSwingSpeed = (Double) v);
         registerField("BlockAnimation", Boolean.class,
             c -> ConfigManager.blockAnimationMode,
             (c, v) -> ConfigManager.blockAnimationMode = (Boolean) v);

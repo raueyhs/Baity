@@ -109,23 +109,29 @@ public class ModuleManager {
             val -> ConfigManager.pepCatEnabled = val
         );
         pepCatModule.setEnabled(true);
-        
+
         ModuleRegistry.registerModuleWithValues(
             "SmolPeople", "SmolPeople", ModuleCategory.FUN,
             () -> ConfigManager.smolpeopleMode,
             val -> ConfigManager.smolpeopleMode = val,
-            new Option[]{
-                new Option("crosshair", "crosshair", true, ModuleCategory.FUN)
+            new com.shyeuar.baity.gui.value.Value[]{
+                new Option("crosshair", "crosshair", true, ModuleCategory.FUN),
+                new com.shyeuar.baity.gui.value.SliderValue("limb swing speed", "Limb Swing Speed", 2.5, 0.5, 5.0, 0.1, ModuleCategory.FUN)
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
                     "crosshair",
                     () -> ConfigManager.crosshairMode,
                     val -> ConfigManager.crosshairMode = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "limb swing speed",
+                    () -> ConfigManager.smolLimbSwingSpeed,
+                    val -> ConfigManager.smolLimbSwingSpeed = ((Number) val).doubleValue()
                 )
             }
         );
-        
+
         Module noSwimChangeModule = ModuleRegistry.registerSimpleModule(
             "NoSwimChange", "NoSwimChange", ModuleCategory.QOL,
             () -> ConfigManager.noSwimChangeEnabled,
