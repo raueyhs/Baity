@@ -1,6 +1,7 @@
 package com.shyeuar.baity.gui;
 
 import com.shyeuar.baity.config.ConfigManager;
+import com.shyeuar.baity.gui.smol.SmolFriendsScreen;
 import com.shyeuar.baity.gui.internal.ClickGuiState;
 import com.shyeuar.baity.gui.internal.ClickGuiLayout;
 import com.shyeuar.baity.gui.internal.ClickGuiInputHandler;
@@ -301,8 +302,16 @@ public class ClickGui extends BaseOwoScreen<FlowLayout> {
     }
     
     private void handleTriggerValueClick(Module module, ButtonValue buttonValue) {
-        String valueName = buttonValue.getName();
-        
+        if (module == null || buttonValue == null) {
+            return;
+        }
+
+        if ("SmolPeople".equals(module.getName()) && "friends".equals(buttonValue.getName())) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc != null) {
+                mc.setScreen(new SmolFriendsScreen(this));
+            }
+        }
     }
     
     public boolean isListeningForInput() {

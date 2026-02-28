@@ -116,7 +116,13 @@ public class ModuleManager {
                 new Option("crosshair", "crosshair", true, ModuleCategory.MISC),
                 new com.shyeuar.baity.gui.value.SliderValue(
                         "limb swing speed", "Limb Swing Speed",
-                        2.5, 0.5, 5.0, 0.1, ModuleCategory.MISC)
+                        2.5, 0.5, 5.0, 0.1, ModuleCategory.MISC),
+                withSeparator(new ButtonValue(
+                        "friends", "friends",
+                        "Manage",
+                        ModuleCategory.MISC,
+                        ButtonValue.ButtonValueType.TRIGGER,
+                        false))
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(

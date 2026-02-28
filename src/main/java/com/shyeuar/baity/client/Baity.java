@@ -8,10 +8,11 @@ import com.shyeuar.baity.managers.ModuleInitializer;
 import com.shyeuar.baity.utils.KeyMappingUtils;
 import com.shyeuar.baity.items.CustomTotemItem;
 import com.shyeuar.baity.features.fancydmgsplash.FancyDmgSplash;
+import com.shyeuar.baity.features.smolpeople.SmolFriendCommands;
+import com.shyeuar.baity.features.smolpeople.SmolFriendManager;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
@@ -33,6 +34,7 @@ public class Baity implements ClientModInitializer {
         CustomTotemItem.register();
         
         ConfigManager.loadConfig();
+        SmolFriendManager.reloadFromConfig();
 
         if (ModuleManager.getModules().isEmpty()) {
             ModuleManager.init();
@@ -72,11 +74,9 @@ public class Baity implements ClientModInitializer {
             com.shyeuar.baity.features.fishing.FishHookTimer.getInstance().tick();
         });
         
-        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(ClientCommandManager.literal("baity")
-            .executes(context -> {
-                openGuiNextTick = true;
-                return 1;
-            })));
+        ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
+            SmolFriendCommands.register(dispatcher)
+        );
 
         WorldRenderEvents.AFTER_ENTITIES.register(new com.shyeuar.baity.features.NametagRenderer());
         WorldRenderEvents.AFTER_ENTITIES.register(new FancyDmgSplash());
