@@ -84,6 +84,12 @@ public class ConfigManager {
     public static double fishHookTimerX = 0.5;
     public static double fishHookTimerY = 0.6;
     public static float fishHookTimerScale = 1.5f;
+
+    public static boolean chromaOwnNameEnabled = false;
+    public static double chromaOwnNameChromaLightness = 0.8;
+    public static double chromaOwnNameChromaChroma = 0.2;
+    public static double chromaOwnNameChromaSize = 3.1;
+    public static double chromaOwnNameChromaSpeed = 1.0;
     
     private static final String CONFIG_FILE_NAME = "config.txt";
 
@@ -285,6 +291,21 @@ public class ConfigManager {
         registerField("FishHookTimerScale", Float.class,
             c -> ConfigManager.fishHookTimerScale,
             (c, v) -> ConfigManager.fishHookTimerScale = (Float) v);
+        registerField("ChromaOwnName", Boolean.class,
+            c -> ConfigManager.chromaOwnNameEnabled,
+            (c, v) -> ConfigManager.chromaOwnNameEnabled = (Boolean) v);
+        registerField("ChromaOwnNameChromaLightness", Double.class,
+            c -> ConfigManager.chromaOwnNameChromaLightness,
+            (c, v) -> ConfigManager.chromaOwnNameChromaLightness = (Double) v);
+        registerField("ChromaOwnNameChromaChroma", Double.class,
+            c -> ConfigManager.chromaOwnNameChromaChroma,
+            (c, v) -> ConfigManager.chromaOwnNameChromaChroma = (Double) v);
+        registerField("ChromaOwnNameChromaSize", Double.class,
+            c -> ConfigManager.chromaOwnNameChromaSize,
+            (c, v) -> ConfigManager.chromaOwnNameChromaSize = (Double) v);
+        registerField("ChromaOwnNameChromaSpeed", Double.class,
+            c -> ConfigManager.chromaOwnNameChromaSpeed,
+            (c, v) -> ConfigManager.chromaOwnNameChromaSpeed = (Double) v);
     }
     
     private static void registerField(String key, Class<?> type,
@@ -343,6 +364,11 @@ public class ConfigManager {
                 
                 Map<String, String> legacyKeyAliases = new HashMap<>();
                 legacyKeyAliases.put("  TransparentNormalTag", "  TransparentizeOtherTags");
+                legacyKeyAliases.put("ColorOwnName", "ChromaOwnName");
+                legacyKeyAliases.put("ColorOwnNameChromaLightness", "ChromaOwnNameChromaLightness");
+                legacyKeyAliases.put("ColorOwnNameChromaChroma", "ChromaOwnNameChromaChroma");
+                legacyKeyAliases.put("ColorOwnNameChromaSize", "ChromaOwnNameChromaSize");
+                legacyKeyAliases.put("ColorOwnNameChromaSpeed", "ChromaOwnNameChromaSpeed");
                 
                 for (String line : lines) {
                     if (line.trim().isEmpty()) continue;

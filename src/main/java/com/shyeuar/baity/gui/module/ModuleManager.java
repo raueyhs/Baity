@@ -216,6 +216,48 @@ public class ModuleManager {
                 )
             }
         );
+
+        ModuleRegistry.registerModuleWithValues(
+            "ChromaOwnName", "ChromaOwnName", ModuleCategory.RENDER,
+            () -> ConfigManager.chromaOwnNameEnabled,
+            val -> ConfigManager.chromaOwnNameEnabled = val,
+            new com.shyeuar.baity.gui.value.Value[]{
+                new com.shyeuar.baity.gui.value.SliderValue(
+                    "chroma lightness", "Chroma Lightness", 0.8, 0.2, 1.0, 0.05, ModuleCategory.RENDER
+                ),
+                new com.shyeuar.baity.gui.value.SliderValue(
+                    "chroma chroma", "Chroma 'Chroma'", 0.2, 0.0, 0.4, 0.01, ModuleCategory.RENDER
+                ),
+                new com.shyeuar.baity.gui.value.SliderValue(
+                    "chroma size", "Chroma Size", 3.1, 0.5, 10.0, 0.1, ModuleCategory.RENDER
+                ),
+                new com.shyeuar.baity.gui.value.SliderValue(
+                    "chroma speed", "Chroma Speed", 1.0, 0.1, 8.0, 0.1, ModuleCategory.RENDER
+                )
+            },
+            new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma lightness",
+                    () -> ConfigManager.chromaOwnNameChromaLightness,
+                    val -> ConfigManager.chromaOwnNameChromaLightness = ((Number) val).doubleValue()
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma chroma",
+                    () -> ConfigManager.chromaOwnNameChromaChroma,
+                    val -> ConfigManager.chromaOwnNameChromaChroma = ((Number) val).doubleValue()
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma size",
+                    () -> ConfigManager.chromaOwnNameChromaSize,
+                    val -> ConfigManager.chromaOwnNameChromaSize = ((Number) val).doubleValue()
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma speed",
+                    () -> ConfigManager.chromaOwnNameChromaSpeed,
+                    val -> ConfigManager.chromaOwnNameChromaSpeed = ((Number) val).doubleValue()
+                )
+            }
+        );
         
         Module clickGUI = new Module("ClickGUI", "ClickGUI", ModuleCategory.HUD);
         clickGUI.setEnabled(true);
@@ -428,6 +470,11 @@ public class ModuleManager {
                 .append(MessageUtils.createColoredText("config\\baity\\FishHookTimer_DIY_UI_Setup_Guide.txt", 0xADFF2F))
                 .append(MessageUtils.createColoredText(".", 0xFFFF00)));
         TooltipManager.registerTooltip("Muffler", "Mute the annoying sounds.", 0xFFFFFF);
+        TooltipManager.registerTooltip("ChromaOwnName", "Color your own name in chat.", 0xFFFFFF);
+        TooltipManager.registerTooltip("chroma lightness", "How light each chroma color should be.", 0xFFFFFF);
+        TooltipManager.registerTooltip("chroma chroma", "Similar to saturation.", 0xFFFFFF);
+        TooltipManager.registerTooltip("chroma size", "Width of each chroma color band.", 0xFFFFFF);
+        TooltipManager.registerTooltip("chroma speed", "Speed that chroma colors move.", 0xFFFFFF);
         TooltipManager.registerTooltip("FancyCreeperVeil", "Replace the wither cloak ability creeper model to a fancy one.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoSwimChange", "Only disables the swimming pose and eye height change on your client.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoSwapAnimation", "Disable the animation of hotbar change.", 0xFFFFFF);

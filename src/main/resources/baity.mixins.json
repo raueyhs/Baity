@@ -43,6 +43,7 @@
     "accessor.FogRendererAccessor",
     "NoSwapAnimationMixin",
     "ImmuneReactionMixin$ChatDetectorMixin",
+    "ChromaOwnNameMixin",
     "ImmuneReactionMixin$PlayerTickMixin",
     "InvisibleBugHighlightsMixin$ParticlePacketMixin",
     "InvisibleBugHighlightsMixin$EntityRemovalMixin",
