@@ -28,21 +28,18 @@ public class NametagHideMixin {
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null || mc.level == null) return;
         
-        Player player = null;
-        for (Player p : mc.level.players()) {
-            if (p.getId() == state.id) {
-                player = p;
-                break;
+        boolean isSelf = mc.player.getId() == state.id;
+        if (!isSelf) {
+            net.minecraft.world.entity.Entity entity = mc.level.getEntity(state.id);
+            if (entity instanceof Player player) {
+                if (com.shyeuar.baity.utils.AntiBotUtils.isBot(player)) {
+                    return;
+                }
             }
-        }
-        if (player == null) return;
-
-        if (com.shyeuar.baity.utils.AntiBotUtils.isBot(player)) {
-            return;
         }
 
         boolean showOwnNametag = ModuleUtils.getOptionBoolean(m, "show own nametag", false);
-        if (player == mc.player) {
+        if (isSelf) {
             if (showOwnNametag) {
                 ci.cancel();  
             }

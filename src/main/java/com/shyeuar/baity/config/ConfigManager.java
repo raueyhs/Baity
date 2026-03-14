@@ -71,6 +71,8 @@ public class ConfigManager {
     public static boolean mufflerMuteEndermanScream = true;
     public static boolean mufflerMutePhantom = true;
     public static boolean mufflerMutePortal = true;
+    public static boolean mufflerMuteVampire = true;
+    public static boolean mufflerMuteDrake = true;
     
     public static boolean highlightsEnabled = false;
     public static boolean highlightsShulkerEnabled = false;
@@ -79,6 +81,8 @@ public class ConfigManager {
     public static boolean fancyCreeperVeilEnabled = false;
     
     public static boolean twoDdroppedItemEnabled = false;
+    
+    public static boolean oldSneakingEnabled = false;
     
     public static boolean fishHookTimerEnabled = false;
     public static double fishHookTimerX = 0.5;
@@ -264,6 +268,12 @@ public class ConfigManager {
         registerField("MufflerMutePortal", Boolean.class,
             c -> ConfigManager.mufflerMutePortal,
             (c, v) -> ConfigManager.mufflerMutePortal = (Boolean) v);
+        registerField("MufflerMuteVampire", Boolean.class,
+            c -> ConfigManager.mufflerMuteVampire,
+            (c, v) -> ConfigManager.mufflerMuteVampire = (Boolean) v);
+        registerField("MufflerMuteDrake", Boolean.class,
+            c -> ConfigManager.mufflerMuteDrake,
+            (c, v) -> ConfigManager.mufflerMuteDrake = (Boolean) v);
         registerField("Highlights", Boolean.class,
             c -> ConfigManager.highlightsEnabled,
             (c, v) -> ConfigManager.highlightsEnabled = (Boolean) v);
@@ -279,6 +289,9 @@ public class ConfigManager {
         registerField("2DdroppedItem", Boolean.class,
             c -> ConfigManager.twoDdroppedItemEnabled,
             (c, v) -> ConfigManager.twoDdroppedItemEnabled = (Boolean) v);
+        registerField("OldSneaking", Boolean.class,
+            c -> ConfigManager.oldSneakingEnabled,
+            (c, v) -> ConfigManager.oldSneakingEnabled = (Boolean) v);
         registerField("FishHookTimer", Boolean.class,
             c -> ConfigManager.fishHookTimerEnabled,
             (c, v) -> ConfigManager.fishHookTimerEnabled = (Boolean) v);

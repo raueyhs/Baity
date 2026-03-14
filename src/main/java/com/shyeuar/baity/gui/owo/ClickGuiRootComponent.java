@@ -342,7 +342,6 @@ public class ClickGuiRootComponent extends BaseComponent {
         int hudTextY = (int)(hudButtonY + (hudButtonHeight - client.font.lineHeight) / 2);
         guiGraphics.drawString(client.font, hudButtonText, hudTextX, hudTextY, theme.FONT.getRGB(), false);
         
-        // Store HUD button bounds in state for click detection
         state.setHudButtonBounds((int)hudButtonX, (int)hudButtonY, (int)hudButtonWidth, (int)hudButtonHeight);
     }
     

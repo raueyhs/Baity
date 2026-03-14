@@ -151,7 +151,9 @@ public class ModuleManager {
             new Option[]{
                 new Option("mute enderman scream", "mute enderman scream", true, ModuleCategory.QOL),
                 new Option("mute phantom", "mute phantom", true, ModuleCategory.QOL),
-                new Option("mute portal", "mute portal", true, ModuleCategory.QOL)
+                new Option("mute portal", "mute portal", true, ModuleCategory.QOL),
+                new Option("mute vampire", "mute vampire", true, ModuleCategory.QOL),
+                new Option("mute drake", "mute drake", true, ModuleCategory.QOL)
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
@@ -168,6 +170,16 @@ public class ModuleManager {
                     "mute portal",
                     () -> ConfigManager.mufflerMutePortal,
                     val -> ConfigManager.mufflerMutePortal = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "mute vampire",
+                    () -> ConfigManager.mufflerMuteVampire,
+                    val -> ConfigManager.mufflerMuteVampire = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "mute drake",
+                    () -> ConfigManager.mufflerMuteDrake,
+                    val -> ConfigManager.mufflerMuteDrake = (Boolean) val
                 )
             }
         );
@@ -259,7 +271,7 @@ public class ModuleManager {
             }
         );
         
-        Module clickGUI = new Module("ClickGUI", "ClickGUI", ModuleCategory.HUD);
+        Module clickGUI = new Module("ClickGUI", "ClickGUI", ModuleCategory.UI);
         clickGUI.setEnabled(true);
         registerModule(clickGUI);
         ConfigSynchronizer.registerModuleConfig(
@@ -438,6 +450,12 @@ public class ModuleManager {
             () -> ConfigManager.twoDdroppedItemEnabled,
             val -> ConfigManager.twoDdroppedItemEnabled = val
         );
+        
+        ModuleRegistry.registerSimpleModule(
+            "OldSneaking", "OldSneaking", ModuleCategory.MISC,
+            () -> ConfigManager.oldSneakingEnabled,
+            val -> ConfigManager.oldSneakingEnabled = val
+        );
 
         ModuleRegistry.registerSimpleModule(
             "FishHookTimer", "FishHookTimer", ModuleCategory.QOL,
@@ -479,6 +497,9 @@ public class ModuleManager {
         TooltipManager.registerTooltip("NoSwimChange", "Only disables the swimming pose and eye height change on your client.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoSwapAnimation", "Disable the animation of hotbar change.", 0xFFFFFF);
         TooltipManager.registerTooltip("2DdroppedItem", "Render dropped items as 2D sprites.", 0xFFFFFF);
+        TooltipManager.registerTooltip("OldSneaking",
+            MessageUtils.createColoredText("Restore the sneaking animation of version 1.7.", 0xFFFFFF)
+                .append(MessageUtils.createColoredText(" Fake sneaking eye height!", 0xFFFF00)));
     }
     
     public static List<Module> getModules() {

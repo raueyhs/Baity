@@ -90,8 +90,6 @@ public class Reminder {
             Minecraft client = Minecraft.getInstance();
             if (client.player == null) return;
             
-            String playerName = client.player.getName().getString();
-            String playerUUID = client.player.getUUID().toString();
             String fullMessage = message.getString();
             
             int colonIndex = fullMessage.indexOf(':');
@@ -99,14 +97,16 @@ public class Reminder {
                 return;
             }
             
-            String beforeColon = fullMessage.substring(0, colonIndex).trim();
-            boolean isOwnMessage = beforeColon.equals(playerName) || beforeColon.equals(playerUUID);
-            
-            if (isOwnMessage) {
+            String afterColon = fullMessage.substring(colonIndex + 1).trim();
+            if (afterColon.isEmpty()) {
                 return;
             }
             
-            String afterColon = fullMessage.substring(colonIndex + 1).trim();
+            String playerName = client.player.getName().getString();
+            if (playerName == null || playerName.isEmpty()) {
+                return;
+            }
+            
             String lowerAfterColon = afterColon.toLowerCase();
             String lowerPlayerName = playerName.toLowerCase();
             if (lowerAfterColon.contains(lowerPlayerName)) {

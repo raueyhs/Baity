@@ -73,55 +73,33 @@ public class PepCat {
         }
     }
     
-    private static boolean isCurrentPlayerDeathMessage(Component message) {
-        Minecraft client = Minecraft.getInstance();
-        if (client.player == null) return false;
-        
-        String messageText = message.getString();
-        return isSecondPersonEnglishDeathMessage(messageText);
-    }
-    
-    private static final String[] ENGLISH_SECOND_PERSON_DEATH_PREFIXES = {
+    private static final String[] ENGLISH_SECOND_PERSON_DEATH_SUBSTRINGS = new String[]{
         "you died",
-        "you were killed",
-        "you were slain",
-        "you were shot",
-        "you were blown up",
-        "you were pricked",
-        "you were squashed",
-        "you were crushed",
-        "you were impaled",
-        "you were doomed to fall",
-        "you were struck by lightning",
-        "you were doomed to fall by",
-        "you were slain by",
         "you were killed by",
-        "you were slain as",
-        "you were knocked into the void",
-        "you were consumed",
-        "you were incinerated",
-        "you fell",
-        "you hit the ground too hard",
-        "you discovered the floor was lava",
-        "you drowned",
-        "you suffocated",
-        "you suffocated in a wall",
-        "you burned",
+        "you were slain by",
+        "you were blown up by",
+        "you fell into the void",
+        "you fell to your death",
+        "you starved to death",
         "you burned to death",
-        "you went up in flames",
-        "you tried to swim in lava",
-        "you blew up",
-        "you froze to death",
+        "you were burnt to a crisp",
+        "you drowned",
+        "you hit the ground too hard",
+        "you were shot by",
+        "you were slain",
+        "you were killed"
     };
-    
-    private static boolean isSecondPersonEnglishDeathMessage(String rawMessage) {
-        if (rawMessage == null || rawMessage.isEmpty()) {
+
+    private static boolean isCurrentPlayerDeathMessage(Component message) {
+        String messageText = message.getString();
+
+        if (messageText.indexOf(':') >= 0) {
             return false;
         }
-        
-        String normalized = rawMessage.toLowerCase();
-        for (String fragment : ENGLISH_SECOND_PERSON_DEATH_PREFIXES) {
-            if (normalized.contains(fragment)) {
+
+        String lower = messageText.toLowerCase(java.util.Locale.ROOT);
+        for (String pattern : ENGLISH_SECOND_PERSON_DEATH_SUBSTRINGS) {
+            if (lower.contains(pattern)) {
                 return true;
             }
         }

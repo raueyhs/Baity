@@ -8,7 +8,7 @@ public enum ModuleCategory {
     RENDER("Render"),
     QOL("Qol"),
     MISC("Misc"),
-    HUD("Hud");
+    UI("UI");
 
     private final String displayName;
 

@@ -50,7 +50,17 @@
     "FancyCreeperVeilMixin",
     "TagBackgroundMixin",
     "NoTextShadowMixin",
-    "DroppedItem2DMixin"
+    "DroppedItem2DMixin",
+    "OldSneakingMixin$OldSneakingCameraMixin",
+    "OldSneakingMixin$OldSneakingHumanoidModelMixin",
+    "OldSneakingMixin$OldSneakingLivingEntityRendererMixin",
+    "CameraRenderStateMixin",
+    "AvatarRenderStateMixin",
+    "GameRendererMixin",
+    "accessor.PlayerAccessor",
+    "accessor.CameraAccessor",
+    "accessor.AvatarRenderStateAccessor",
+    "accessor.CameraRenderStateAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

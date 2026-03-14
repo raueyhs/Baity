@@ -30,6 +30,7 @@ public class ModuleInitializer {
         initializeFancyDmgSplash();
         initializeHighlights();
         initializeNodebuff();
+        initializeOldSneaking();
         
         com.shyeuar.baity.gui.sync.ConfigSynchronizer.syncModuleStates();
         
@@ -146,5 +147,11 @@ public class ModuleInitializer {
             }
         }
     }
-
+    
+    private static void initializeOldSneaking() {
+        Module oldSneaking = ModuleManager.getModuleByName("OldSneaking");
+        if (oldSneaking != null) {
+            oldSneaking.setEnabled(ConfigManager.oldSneakingEnabled);
+        }
+    }
 }
