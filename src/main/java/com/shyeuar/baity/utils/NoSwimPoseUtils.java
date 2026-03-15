@@ -6,17 +6,17 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.FluidTags;
 
-public final class NoSwimChangeUtils {
+public final class NoSwimPoseUtils {
 
     public static final float STANDING_EYE_HEIGHT = 1.62F;
     private static final long DELAY_MS = 500L;
     private static long exitWaterTime = 0L;
     private static boolean wasInWater = false;
 
-    private NoSwimChangeUtils() {}
+    private NoSwimPoseUtils() {}
 
     public static boolean isFeatureActive() {
-        Module m = ModuleManager.getModuleByName("NoSwimChange");
+        Module m = ModuleManager.getModuleByName("NoSwimPose");
         return m != null && m.isEnabled();
     }
 
@@ -97,4 +97,3 @@ public final class NoSwimChangeUtils {
         return false;
     }
 }
-

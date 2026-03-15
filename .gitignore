@@ -39,14 +39,5 @@ replay_*.log
 *.hprof
 *.jfr
 
-# private development scripts
-scripts/
-a.bat
-git-filter-clean.py
-
 # local temp sources / caches
 .tmp/
-
-# MACRO_START - 私有macro功能模块（不提交到GitHub）
-src/main/java/com/shyeuar/baity/features/AutoFish.java
-# MACRO_END

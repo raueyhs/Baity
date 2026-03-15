@@ -3,7 +3,7 @@ package com.shyeuar.baity.mixin;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.shyeuar.baity.utils.NoSwimChangeUtils;
+import com.shyeuar.baity.utils.NoSwimPoseUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Camera;
@@ -21,21 +21,21 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-public class NoSwimChangeMixin {
+public class NoSwimPoseMixin {
 
     @Mixin(AvatarRenderer.class)
     public static class PlayerRendererTransformMixin {
 
         @Inject(method = "setupRotations", at = @At("HEAD"))
         private void baity$preventSwimTransform(AvatarRenderState state, PoseStack matrixStack, float f, float g, CallbackInfo ci) {
-            if (!NoSwimChangeUtils.isSelfPlayerById(state.id)) return;
-            if (!NoSwimChangeUtils.isFeatureActive()) return;
+            if (!NoSwimPoseUtils.isSelfPlayerById(state.id)) return;
+            if (!NoSwimPoseUtils.isFeatureActive()) return;
 
             if (state.isVisuallySwimming || state.swimAmount > 0.0F) {
                 state.isVisuallySwimming = false;
                 state.swimAmount = 0.0F;
 
-                if (NoSwimChangeUtils.isSneaking()) {
+                if (NoSwimPoseUtils.isSneaking()) {
                     state.isCrouching = true;
                 }
             }
@@ -48,14 +48,14 @@ public class NoSwimChangeMixin {
         @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V",
                 at = @At("HEAD"))
         private void baity$modifySwimmingPose(AvatarRenderState state, CallbackInfo ci) {
-            if (!NoSwimChangeUtils.isSelfPlayerById(state.id)) return;
-            if (!NoSwimChangeUtils.isFeatureActive()) return;
+            if (!NoSwimPoseUtils.isSelfPlayerById(state.id)) return;
+            if (!NoSwimPoseUtils.isFeatureActive()) return;
 
             if (state.isVisuallySwimming || state.swimAmount > 0.0F) {
                 state.isVisuallySwimming = false;
                 state.swimAmount = 0.0F;
 
-                if (NoSwimChangeUtils.isSneaking()) {
+                if (NoSwimPoseUtils.isSneaking()) {
                     state.isCrouching = true;
                 }
             }
@@ -71,8 +71,8 @@ public class NoSwimChangeMixin {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null || focusedEntity != mc.player) return original;
 
-            if (NoSwimChangeUtils.shouldApplyEyeHeightChange()) {
-                return NoSwimChangeUtils.STANDING_EYE_HEIGHT;
+            if (NoSwimPoseUtils.shouldApplyEyeHeightChange()) {
+                return NoSwimPoseUtils.STANDING_EYE_HEIGHT;
             }
 
             return original;
@@ -86,8 +86,8 @@ public class NoSwimChangeMixin {
         private void baity$adjustNameTagHeight(AvatarRenderState state, com.mojang.blaze3d.vertex.PoseStack matrices, net.minecraft.client.renderer.SubmitNodeCollector queue, net.minecraft.client.renderer.state.CameraRenderState cameraState, CallbackInfo ci) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null) return;
-            if (!NoSwimChangeUtils.isSelfPlayerById(state.id)) return;
-            if (!NoSwimChangeUtils.isFeatureActive()) return;
+            if (!NoSwimPoseUtils.isSelfPlayerById(state.id)) return;
+            if (!NoSwimPoseUtils.isFeatureActive()) return;
             if (mc.player.getPose() != Pose.SWIMMING) return;
 
             matrices.translate(0, 1.2, 0);
@@ -105,11 +105,11 @@ public class NoSwimChangeMixin {
             
             Entity self = (Entity) (Object) this;
             if (!(self instanceof Player)) return;
-            if (!NoSwimChangeUtils.isSelfPlayer(self)) return;
+            if (!NoSwimPoseUtils.isSelfPlayer(self)) return;
 
-            if (NoSwimChangeUtils.shouldApplyEyeHeightChange()) {
+            if (NoSwimPoseUtils.shouldApplyEyeHeightChange()) {
                 double x = mc.player.getX();
-                double y = mc.player.getY() + NoSwimChangeUtils.STANDING_EYE_HEIGHT;
+                double y = mc.player.getY() + NoSwimPoseUtils.STANDING_EYE_HEIGHT;
                 double z = mc.player.getZ();
                 cir.setReturnValue(new Vec3(x, y, z));
             }
@@ -124,10 +124,10 @@ public class NoSwimChangeMixin {
             
             Entity self = (Entity) (Object) this;
             if (!(self instanceof Player)) return;
-            if (!NoSwimChangeUtils.isSelfPlayer(self)) return;
+            if (!NoSwimPoseUtils.isSelfPlayer(self)) return;
 
-            if (NoSwimChangeUtils.shouldApplyEyeHeightChange()) {
-                cir.setReturnValue(NoSwimChangeUtils.STANDING_EYE_HEIGHT);
+            if (NoSwimPoseUtils.shouldApplyEyeHeightChange()) {
+                cir.setReturnValue(NoSwimPoseUtils.STANDING_EYE_HEIGHT);
             }
         }
     }

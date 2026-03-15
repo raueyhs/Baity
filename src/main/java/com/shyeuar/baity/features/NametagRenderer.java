@@ -89,8 +89,8 @@ public class NametagRenderer implements WorldRenderEvents.AfterEntities {
         try {
             float heightOffset = player.getBbHeight() + 0.5f;
             
-            Module noSwimChangeModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("NoSwimChange");
-            if (noSwimChangeModule != null && noSwimChangeModule.isEnabled()) {
+            Module noSwimPoseModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("NoSwimPose");
+            if (noSwimPoseModule != null && noSwimPoseModule.isEnabled()) {
                 if (player == mc.player && player.getPose() == net.minecraft.world.entity.Pose.SWIMMING) {
                     heightOffset = 1.8f + 0.5f;
                 }

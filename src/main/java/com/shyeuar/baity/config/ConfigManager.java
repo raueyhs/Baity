@@ -48,7 +48,7 @@ public class ConfigManager {
     public static int fancyDmgSplashCritGradientEnd = 0xFF5555;
     public static int fancyDmgSplashNormalDamageColor = 0xFFFFFF;
     
-    public static boolean noSwimChangeEnabled = false; 
+    public static boolean noSwimPoseEnabled = false; 
     
     public static boolean cullingEnabled = false;
     public static boolean cullingHideDyingMob = false;
@@ -220,9 +220,9 @@ public class ConfigManager {
         registerField("FancyDmgSplashNormalDamageColor", Integer.class,
             c -> ConfigManager.fancyDmgSplashNormalDamageColor,
             (c, v) -> ConfigManager.fancyDmgSplashNormalDamageColor = (Integer) v);
-        registerField("NoSwimChange", Boolean.class,
-            c -> ConfigManager.noSwimChangeEnabled,
-            (c, v) -> ConfigManager.noSwimChangeEnabled = (Boolean) v);
+        registerField("NoSwimPose", Boolean.class,
+            c -> ConfigManager.noSwimPoseEnabled,
+            (c, v) -> ConfigManager.noSwimPoseEnabled = (Boolean) v);
         registerField("Culling", Boolean.class,
             c -> ConfigManager.cullingEnabled,
             (c, v) -> ConfigManager.cullingEnabled = (Boolean) v);

@@ -1,4 +1,4 @@
-package com.shyeuar.baity.api;
+package com.shyeuar.baity.render.interfaces;
 
 public interface CameraRenderStateInterface {
 	int baity$getId();

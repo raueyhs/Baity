@@ -139,9 +139,9 @@ public class ModuleManager {
         );
         
         ModuleRegistry.registerSimpleModule(
-            "NoSwimChange", "NoSwimChange", ModuleCategory.QOL,
-            () -> ConfigManager.noSwimChangeEnabled,
-            val -> ConfigManager.noSwimChangeEnabled = val
+            "NoSwimPose", "NoSwimPose", ModuleCategory.QOL,
+            () -> ConfigManager.noSwimPoseEnabled,
+            val -> ConfigManager.noSwimPoseEnabled = val
         );
         
         ModuleRegistry.registerModuleWithValues(
@@ -494,7 +494,7 @@ public class ModuleManager {
         TooltipManager.registerTooltip("chroma size", "Width of each chroma color band.", 0xFFFFFF);
         TooltipManager.registerTooltip("chroma speed", "Speed that chroma colors move.", 0xFFFFFF);
         TooltipManager.registerTooltip("FancyCreeperVeil", "Replace the wither cloak ability creeper model to a fancy one.", 0xFFFFFF);
-        TooltipManager.registerTooltip("NoSwimChange", "Only disables the swimming pose and eye height change on your client.", 0xFFFFFF);
+        TooltipManager.registerTooltip("NoSwimPose", "Only disables the swimming pose and eye height change on your client.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoSwapAnimation", "Disable the animation of hotbar change.", 0xFFFFFF);
         TooltipManager.registerTooltip("2DdroppedItem", "Render dropped items as 2D sprites.", 0xFFFFFF);
         TooltipManager.registerTooltip("OldSneaking",

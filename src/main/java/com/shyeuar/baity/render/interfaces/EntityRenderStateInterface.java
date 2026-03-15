@@ -1,4 +1,4 @@
-package com.shyeuar.baity.api;
+package com.shyeuar.baity.render.interfaces;
 
 import net.minecraft.world.entity.EntityDimensions;
 

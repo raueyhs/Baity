@@ -7,6 +7,8 @@ import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.mixin.accessor.AvatarRenderStateAccessor;
 import com.shyeuar.baity.mixin.accessor.CameraRenderStateAccessor;
 import com.shyeuar.baity.mixin.accessor.PlayerAccessor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.HumanoidModel;
@@ -21,6 +23,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -28,6 +31,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 public class OldSneakingMixin {
 	
@@ -145,6 +149,49 @@ public class OldSneakingMixin {
 		@Unique
 		private static float baity$interpolateCameraEyeHeight(CameraRenderStateAccessor cameraAccessor) {
 			return Mth.lerp(cameraAccessor.baity$getPartialTickTime(), cameraAccessor.baity$getOldEyeHeight(), cameraAccessor.baity$getEyeHeight());
+		}
+	}
+	
+	@Mixin(Entity.class)
+	public static abstract class OldSneakingEntityEyeHeightMixin {
+		
+		@Inject(method = "getEyePosition(F)Lnet/minecraft/world/phys/Vec3;", at = @At("HEAD"), cancellable = true)
+		private void baity$modifyEyePositionForRaycast(float tickDelta, CallbackInfoReturnable<Vec3> cir) {
+			if (FabricLoader.getInstance().getEnvironmentType() != EnvType.CLIENT) return;
+			if (!ConfigManager.oldSneakingEnabled) return;
+			
+			Minecraft mc = Minecraft.getInstance();
+			if (mc == null || mc.player == null) return;
+			
+			Entity self = (Entity) (Object) this;
+			if (!(self instanceof Player)) return;
+			if (self != mc.player) return;
+			
+			if (self.isCrouching() && 
+					((PlayerAccessor) self).baity$canChangeIntoPose(Pose.STANDING)) {
+				double x = self.getX();
+				double y = self.getY() + (STANDING_EYE_HEIGHT_MULTIPLIER * ((Player) self).getScale());
+				double z = self.getZ();
+				cir.setReturnValue(new Vec3(x, y, z));
+			}
+		}
+		
+		@Inject(method = "getEyeHeight(Lnet/minecraft/world/entity/Pose;)F", at = @At("HEAD"), cancellable = true)
+		private void baity$modifyEyeHeightForRaycast(Pose pose, CallbackInfoReturnable<Float> cir) {
+			if (FabricLoader.getInstance().getEnvironmentType() != EnvType.CLIENT) return;
+			if (!ConfigManager.oldSneakingEnabled) return;
+			
+			Minecraft mc = Minecraft.getInstance();
+			if (mc == null || mc.player == null) return;
+			
+			Entity self = (Entity) (Object) this;
+			if (!(self instanceof Player)) return;
+			if (self != mc.player) return;
+			
+			if (self.isCrouching() && 
+					((PlayerAccessor) self).baity$canChangeIntoPose(Pose.STANDING)) {
+				cir.setReturnValue(STANDING_EYE_HEIGHT_MULTIPLIER * ((Player) self).getScale());
+			}
 		}
 	}
 }

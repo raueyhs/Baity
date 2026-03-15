@@ -1,6 +1,6 @@
 package com.shyeuar.baity.mixin;
 
-import com.shyeuar.baity.api.EntityRenderStateInterface;
+import com.shyeuar.baity.render.interfaces.EntityRenderStateInterface;
 import net.minecraft.client.renderer.entity.state.ArmedEntityRenderState;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.world.entity.Avatar;
