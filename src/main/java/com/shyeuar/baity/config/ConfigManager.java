@@ -4,6 +4,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ConfigManager {
+    private static final long SAVE_DEBOUNCE_MS = 750L;
+
     public static boolean smolpeopleMode = false;
     public static double smolLimbSwingSpeed = 2.5;
     public static String smolFriendList = "";
@@ -39,6 +41,12 @@ public class ConfigManager {
     
     public static boolean radialMenuEnabled = true;
     public static int radialMenuKeybind = 4;
+    public static boolean chatChannelSwitcherEnabled = false;
+    public static String chatChannelSwitcherLastChannel = "";
+    public static double chatChannelSwitcherX = Double.NaN;
+    public static double chatChannelSwitcherY = Double.NaN;
+    public static float chatChannelSwitcherScale = 1.0f;
+    public static boolean chatChannelSwitcherHintHidden = false;
     
     public static boolean fancyDmgSplashEnabled = false;
     public static boolean fancyDmgSplashGenshinReaction = false;
@@ -98,6 +106,8 @@ public class ConfigManager {
     private static final String CONFIG_FILE_NAME = "config.txt";
 
     private static final Map<String, SettingField> CONFIG_FIELDS = new HashMap<>();
+    private static boolean pendingSave = false;
+    private static long pendingSaveAt = 0L;
     
     static {
         registerField("SmolPeople", Boolean.class, 
@@ -199,6 +209,24 @@ public class ConfigManager {
         registerField("RadialMenuKeybind", Integer.class,
             c -> ConfigManager.radialMenuKeybind,
             (c, v) -> ConfigManager.radialMenuKeybind = (Integer) v);
+        registerField("ChatChannelSwitcher", Boolean.class,
+            c -> ConfigManager.chatChannelSwitcherEnabled,
+            (c, v) -> ConfigManager.chatChannelSwitcherEnabled = (Boolean) v);
+        registerField("ChatChannelSwitcherLastChannel", String.class,
+            c -> ConfigManager.chatChannelSwitcherLastChannel,
+            (c, v) -> ConfigManager.chatChannelSwitcherLastChannel = (String) v);
+        registerField("ChatChannelSwitcherX", Double.class,
+            c -> ConfigManager.chatChannelSwitcherX,
+            (c, v) -> ConfigManager.chatChannelSwitcherX = (Double) v);
+        registerField("ChatChannelSwitcherY", Double.class,
+            c -> ConfigManager.chatChannelSwitcherY,
+            (c, v) -> ConfigManager.chatChannelSwitcherY = (Double) v);
+        registerField("ChatChannelSwitcherScale", Float.class,
+            c -> ConfigManager.chatChannelSwitcherScale,
+            (c, v) -> ConfigManager.chatChannelSwitcherScale = (Float) v);
+        registerField("ChatChannelSwitcherHintHidden", Boolean.class,
+            c -> ConfigManager.chatChannelSwitcherHintHidden,
+            (c, v) -> ConfigManager.chatChannelSwitcherHintHidden = (Boolean) v);
         registerField("FancyDmgSplash", Boolean.class,
             c -> ConfigManager.fancyDmgSplashEnabled,
             (c, v) -> ConfigManager.fancyDmgSplashEnabled = (Boolean) v);
@@ -328,6 +356,8 @@ public class ConfigManager {
     }
 
     public static void saveConfig() {
+        pendingSave = false;
+        pendingSaveAt = 0L;
         try {
             java.nio.file.Path baityDir = BaityConfigDir.getBaityConfigDir();
             if (!java.nio.file.Files.exists(baityDir)) {
@@ -349,6 +379,23 @@ public class ConfigManager {
         } catch (java.io.IOException e) {
             System.err.println("Failed to save Baity config: " + e.getMessage());
         }
+    }
+
+    public static void requestSave() {
+        pendingSave = true;
+        pendingSaveAt = System.currentTimeMillis() + SAVE_DEBOUNCE_MS;
+    }
+
+    public static void flushPendingSave() {
+        if (!pendingSave) {
+            return;
+        }
+
+        if (System.currentTimeMillis() < pendingSaveAt) {
+            return;
+        }
+
+        saveConfig();
     }
 
     public static void loadConfig() {

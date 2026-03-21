@@ -43,6 +43,7 @@ public class Baity implements ClientModInitializer {
         ModuleInitializer.initializeModules();
         
         com.shyeuar.baity.features.fishing.FishHookTimer.init();
+        com.shyeuar.baity.features.chat.ChatChannelSwitcher.init();
         
         com.shyeuar.baity.features.blockanimation.BlockAnimationManager.register();
         
@@ -50,6 +51,7 @@ public class Baity implements ClientModInitializer {
         
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             long windowHandle = client.getWindow().handle();
+            ConfigManager.flushPendingSave();
             
             if (openGuiNextTick) {
                 openGuiNextTick = false;

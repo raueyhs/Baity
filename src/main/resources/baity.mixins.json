@@ -22,6 +22,7 @@
     "CustomHandHoldingMixin$HeldItemTransformMixin",
     "CustomHandHoldingMixin$LevelRendererTickMixin",
     "RadialMenuMouseMixin",
+    "ChatChannelSwitcherMixin",
     "WarpMenuMovementMixin",
     "NoSwimPoseMixin$PlayerRendererTransformMixin",
     "NoSwimPoseMixin$PlayerModelPoseMixin",

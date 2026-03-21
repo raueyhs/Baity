@@ -199,6 +199,12 @@ public class ModuleManager {
                 )
             }
         );
+
+        ModuleRegistry.registerSimpleModule(
+            "ChatChannelSwitcher", "ChatChannelSwitcher", ModuleCategory.QOL,
+            () -> ConfigManager.chatChannelSwitcherEnabled,
+            val -> ConfigManager.chatChannelSwitcherEnabled = val
+        );
         
         ModuleRegistry.registerModuleWithValues(
             "Reminder", "Reminder", ModuleCategory.QOL,
@@ -478,6 +484,7 @@ public class ModuleManager {
         TooltipManager.registerTooltip("BlockAnimation", "Restore the blocking animation of version 1.7.", 0xFFFFFF);
         TooltipManager.registerTooltip("PepCat", "Play an animation and give pep talk when you died. It's a skill issue!", 0xFFFFFF);
         TooltipManager.registerTooltip("RadialMenu", "A roulette tool that invokes a shortcut command.", 0xFFFFFF);
+        TooltipManager.registerTooltip("ChatChannelSwitcher", "Show quick chat-channel buttons.", 0xFFFFFF);
         TooltipManager.registerTooltip("meowalert", 
             MessageUtils.createColoredText("play a ", 0xFFFFFF)
                 .append(MessageUtils.createColoredText("ᯠ₋ ̫ ₋.ᯄ ੭", 0xFFC0CB))
