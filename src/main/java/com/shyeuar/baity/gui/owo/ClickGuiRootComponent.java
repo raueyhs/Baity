@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.function.Function;
 
 public class ClickGuiRootComponent extends BaseComponent {
+    private static final float VERSION_RIGHT_PADDING = 8.0f;
     
     private final ClickGuiState state;
     private final Theme theme;
@@ -591,7 +592,7 @@ public class ClickGuiRootComponent extends BaseComponent {
     
     private void renderWatermark(OwoRenderAdapter adapter, Minecraft client, float mouseX, float mouseY) {
         String prefix = "Baity by ";
-        String handleName = "@raueyhs";
+        String handleName = "@11YearCookieBuff";
 
         float wmScale = 0.70f;
         int prefixWidth = client.font.width(prefix);
@@ -652,7 +653,7 @@ public class ClickGuiRootComponent extends BaseComponent {
         int currentVersionWidth = client.font.width(currentVersion);
         float scaledCurrentVersionWidth = versionScale * currentVersionWidth;
         
-        float baseX = ClickGuiState.WIDTH - scaledCurrentVersionWidth - 8;
+        float baseX = ClickGuiState.WIDTH - scaledCurrentVersionWidth - VERSION_RIGHT_PADDING;
         float baseY = ClickGuiState.HEIGHT - (int)(client.font.lineHeight * versionScale) - 8;
         
         var matrices = guiGraphics.pose();
@@ -710,14 +711,8 @@ public class ClickGuiRootComponent extends BaseComponent {
                     }
                 } else if ("error".equals(checkStatus)) {
                     showFeedback = true;
-                    String errorMsg = state.getLatestVersion();
-                    if (errorMsg != null && errorMsg.equals("Unknown error")) {
-                        displayText = "Unknown error";
-                        isError = true;
-                    } else {
-                        displayText = "It's already the latest version！Network error！";
-                        isError = true;
-                    }
+                    displayText = "Network error！";
+                    isError = true;
                 } else if ("update_available".equals(checkStatus)) {
                     showFeedback = true;
                     String latest = state.getLatestVersion();
@@ -774,24 +769,9 @@ public class ClickGuiRootComponent extends BaseComponent {
                                 versionColor, false);
             }
         } else if (showFeedback && isError) {
-            String errorMsg = state.getLatestVersion();
-            if (errorMsg != null && errorMsg.equals("Unknown error")) {
-                guiGraphics.drawString(client.font, displayText,
-                                (int)(renderX / versionScale), (int)(baseY / versionScale),
-                                com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR, false);
-            } else {
-                String prefix = "It's already the latest version！";
-                String suffix = "Network error！";
-                int prefixWidth = client.font.width(prefix);
-                
-                guiGraphics.drawString(client.font, prefix,
-                                (int)(renderX / versionScale), (int)(baseY / versionScale),
-                                0xFFFFFF00, false);
-                guiGraphics.drawString(client.font, suffix,
-                                (int)((renderX + prefixWidth * versionScale) / versionScale),
-                                (int)(baseY / versionScale),
-                                com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR, false);
-            }
+            guiGraphics.drawString(client.font, displayText,
+                            (int)(renderX / versionScale), (int)(baseY / versionScale),
+                            com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR, false);
         } else if (showFeedback) {
             guiGraphics.drawString(client.font, displayText,
                             (int)(renderX / versionScale), (int)(baseY / versionScale),

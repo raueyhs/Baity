@@ -133,37 +133,35 @@ public class ClickGui extends BaseOwoScreen<FlowLayout> {
         
         Minecraft mc = this.minecraft;
         com.shyeuar.baity.utils.VersionCheckUtils.checkVersionAsync(currentVersion).thenAccept(result -> {
-            if (mc != null && mc.level != null) {
-                mc.schedule(() -> {
-                    state.setVersionChecking(false);
-                    if (result.hasError) {
-                        state.setVersionCheckStatus(null);
-                        state.setAutoCheck(false);
-                        return;
-                    }
-                    
-                    if (result.isLatest) {
-                        state.setVersionCheckStatus("latest");
-                    } else {
-                        state.setVersionCheckStatus("update_available");
-                        state.setLatestVersion(result.latestVersion);
-                    }
+            if (mc == null) {
+                return;
+            }
+            mc.schedule(() -> {
+                state.setVersionChecking(false);
+                if (result.hasError) {
+                    state.setVersionCheckStatus("error");
+                    state.setLatestVersion(null);
                     state.setVersionCheckStartTime(System.currentTimeMillis());
-                });
-            } else {
-                state.setVersionChecking(false);
-                state.setAutoCheck(false);
-            }
-        }).exceptionally(throwable -> {
-            if (this.minecraft != null && this.minecraft.level != null) {
-                this.minecraft.schedule(() -> {
-                    state.setVersionChecking(false);
                     state.setAutoCheck(false);
-                });
-            } else {
+                    return;
+                }
+                
+                if (result.isLatest) {
+                    state.setVersionCheckStatus("latest");
+                } else {
+                    state.setVersionCheckStatus("update_available");
+                    state.setLatestVersion(result.latestVersion);
+                }
+                state.setVersionCheckStartTime(System.currentTimeMillis());
+            });
+        }).exceptionally(throwable -> {
+            if (this.minecraft == null) {
+                return null;
+            }
+            this.minecraft.schedule(() -> {
                 state.setVersionChecking(false);
                 state.setAutoCheck(false);
-            }
+            });
             return null;
         });
     }

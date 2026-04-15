@@ -25,6 +25,7 @@ import java.util.function.BiConsumer;
 import net.minecraft.client.Minecraft;
 
 public class ClickGuiInputHandler {
+    private static final float VERSION_RIGHT_PADDING = 8.0f;
     
     private final ClickGuiState state;
     private final TimerUtils timer;
@@ -625,7 +626,7 @@ public class ClickGuiInputHandler {
         int versionRawWidth = client.font.width(currentVersion);
         float scaledWidth = versionScale * versionRawWidth;
         
-        float baseX = ClickGuiState.WIDTH - scaledWidth - 8;
+        float baseX = ClickGuiState.WIDTH - scaledWidth - VERSION_RIGHT_PADDING;
         float baseY = ClickGuiState.HEIGHT - 8 - (int)(client.font.lineHeight * versionScale) - 2;
         float baseHeight = (int)(client.font.lineHeight * versionScale);
         float lineY = baseY + baseHeight + 1;
@@ -646,34 +647,25 @@ public class ClickGuiInputHandler {
             state.setVersionCheckStartTime(System.currentTimeMillis());
             Minecraft mc = client;
             VersionCheckUtils.checkVersionAsync(currentVersion).thenAccept(result -> {
-                if (mc != null && mc.level != null) {
-                    mc.schedule(() -> {
-                        state.setVersionChecking(false);
-                        if (result.hasError) {
-                            state.setVersionCheckStatus("error");
-                            state.setVersionCheckStartTime(System.currentTimeMillis());
-                            return;
-                        }
-                        
-                        if (result.isLatest) {
-                            state.setVersionCheckStatus("latest");
-                        } else {
-                            state.setVersionCheckStatus("update_available");
-                            state.setLatestVersion(result.latestVersion);
-                        }
+                mc.schedule(() -> {
+                    state.setVersionChecking(false);
+                    if (result.hasError) {
+                        state.setVersionCheckStatus("error");
+                        state.setLatestVersion(null);
                         state.setVersionCheckStartTime(System.currentTimeMillis());
-                    });
-                } else {
-                    state.setVersionChecking(false);
-                }
+                        return;
+                    }
+                    
+                    if (result.isLatest) {
+                        state.setVersionCheckStatus("latest");
+                    } else {
+                        state.setVersionCheckStatus("update_available");
+                        state.setLatestVersion(result.latestVersion);
+                    }
+                    state.setVersionCheckStartTime(System.currentTimeMillis());
+                });
             }).exceptionally(throwable -> {
-                if (client != null && client.level != null) {
-                    client.schedule(() -> {
-                        state.setVersionChecking(false);
-                    });
-                } else {
-                    state.setVersionChecking(false);
-                }
+                client.schedule(() -> state.setVersionChecking(false));
                 return null;
             });
             
@@ -708,7 +700,7 @@ public class ClickGuiInputHandler {
         int displayTextWidth = client.font.width(displayText);
         float scaledWidth = versionScale * displayTextWidth;
         
-        float baseX = ClickGuiState.WIDTH - scaledWidth - 8;
+        float baseX = ClickGuiState.WIDTH - scaledWidth - VERSION_RIGHT_PADDING;
         float baseY = ClickGuiState.HEIGHT - 8 - (int)(client.font.lineHeight * versionScale) - 2;
         float baseHeight = (int)(client.font.lineHeight * versionScale);
         
@@ -722,12 +714,16 @@ public class ClickGuiInputHandler {
             coords.mouseY >= versionY && coords.mouseY <= versionY + baseHeight) {
             
             try {
-                net.minecraft.Util.getPlatform().openUri(new java.net.URI("https://github.com/raueyhs/Baity/releases"));
+                String latestTag = latest;
+                if (!latestTag.startsWith("v") && !latestTag.startsWith("V")) {
+                    latestTag = "v" + latestTag;
+                }
+                net.minecraft.Util.getPlatform().openUri(new java.net.URI("https://github.com/raueyhs/Baity/releases/tag/" + latestTag));
                 return true;
             } catch (Exception e) {
                 if (client.player != null) {
                     client.player.displayClientMessage(
-                        net.minecraft.network.chat.Component.literal("无法打开浏览器，请手动访问: https://github.com/raueyhs/Baity/releases"),
+                        net.minecraft.network.chat.Component.literal("无法打开浏览器，请手动访问: https://github.com/raueyhs/Baity/releases/tag/" + latest),
                         false
                     );
                 }
@@ -809,7 +805,7 @@ public class ClickGuiInputHandler {
         if (client == null) return false;
 
         String prefix = "Baity by ";
-        String handleName = "@raueyhs";
+        String handleName = "@11YearCookieBuff";
         float wmScale = 0.70f;
 
         int prefixWidth = client.font.width(prefix);
@@ -833,11 +829,11 @@ public class ClickGuiInputHandler {
         if (!hovered) return false;
 
         try {
-            net.minecraft.Util.getPlatform().openUri(new java.net.URI("https://github.com/raueyhs"));
+            net.minecraft.Util.getPlatform().openUri(new java.net.URI("https://space.bilibili.com/522178337"));
         } catch (Exception e) {
             if (client.player != null) {
                 client.player.displayClientMessage(
-                    net.minecraft.network.chat.Component.literal("无法打开浏览器，请手动访问: https://github.com/raueyhs"),
+                    net.minecraft.network.chat.Component.literal("无法打开浏览器，请手动访问: https://space.bilibili.com/522178337"),
                     false
                 );
             }
