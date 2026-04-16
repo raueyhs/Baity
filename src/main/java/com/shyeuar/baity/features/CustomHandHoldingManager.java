@@ -176,11 +176,17 @@ public class CustomHandHoldingManager {
     }
 
     public void applyTransform(PoseStack poseStack, HumanoidArm hand) {
-        applyPositionAndRotation(poseStack, hand);
+        applyPosition(poseStack, hand);
+        applyRotation(poseStack, hand);
         applyScale(poseStack);
     }
 
     public void applyPositionAndRotation(PoseStack poseStack, HumanoidArm hand) {
+        applyPosition(poseStack, hand);
+        applyRotation(poseStack, hand);
+    }
+
+    public void applyPosition(PoseStack poseStack, HumanoidArm hand) {
         int handDirection = hand == HumanoidArm.RIGHT ? 1 : -1;
         
         poseStack.translate(
@@ -188,7 +194,11 @@ public class CustomHandHoldingManager {
             currentPosY,
             currentPosZ
         );
-        
+    }
+
+    public void applyRotation(PoseStack poseStack, HumanoidArm hand) {
+        int handDirection = hand == HumanoidArm.RIGHT ? 1 : -1;
+
         poseStack.mulPose(Axis.XP.rotationDegrees(currentRotX));
         poseStack.mulPose(Axis.YP.rotationDegrees(currentRotY * handDirection));
         poseStack.mulPose(Axis.ZP.rotationDegrees(currentRotZ * handDirection));

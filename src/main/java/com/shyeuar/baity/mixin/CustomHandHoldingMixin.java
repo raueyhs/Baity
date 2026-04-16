@@ -69,6 +69,30 @@ public class CustomHandHoldingMixin {
             method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
             at = @At(
                 value = "INVOKE",
+                target = "Lcom/mojang/blaze3d/vertex/PoseStack;pushPose()V",
+                shift = At.Shift.AFTER
+            )
+        )
+        private void baity$applyPositionOnly(AbstractClientPlayer player, float tickDelta, float pitch,
+                InteractionHand hand, float swingProgress, ItemStack item, float equipProgress,
+                com.mojang.blaze3d.vertex.PoseStack matrices, net.minecraft.client.renderer.SubmitNodeCollector queue,
+                int light, CallbackInfo ci) {
+            Module customHandHoldingModule = ModuleManager.getModuleByName("CustomHandHolding");
+            if (customHandHoldingModule == null || !customHandHoldingModule.isEnabled()) return;
+
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player == null || player != mc.player) return;
+            if (item.isEmpty()) return;
+
+            HumanoidArm arm = hand == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
+
+            CustomHandHoldingManager.getInstance().applyPosition(matrices, arm);
+        }
+
+        @Inject(
+            method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
+            at = @At(
+                value = "INVOKE",
                 target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V"
             )
         )
@@ -92,8 +116,9 @@ public class CustomHandHoldingMixin {
             }
 
             HumanoidArm arm = hand == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
-            
-            CustomHandHoldingManager.getInstance().applyTransform(matrices, arm);
+
+            CustomHandHoldingManager.getInstance().applyRotation(matrices, arm);
+            CustomHandHoldingManager.getInstance().applyScale(matrices);
         }
 
 
@@ -124,6 +149,7 @@ public class CustomHandHoldingMixin {
             }
 
             ci.cancel();
+            
             
             ItemInHandRendererAccessor accessor = (ItemInHandRendererAccessor) this;
             accessor.baity$callApplyItemArmTransform(poseStack, arm, equipProgress);
