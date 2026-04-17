@@ -4,11 +4,9 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import com.shyeuar.baity.utils.TickSchedulerUtils;
 import com.shyeuar.baity.utils.MessageUtils;
-import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
-import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
@@ -28,19 +26,10 @@ public class Reminder {
     private static final Pattern GOD_POTION_PATTERN = Pattern.compile(
         "You have a God Potion active! (\\d+) (Days?|Hours?|Minutes?|Mins?|Min) Use '/effects' to see the effects!"
     );
-    private static final Pattern SECTION_COLOR_CODE_PATTERN = Pattern.compile("(?i)\u00A7[0-9A-FK-ORX]");
-    private static final Pattern AMPERSAND_HEX_CODE_PATTERN = Pattern.compile("(?i)&#[0-9A-F]{6}");
-    
-    private static final long MEOW_COOLDOWN = 2000;
-    private static final float MEOW_VOLUME = 1.5F;
-    private static final float MEOW_PITCH = 1.0F;
     
     private boolean cookieAlreadyNotified = false;
     private boolean godPotionAlreadyNotified = false;
     private boolean previouslyInSkyBlock = false;
-    
-    private boolean meowAlertRegistered = false;
-    private long lastMeowTimestamp = 0;
     
     private int cookieSchedulerId = -1;
     private int godPotionSchedulerId = -1;
@@ -57,7 +46,6 @@ public class Reminder {
         if (reminder != null) {
             reminder.startCookieScheduler();
             reminder.startGodPotionScheduler();
-            reminder.registerMeowAlert();
         }
     }
     
@@ -78,57 +66,6 @@ public class Reminder {
                 tickGodPotionReminder();
             }
         }, 10, TimeUnit.SECONDS);
-    }
-    
-    private void registerMeowAlert() {
-        if (meowAlertRegistered) return;
-        
-        ClientReceiveMessageEvents.CHAT.register((message, signedMessage, sender, params, receptionTimestamp) -> {
-            com.shyeuar.baity.gui.module.Module reminderModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("Reminder");
-            if (reminderModule == null || !reminderModule.isEnabled()) return;
-            
-            boolean meowEnabled = com.shyeuar.baity.utils.ModuleUtils.getOptionBoolean(reminderModule, "meowalert", false);
-            if (!meowEnabled) return;
-            
-            Minecraft client = Minecraft.getInstance();
-            if (client.player == null) return;
-            
-            String fullMessage = message.getString();
-            String sentenceMessage = fullMessage.replace('\n', ' ').replace('\r', ' ');
-            
-            int colonIndex = sentenceMessage.indexOf(':');
-            if (colonIndex == -1) {
-                return;
-            }
-            
-            String afterColon = sentenceMessage.substring(colonIndex + 1).trim();
-            if (afterColon.isEmpty()) {
-                return;
-            }
-            
-            String playerName = client.player.getDisplayName() != null
-                    ? client.player.getDisplayName().getString()
-                    : client.player.getName().getString();
-            if (playerName == null || playerName.isEmpty()) {
-                return;
-            }
-            
-            String normalizedAfterColon = normalizeForMeowMatch(afterColon);
-            String normalizedPlayerName = normalizeForMeowMatch(playerName);
-            if (!normalizedPlayerName.isEmpty() && normalizedAfterColon.contains(normalizedPlayerName)) {
-                long currentTime = System.currentTimeMillis();
-                if (currentTime - lastMeowTimestamp > MEOW_COOLDOWN) {
-                    lastMeowTimestamp = currentTime;
-                    playMeowSound(client.player);
-                }
-            }
-        });
-        meowAlertRegistered = true;
-    }
-    
-    private void playMeowSound(net.minecraft.client.player.LocalPlayer player) {
-        player.playSound(net.minecraft.sounds.SoundEvents.CAT_AMBIENT, MEOW_VOLUME * 5.0f, MEOW_PITCH);
-        player.playSound(net.minecraft.sounds.SoundEvents.EXPERIENCE_ORB_PICKUP, MEOW_VOLUME * 5.0f, 5.0f);
     }
     
     private void tickCookieReminder() {
@@ -306,11 +243,9 @@ public class Reminder {
         
         boolean cookieEnabled = com.shyeuar.baity.utils.ModuleUtils.getOptionBoolean(reminderModule, "cookie buff reminder", false);
         boolean godPotionEnabled = com.shyeuar.baity.utils.ModuleUtils.getOptionBoolean(reminderModule, "god potion reminder", false);
-        boolean meowEnabled = com.shyeuar.baity.utils.ModuleUtils.getOptionBoolean(reminderModule, "meowalert", false);
         
         reminder.setCookieReminderEnabled(cookieEnabled);
         reminder.setGodPotionReminderEnabled(godPotionEnabled);
-        reminder.setMeowAlertEnabled(meowEnabled);
     }
     
     public boolean isCookieReminderEnabled() {
@@ -355,18 +290,4 @@ public class Reminder {
         }
     }
     
-    public boolean isMeowAlertEnabled() {
-        return com.shyeuar.baity.config.ConfigManager.reminderMeowAlertEnabled;
-    }
-    
-    public void setMeowAlertEnabled(boolean enabled) {
-        com.shyeuar.baity.config.ConfigManager.reminderMeowAlertEnabled = enabled;
-    }
-
-    private String normalizeForMeowMatch(String input) {
-        if (input == null || input.isEmpty()) return "";
-        String noSectionColor = SECTION_COLOR_CODE_PATTERN.matcher(input).replaceAll("");
-        String noAmpHex = AMPERSAND_HEX_CODE_PATTERN.matcher(noSectionColor).replaceAll("");
-        return noAmpHex.trim().toLowerCase(Locale.ROOT);
-    }
 }

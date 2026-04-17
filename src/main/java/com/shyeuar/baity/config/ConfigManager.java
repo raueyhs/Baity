@@ -26,7 +26,6 @@ public class ConfigManager {
     public static boolean reminderEnabled = false;
     public static boolean reminderCookieBuffEnabled = true;
     public static boolean reminderGodPotionEnabled = true;
-    public static boolean reminderMeowAlertEnabled = true;
     
     public static boolean customHandHoldingEnabled = false;
     public static double swingDuration = 6;
@@ -192,9 +191,6 @@ public class ConfigManager {
         registerField("GodPotionReminder", Boolean.class,
             c -> ConfigManager.reminderGodPotionEnabled,
             (c, v) -> ConfigManager.reminderGodPotionEnabled = (Boolean) v);
-        registerField("MeowAlert", Boolean.class,
-            c -> ConfigManager.reminderMeowAlertEnabled,
-            (c, v) -> ConfigManager.reminderMeowAlertEnabled = (Boolean) v);
         registerField("CustomHandHolding", Boolean.class,
             c -> ConfigManager.customHandHoldingEnabled,
             (c, v) -> ConfigManager.customHandHoldingEnabled = (Boolean) v);

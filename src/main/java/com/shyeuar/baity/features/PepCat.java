@@ -143,9 +143,9 @@ public class PepCat {
     
     
     private static void sendEncouragementMessage(LocalPlayer player) {
-        int idx = java.util.concurrent.ThreadLocalRandom.current().nextInt(4);
-        if (idx == lastRandomMessageIndex && 4 > 1) {
-            idx = (idx + 1) % 4;
+        int idx = java.util.concurrent.ThreadLocalRandom.current().nextInt(7);
+        if (idx == lastRandomMessageIndex && 7 > 1) {
+            idx = (idx + 1) % 7;
         }
         lastRandomMessageIndex = idx;
 
@@ -153,20 +153,32 @@ public class PepCat {
         String emoji;
         switch (idx) {
             case 0 -> {
-                text = "阎王爷翻了翻生死簿，备注栏写了个\"菜\"";
-                emoji = "( ͡° ͜ʖ ͡°)";
+                text = "它张嘴大笑，似乎在嘲笑你的失误，又或嘲笑死神的无能...";
+                emoji = "(´-ι_-｀)";
             }
             case 1 -> {
-                text = "这次复活，建议换个脑子试试";
-                emoji = "⌐■_■";
+                text = "死神能带走你的命，但带不走你的倔强...";
+                emoji = "(°∀°)ﾉ";
             }
             case 2 -> {
-                text = "路边的乌鸦都在讨论你刚才的走位";
-                emoji = "→_→";
+                text = "身体重新拼凑的感觉并不好受，像是把一堆零件强行塞进太小的盒子里，顺便还弄丢了几枚硬币...";
+                emoji = "(ﾟ∀。)";
+            }
+            case 3 -> {
+                text = "不是因为怜悯，是因为你老死在这儿...";
+                emoji = "(￣^￣)ゞ";
+            }
+            case 4 -> {
+                text = "用一种比较激烈的方式，测试一下这个世界的硬度。结论：挺硬...";
+                emoji = "(´;ω;)";
+            }
+            case 5 -> {
+                text = "屏幕前的你喝了一口水，屏幕里的你也站了起来。你们都有光明的未来...";
+                emoji = "(・∀・)";
             }
             default -> {
-                text = "您的操作已加入\"反面教材\"合集";
-                emoji = "(￣▽￣)";
+                text = "我其实想在死亡后自动打开千恋万花的...没有就启动原神... Ciallo~";
+                emoji = "(∠・ω< )⌒☆";
             }
         }
 

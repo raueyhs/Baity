@@ -475,6 +475,7 @@ export default {
     }
 
     if (request.method === "GET" && path === "/users.json") {
+      const indexObj = await readIndex(env);
       let requestUuid = "";
       if (!isAdminRequest) {
         const accessToken = request.headers.get("x-baity-token") || "";
@@ -492,7 +493,6 @@ export default {
           await appendReadLog(env, requestUuid, requestName, new Date().toISOString());
         }
       }
-      const indexObj = await readIndex(env);
       const uuids = Object.keys(indexObj);
       const users = {};
       const now = Date.now();

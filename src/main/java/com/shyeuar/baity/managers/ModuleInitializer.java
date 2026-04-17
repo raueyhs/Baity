@@ -16,7 +16,7 @@ public class ModuleInitializer {
         "focus player nametag",
         "transparentize other tags"
     );
-    private static final Set<String> REMINDER_OPTIONS = Set.of("cookie buff reminder", "god potion reminder", "meowalert");
+    private static final Set<String> REMINDER_OPTIONS = Set.of("cookie buff reminder", "god potion reminder");
     private static final Set<String> FANCYDMGSPLASH_OPTIONS = Set.of("genshin elemental reaction", "compact damage number");
     private static final Set<String> HIGHLIGHTS_OPTIONS = Set.of("shulker", "invisible bug");
     private static final Set<String> NODEBUFF_OPTIONS = Set.of("remove nausea", "remove blindness");
@@ -75,7 +75,6 @@ public class ModuleInitializer {
                     switch (v.getName()) {
                         case "cookie buff reminder" -> v.setValue(ConfigManager.reminderCookieBuffEnabled);
                         case "god potion reminder" -> v.setValue(ConfigManager.reminderGodPotionEnabled);
-                        case "meowalert" -> v.setValue(ConfigManager.reminderMeowAlertEnabled);
                     }
                 }
             }

@@ -221,8 +221,7 @@ public class ModuleManager {
             val -> ConfigManager.reminderEnabled = val,
             new Option[]{
                 new Option("cookie buff reminder", "cookie buff reminder", true, ModuleCategory.QOL),
-                new Option("god potion reminder", "god potion reminder", true, ModuleCategory.QOL),
-                withSeparator(new Option("meowalert", "meowalert", true, ModuleCategory.QOL))
+                new Option("god potion reminder", "god potion reminder", true, ModuleCategory.QOL)
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
@@ -234,12 +233,6 @@ public class ModuleManager {
                     "god potion reminder",
                     () -> ConfigManager.reminderGodPotionEnabled,
                     val -> ConfigManager.reminderGodPotionEnabled = (Boolean) val
-                ),
-                new ModuleRegistry.ValueConfigInfo(
-                    "meowalert",
-                    () -> ConfigManager.reminderMeowAlertEnabled,
-                    val -> ConfigManager.reminderMeowAlertEnabled = (Boolean) val,
-                    () -> com.shyeuar.baity.features.Reminder.updateSettings()
                 )
             }
         );
@@ -555,11 +548,6 @@ public class ModuleManager {
             MessageUtils.createColoredText("Show quick chat-channel buttons.", 0xFFFFFF)
                 .append(MessageUtils.createColoredText(" Click the channel button with the middle button to get the usage method.", 0xFFFF00))
         );
-        TooltipManager.registerTooltip("meowalert", 
-            MessageUtils.createColoredText("play a ", 0xFFFFFF)
-                .append(MessageUtils.createColoredText("ᯠ₋ ̫ ₋.ᯄ ੭", 0xFFC0CB))
-                .append(MessageUtils.createColoredText("meow~", 0xFFC0CB))
-                .append(MessageUtils.createColoredText(" when you are mentioned in chat.", 0xFFFFFF)));
         TooltipManager.registerTooltip("FishHookTimer",
             MessageUtils.createColoredText("Tip: You can DIY the timer UI by resources. Check ", 0xFFFF00)
                 .append(MessageUtils.createColoredText("config\\baity\\FishHookTimer_DIY_UI_Setup_Guide.txt", 0xADFF2F))
