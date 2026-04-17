@@ -49,6 +49,7 @@ public final class BaityPresenceSync {
     private static final int READ_TIMEOUT_MS = 10_000;
     private static final int NETWORK_RETRY_COUNT = 0;
     private static final long NETWORK_RETRY_BACKOFF_MS = 350L;
+    private static final long NETWORK_WARN_THROTTLE_MS = 60_000L;
     private static final String DEFAULT_SYNC_URL = "https://baity-presence-sync.1427637445.workers.dev/users.json";
     private static final String DEFAULT_SYNC_ACCESS_TOKEN = "baity_sync_read_v1_f4c9e7a2d1b84e73";
     private static final long SOFT_STALE_AFTER_MS = 3L * 24L * 60L * 60L * 1000L;
@@ -65,6 +66,9 @@ public final class BaityPresenceSync {
     private static volatile long nextTokenProvisionAllowedAt = 0L;
     private static final AtomicBoolean TOKEN_PROVISIONING = new AtomicBoolean(false);
     private static final AtomicBoolean CONNECTIVITY_CHECK_RUNNING = new AtomicBoolean(false);
+    private static final AtomicLong LAST_FETCH_EXCEPTION_WARN_AT = new AtomicLong(0L);
+    private static final AtomicLong LAST_REPORT_EXCEPTION_WARN_AT = new AtomicLong(0L);
+    private static final AtomicLong LAST_REGISTER_EXCEPTION_WARN_AT = new AtomicLong(0L);
 
     private static final AtomicBoolean MANUAL_SYNC_PENDING = new AtomicBoolean(false);
     private static final AtomicBoolean MANUAL_RESULT_SENT = new AtomicBoolean(false);
@@ -586,7 +590,7 @@ public final class BaityPresenceSync {
                 setAutoStartupResultIfUnset(-1);
                 return false;
             } catch (Exception e) {
-                LOGGER.warn("[PresenceSync] fetch exception, attempt={}, err={}", attempt + 1, e.toString());
+                logThrottledWarn(LAST_FETCH_EXCEPTION_WARN_AT, "[PresenceSync] fetch exception, attempt={}, err={}", attempt + 1, e.toString());
                 if (attempt < NETWORK_RETRY_COUNT && shouldRetryException(e)) {
                     sleepRetryBackoff();
                     continue;
@@ -738,7 +742,7 @@ public final class BaityPresenceSync {
                 }
                 return false;
             } catch (Exception e) {
-                LOGGER.warn("[PresenceSync] report exception, uuid={}, attempt={}, err={}", state.uuid(), attempt + 1, e.toString());
+                logThrottledWarn(LAST_REPORT_EXCEPTION_WARN_AT, "[PresenceSync] report exception, uuid={}, attempt={}, err={}", state.uuid(), attempt + 1, e.toString());
                 if (attempt < NETWORK_RETRY_COUNT && shouldRetryException(e)) {
                     sleepRetryBackoff();
                     continue;
@@ -819,7 +823,7 @@ public final class BaityPresenceSync {
                 }
                 return;
             } catch (Exception e) {
-                LOGGER.warn("[PresenceSync] register exception, uuid={}, attempt={}, err={}", state.uuid(), attempt + 1, e.toString());
+                logThrottledWarn(LAST_REGISTER_EXCEPTION_WARN_AT, "[PresenceSync] register exception, uuid={}, attempt={}, err={}", state.uuid(), attempt + 1, e.toString());
                 if (attempt < NETWORK_RETRY_COUNT && shouldRetryException(e)) {
                     sleepRetryBackoff();
                     continue;
@@ -857,6 +861,15 @@ public final class BaityPresenceSync {
             Thread.sleep(NETWORK_RETRY_BACKOFF_MS);
         } catch (InterruptedException ignored) {
             Thread.currentThread().interrupt();
+        }
+    }
+
+    private static void logThrottledWarn(AtomicLong gate, String pattern, Object... args) {
+        long now = System.currentTimeMillis();
+        long last = gate.get();
+        if (now - last < NETWORK_WARN_THROTTLE_MS) return;
+        if (gate.compareAndSet(last, now)) {
+            LOGGER.warn(pattern, args);
         }
     }
 

@@ -122,7 +122,6 @@ public class ModuleManager {
             () -> ConfigManager.smolpeopleMode,
             val -> ConfigManager.smolpeopleMode = val,
             new com.shyeuar.baity.gui.value.Value[]{
-                new Option("crosshair", "crosshair", true, ModuleCategory.MISC),
                 new com.shyeuar.baity.gui.value.SliderValue(
                         "limb swing speed", "Limb Swing Speed",
                         2.5, 0.5, 5.0, 0.1, ModuleCategory.MISC),
@@ -135,14 +134,73 @@ public class ModuleManager {
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
-                    "crosshair",
-                    () -> ConfigManager.crosshairMode,
-                    val -> ConfigManager.crosshairMode = (Boolean) val
-                ),
-                new ModuleRegistry.ValueConfigInfo(
                     "limb swing speed",
                     () -> ConfigManager.smolLimbSwingSpeed,
                     val -> ConfigManager.smolLimbSwingSpeed = ((Number) val).doubleValue()
+                )
+            }
+        );
+
+        ModuleRegistry.registerModuleWithValues(
+            "Crosshair", "Crosshair", ModuleCategory.MISC,
+            () -> ConfigManager.crosshairEnabled,
+            val -> ConfigManager.crosshairEnabled = val,
+            new com.shyeuar.baity.gui.value.Value[]{
+                new Option("show third-person-back crosshair", "show third-person-back crosshair", true, ModuleCategory.MISC),
+                new Option("custom crosshair", "custom crosshair", false, ModuleCategory.MISC),
+                new ButtonValue(
+                    "anima mode",
+                    "anima mode",
+                    ConfigManager.crosshairAnimaMode,
+                    "always",
+                    ModuleCategory.MISC,
+                    ButtonValue.ButtonValueType.TRIGGER,
+                    false
+                ),
+                new com.shyeuar.baity.gui.value.CrosshairPainterValue(
+                    "crosshair painter",
+                    "crosshair painter",
+                    ModuleCategory.MISC,
+                    31,
+                    ConfigManager.crosshairStaticLayer,
+                    ConfigManager.crosshairActiveLayer,
+                    !ConfigManager.crosshairPainterInitialized
+                ),
+                new Option("chroma crosshair", "chroma crosshair", false, ModuleCategory.MISC)
+            },
+            new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "show third-person-back crosshair",
+                    () -> ConfigManager.thirdPersonBackCrosshairEnabled,
+                    val -> ConfigManager.thirdPersonBackCrosshairEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "custom crosshair",
+                    () -> ConfigManager.customCrosshairEnabled,
+                    val -> ConfigManager.customCrosshairEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "anima mode",
+                    () -> ConfigManager.crosshairAnimaMode,
+                    val -> ConfigManager.crosshairAnimaMode = (String) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "crosshair painter",
+                    () -> "v1|31|" + (ConfigManager.crosshairStaticLayer == null ? "" : ConfigManager.crosshairStaticLayer) + "|" + (ConfigManager.crosshairActiveLayer == null ? "" : ConfigManager.crosshairActiveLayer),
+                    val -> {
+                        if (!(val instanceof String raw)) return;
+                        String[] parts = raw.split("\\|", 4);
+                        if (parts.length == 4) {
+                            ConfigManager.crosshairStaticLayer = parts[2];
+                            ConfigManager.crosshairActiveLayer = parts[3];
+                            ConfigManager.crosshairPainterInitialized = true;
+                        }
+                    }
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma crosshair",
+                    () -> ConfigManager.crosshairChromaEnabled,
+                    val -> ConfigManager.crosshairChromaEnabled = (Boolean) val
                 )
             }
         );
@@ -566,6 +624,10 @@ public class ModuleManager {
         TooltipManager.registerTooltip("chroma chroma", "Similar to saturation.", 0xFFFFFF);
         TooltipManager.registerTooltip("chroma size", "Width of each chroma color band.", 0xFFFFFF);
         TooltipManager.registerTooltip("chroma speed", "Speed that chroma colors move.", 0xFFFFFF);
+        TooltipManager.registerTooltip(
+            "chroma crosshair",
+            MessageUtils.createColoredText("Only active on custom crosshair.", 0xFFFF00)
+        );
         TooltipManager.registerTooltip("FancyCreeperVeil", "Replace the wither cloak ability creeper model to a fancy one.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoSwimPose", "Only disables the swimming pose and eye height change on your client.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoSwapAnimation", "Disable the animation of hotbar change.", 0xFFFFFF);

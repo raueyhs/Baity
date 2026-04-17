@@ -13,7 +13,14 @@ public class ConfigManager {
     public static boolean blockAnimationMode = false;
     public static boolean blockAnimationInteractAnimations = true;
     public static boolean blockAnimationNoReequipWhenUsing = true;
-    public static boolean crosshairMode = true;
+    public static boolean crosshairEnabled = false;
+    public static boolean customCrosshairEnabled = false;
+    public static boolean thirdPersonBackCrosshairEnabled = true;
+    public static boolean crosshairChromaEnabled = false;
+    public static String crosshairAnimaMode = "always"; // "always" | "bow only"
+    public static String crosshairStaticLayer = "";
+    public static String crosshairActiveLayer = "";
+    public static boolean crosshairPainterInitialized = false;
     public static boolean guiEnabled = true;
     public static int guiKeyCode = 345;
     public static boolean nametagEnabled = false;
@@ -149,9 +156,30 @@ public class ConfigManager {
         registerField("BlockAnimationNoReequipWhenUsing", Boolean.class,
             c -> ConfigManager.blockAnimationNoReequipWhenUsing,
             (c, v) -> ConfigManager.blockAnimationNoReequipWhenUsing = (Boolean) v);
-        registerField("Crosshair", Boolean.class,
-            c -> ConfigManager.crosshairMode,
-            (c, v) -> ConfigManager.crosshairMode = (Boolean) v);
+        registerField("CrosshairEnabled", Boolean.class,
+            c -> ConfigManager.crosshairEnabled,
+            (c, v) -> ConfigManager.crosshairEnabled = (Boolean) v);
+        registerField("CustomCrosshairEnabled", Boolean.class,
+            c -> ConfigManager.customCrosshairEnabled,
+            (c, v) -> ConfigManager.customCrosshairEnabled = (Boolean) v);
+        registerField("ThirdPersonBackCrosshair", Boolean.class,
+            c -> ConfigManager.thirdPersonBackCrosshairEnabled,
+            (c, v) -> ConfigManager.thirdPersonBackCrosshairEnabled = (Boolean) v);
+        registerField("CrosshairChromaEnabled", Boolean.class,
+            c -> ConfigManager.crosshairChromaEnabled,
+            (c, v) -> ConfigManager.crosshairChromaEnabled = (Boolean) v);
+        registerField("CrosshairAnimaMode", String.class,
+            c -> ConfigManager.crosshairAnimaMode,
+            (c, v) -> ConfigManager.crosshairAnimaMode = (String) v);
+        registerField("CrosshairStaticLayer", String.class,
+            c -> ConfigManager.crosshairStaticLayer,
+            (c, v) -> ConfigManager.crosshairStaticLayer = (String) v);
+        registerField("CrosshairActiveLayer", String.class,
+            c -> ConfigManager.crosshairActiveLayer,
+            (c, v) -> ConfigManager.crosshairActiveLayer = (String) v);
+        registerField("CrosshairPainterInitialized", Boolean.class,
+            c -> ConfigManager.crosshairPainterInitialized,
+            (c, v) -> ConfigManager.crosshairPainterInitialized = (Boolean) v);
         registerField("ClickGUI", Boolean.class,
             c -> ConfigManager.guiEnabled,
             (c, v) -> ConfigManager.guiEnabled = (Boolean) v);
@@ -502,6 +530,8 @@ public class ConfigManager {
                 legacyKeyAliases.put("ChromaOwnNameChromaChroma", "NickTweaksChromaChroma");
                 legacyKeyAliases.put("ChromaOwnNameChromaSize", "NickTweaksChromaSize");
                 legacyKeyAliases.put("ChromaOwnNameChromaSpeed", "NickTweaksChromaSpeed");
+                legacyKeyAliases.put("Crosshair", "ThirdPersonBackCrosshair");
+                legacyKeyAliases.put("ThirdPersonCrosshair", "ThirdPersonBackCrosshair");
                 
                 for (String line : lines) {
                     if (line.trim().isEmpty()) continue;
@@ -545,9 +575,69 @@ public class ConfigManager {
             if (needSave) {
                 saveConfig();
             }
+
+            if (!ConfigManager.crosshairPainterInitialized
+                && (ConfigManager.crosshairStaticLayer == null || ConfigManager.crosshairStaticLayer.isBlank())
+                && (ConfigManager.crosshairActiveLayer == null || ConfigManager.crosshairActiveLayer.isBlank())) {
+                int size = 31;
+                java.util.BitSet sl = new java.util.BitSet(size * size);
+                java.util.BitSet al = new java.util.BitSet(size * size);
+                seedDefaultCrosshairStaticLayer(sl, size);
+                seedDefaultCrosshairActiveLayer(al, size);
+                ConfigManager.crosshairStaticLayer = encodeCrosshairBits(sl, size);
+                ConfigManager.crosshairActiveLayer = encodeCrosshairBits(al, size);
+                ConfigManager.crosshairPainterInitialized = true;
+                saveConfig();
+            }
         } catch (java.io.IOException e) {
             System.err.println("Failed to load Baity config: " + e.getMessage());
         }
+    }
+
+    private static void seedDefaultCrosshairStaticLayer(java.util.BitSet layer, int size) {
+        int c = size / 2;
+        layer.set(c * size + c);
+        if (c - 1 >= 0) layer.set((c - 1) * size + c);
+        if (c + 1 < size) layer.set((c + 1) * size + c);
+        if (c - 1 >= 0) layer.set(c * size + (c - 1));
+        if (c + 1 < size) layer.set(c * size + (c + 1));
+    }
+
+    private static void seedDefaultCrosshairActiveLayer(java.util.BitSet layer, int size) {
+        int c = size / 2;
+        for (int d = 2; d <= 4; d++) {
+            int upY = c - d;
+            int downY = c + d;
+            int leftX = c - d;
+            int rightX = c + d;
+            if (upY >= 0) layer.set(upY * size + c);
+            if (downY < size) layer.set(downY * size + c);
+            if (leftX >= 0) layer.set(c * size + leftX);
+            if (rightX < size) layer.set(c * size + rightX);
+        }
+    }
+
+    private static String encodeCrosshairBits(java.util.BitSet bits, int size) {
+        int total = size * size;
+        if (bits.isEmpty()) return "";
+        final char[] ALPH = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_".toCharArray();
+        StringBuilder out = new StringBuilder((total + 5) / 6);
+        int acc = 0;
+        int accBits = 0;
+        for (int i = 0; i < total; i++) {
+            int bit = bits.get(i) ? 1 : 0;
+            acc |= (bit << accBits);
+            accBits++;
+            if (accBits == 6) {
+                out.append(ALPH[acc & 63]);
+                acc = 0;
+                accBits = 0;
+            }
+        }
+        if (accBits > 0) {
+            out.append(ALPH[acc & 63]);
+        }
+        return out.toString();
     }
     
     private static Object parseValue(String valueStr, Class<?> type) {

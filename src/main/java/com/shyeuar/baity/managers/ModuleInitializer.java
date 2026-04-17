@@ -8,7 +8,8 @@ import java.util.Set;
 
 public class ModuleInitializer {
     
-    private static final Set<String> SMOLPEOPLE_OPTIONS = Set.of("crosshair");
+    private static final Set<String> SMOLPEOPLE_OPTIONS = Set.of();
+    private static final Set<String> CROSSHAIR_OPTIONS = Set.of("show third-person-back crosshair", "custom crosshair", "chroma crosshair");
     private static final Set<String> PLAYERESP_OPTIONS = Set.of(
         "show distance",
         "show own nametag",
@@ -23,6 +24,7 @@ public class ModuleInitializer {
     
     public static void initializeModules() {
         initializeSmolPeople();
+        initializeCrosshair();
         initializeBlockAnimation();
         initializePepCat();
         initializeReminder();
@@ -44,7 +46,22 @@ public class ModuleInitializer {
             for (Value v : smolPeople.getValues()) {
                 if (SMOLPEOPLE_OPTIONS.contains(v.getName())) {
                     switch (v.getName()) {
-                        case "crosshair" -> v.setValue(ConfigManager.crosshairMode);
+                    }
+                }
+            }
+        }
+    }
+
+    private static void initializeCrosshair() {
+        Module crosshair = ModuleManager.getModuleByName("Crosshair");
+        if (crosshair != null) {
+            crosshair.setEnabled(ConfigManager.crosshairEnabled);
+            for (Value v : crosshair.getValues()) {
+                if (CROSSHAIR_OPTIONS.contains(v.getName())) {
+                    switch (v.getName()) {
+                        case "custom crosshair" -> v.setValue(ConfigManager.customCrosshairEnabled);
+                        case "show third-person-back crosshair" -> v.setValue(ConfigManager.thirdPersonBackCrosshairEnabled);
+                        case "chroma crosshair" -> v.setValue(ConfigManager.crosshairChromaEnabled);
                     }
                 }
             }

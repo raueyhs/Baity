@@ -5,6 +5,7 @@ import com.shyeuar.baity.gui.theme.Theme;
 import com.shyeuar.baity.gui.value.Value;
 import com.shyeuar.baity.gui.value.ValueStyle;
 import com.shyeuar.baity.gui.value.ButtonValue;
+import com.shyeuar.baity.gui.value.CrosshairPainterValue;
 import com.shyeuar.baity.gui.value.GradientEditorValue;
 import com.shyeuar.baity.gui.value.GroupValue;
 import com.shyeuar.baity.gui.value.SliderValue;
@@ -15,6 +16,107 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
 public class ValueStyleRenderer {
+
+   public static class CrosshairPainterLayout {
+       public final float blockHeight;
+       public final float canvasX1, canvasY1, canvasX2, canvasY2;
+       public final int gridX1, gridY1, cellPx, gridSizePx;
+       public final float activeBtnX1, activeBtnY1, activeBtnX2, activeBtnY2;
+       public final float staticBtnX1, staticBtnY1, staticBtnX2, staticBtnY2;
+       public final float resetX1, resetY1, resetX2, resetY2;
+       public final float previewX1, previewY1, previewX2, previewY2;
+       public final String resetText;
+
+       public CrosshairPainterLayout(float blockHeight,
+                                     float canvasX1, float canvasY1, float canvasX2, float canvasY2,
+                                     int gridX1, int gridY1, int cellPx, int gridSizePx,
+                                     float activeBtnX1, float activeBtnY1, float activeBtnX2, float activeBtnY2,
+                                     float staticBtnX1, float staticBtnY1, float staticBtnX2, float staticBtnY2,
+                                     float resetX1, float resetY1, float resetX2, float resetY2,
+                                     float previewX1, float previewY1, float previewX2, float previewY2,
+                                     String resetText) {
+           this.blockHeight = blockHeight;
+           this.canvasX1 = canvasX1; this.canvasY1 = canvasY1; this.canvasX2 = canvasX2; this.canvasY2 = canvasY2;
+           this.gridX1 = gridX1; this.gridY1 = gridY1; this.cellPx = cellPx; this.gridSizePx = gridSizePx;
+           this.activeBtnX1 = activeBtnX1; this.activeBtnY1 = activeBtnY1; this.activeBtnX2 = activeBtnX2; this.activeBtnY2 = activeBtnY2;
+           this.staticBtnX1 = staticBtnX1; this.staticBtnY1 = staticBtnY1; this.staticBtnX2 = staticBtnX2; this.staticBtnY2 = staticBtnY2;
+           this.resetX1 = resetX1; this.resetY1 = resetY1; this.resetX2 = resetX2; this.resetY2 = resetY2;
+           this.previewX1 = previewX1; this.previewY1 = previewY1; this.previewX2 = previewX2; this.previewY2 = previewY2;
+           this.resetText = resetText;
+       }
+   }
+
+   public static CrosshairPainterLayout computeCrosshairPainterLayout(Minecraft client, CrosshairPainterValue value,
+                                                                      float x1, float y, float x2, float subOptionHeight) {
+       float blockHeight = getCrosshairPainterHeight(subOptionHeight);
+       float pad = 8f;
+       float contentY1 = y + 22f;
+       float contentY2 = y + blockHeight - 8f;
+
+       float canvasH = Math.max(60f, contentY2 - contentY1);
+       float canvasW = Math.max(60f, (x2 - x1) * 0.56f - pad * 2f);
+       float canvasSize = Math.min(canvasH, canvasW);
+       canvasSize = (float) Math.floor(canvasSize);
+       float canvasX1 = x1 + pad;
+       float canvasY1 = contentY1 + ((contentY2 - contentY1) - canvasSize) * 0.5f;
+       float canvasX2 = canvasX1 + canvasSize;
+       float canvasY2 = canvasY1 + canvasSize;
+
+       int n = value.getSize();
+       int cellPx = Math.max(1, (int) Math.floor(canvasSize / n));
+       int gridSizePx = cellPx * n;
+       int gridX1 = (int) Math.floor(canvasX1 + (canvasSize - gridSizePx) * 0.5f);
+       int gridY1 = (int) Math.floor(canvasY1 + (canvasSize - gridSizePx) * 0.5f);
+
+       float rightX1 = canvasX2 + 10f;
+       float rightX2 = x2 - pad;
+
+       String resetText = value.isResetArmed() ? "reclick to confirm" : "Reset";
+       float btnH = 16f;
+       float activeW = Math.max(26f, client.font.width("AL") + 12f);
+       float staticW = Math.max(26f, client.font.width("SL") + 12f);
+       float btnW = Math.max(activeW, staticW);
+       float maxResetW = Math.max(30f, rightX2 - rightX1);
+       float resetW = Math.min(maxResetW, Math.max(30f, client.font.width(resetText) + 12f));
+       float stackY = contentY1 + 4f;
+       float gap = 6f;
+
+       float pairGap = 6f;
+       float pairW = btnW * 2f + pairGap;
+       float pairX1 = rightX1 + Math.max(0f, (rightX2 - rightX1 - pairW) * 0.5f);
+
+       float activeBtnX1 = pairX1;
+       float activeBtnY1 = stackY;
+       float activeBtnX2 = activeBtnX1 + btnW;
+       float activeBtnY2 = activeBtnY1 + btnH;
+
+       float staticBtnX1 = activeBtnX2 + pairGap;
+       float staticBtnY1 = activeBtnY1;
+       float staticBtnX2 = staticBtnX1 + btnW;
+       float staticBtnY2 = activeBtnY2;
+
+       float resetX1 = rightX1 + Math.max(0f, (rightX2 - rightX1 - resetW) * 0.5f);
+       float resetY1 = staticBtnY2 + gap;
+       float resetX2 = Math.min(rightX2, resetX1 + resetW);
+       float resetY2 = resetY1 + btnH;
+
+       float previewX1 = rightX1;
+       float previewY1 = resetY2 + 8f;
+       float previewX2 = rightX2;
+       float previewY2 = contentY2;
+       if (previewY2 < previewY1) previewY2 = previewY1 + 1f;
+
+       return new CrosshairPainterLayout(
+           blockHeight,
+           canvasX1, canvasY1, canvasX2, canvasY2,
+           gridX1, gridY1, cellPx, gridSizePx,
+           activeBtnX1, activeBtnY1, activeBtnX2, activeBtnY2,
+           staticBtnX1, staticBtnY1, staticBtnX2, staticBtnY2,
+           resetX1, resetY1, resetX2, resetY2,
+           previewX1, previewY1, previewX2, previewY2,
+           resetText
+       );
+   }
    
    public static void renderValue(GuiGraphics context, Minecraft client, Module module, Value value, Theme theme,
                                  float x1, float y, float x2, float subOptionHeight,
@@ -85,6 +187,8 @@ public class ValueStyleRenderer {
                                    mouseX, mouseY, localAlpha);
       } else if (style == ValueStyle.GRADIENT_EDITOR && value instanceof GradientEditorValue) {
           renderGradientEditorValue(context, client, (GradientEditorValue) value, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, editingGradient, gradientInputText, hoveredTooltipInfo);
+      } else if (style == ValueStyle.CROSSHAIR_PAINTER && value instanceof CrosshairPainterValue) {
+          renderCrosshairPainterValue(context, client, (CrosshairPainterValue) value, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, hoveredTooltipInfo);
       } else if (style == ValueStyle.TEXT_LINE_INPUT && value instanceof TextLineInputValue) {
           renderTextLineInputValue(context, client, module, (TextLineInputValue) value, theme,
               x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, editingTextInput, textInputValue,
@@ -443,6 +547,170 @@ public class ValueStyleRenderer {
 
    public static float getGradientEditorHeight(float subOptionHeight) {
        return subOptionHeight * 6;
+   }
+
+   public static float getCrosshairPainterHeight(float subOptionHeight) {
+       return subOptionHeight * 8;
+   }
+
+   public static void renderCrosshairPainterValue(GuiGraphics context, Minecraft client, CrosshairPainterValue value, Theme theme,
+                                                  float x1, float y, float x2, float subOptionHeight,
+                                                  float mouseX, float mouseY, int localAlpha,
+                                                  ModuleStyleRenderer.TooltipInfo hoveredTooltipInfo) {
+       CrosshairPainterLayout l = computeCrosshairPainterLayout(client, value, x1, y, x2, subOptionHeight);
+
+       int bg = (new java.awt.Color(30, 31, 36, 165).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       int border = (new java.awt.Color(65, 68, 78, 220).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       int textColor = (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.drawRoundedRect(context, x1, y, x2, y + l.blockHeight, 6, bg);
+       GuiRenderUtil.drawRoundedRectOutline(context, x1, y, x2, y + l.blockHeight, 6, border);
+       GuiRenderUtil.drawRoundedRectOutline(context, l.previewX1, l.previewY1, l.previewX2, l.previewY2, 0, border);
+       context.drawString(client.font, value.getDisplayName(), (int) (x1 + 8), (int) (y + 6), textColor, false);
+
+       int canvasBg = (new java.awt.Color(22, 23, 27, 210).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.drawRoundedRect(context, l.canvasX1, l.canvasY1, l.canvasX2, l.canvasY2, 4, canvasBg);
+       GuiRenderUtil.drawRoundedRectOutline(context, l.canvasX1, l.canvasY1, l.canvasX2, l.canvasY2, 4, border);
+
+       int emptyA = localAlpha;
+       int empty0 = (emptyA << 24) | 0x1F2228;
+       int empty1 = (emptyA << 24) | 0x232730;
+       int center = (Math.min(255, (int) (localAlpha * 0.85f)) << 24) | 0xB061FF;
+       int staticColor = (localAlpha << 24) | 0xE6E6E6;
+       int activeColor = (localAlpha << 24) | 0xBEBEBE;
+       int bothColor = (localAlpha << 24) | 0x7FD4FF;
+
+       int n = value.getSize();
+       int cx = value.getCenterIndex();
+       int cy = value.getCenterIndex();
+
+       for (int py = 0; py < n; py++) {
+           for (int px = 0; px < n; px++) {
+               int rx1 = l.gridX1 + px * l.cellPx;
+               int ry1 = l.gridY1 + py * l.cellPx;
+               int rx2 = rx1 + l.cellPx;
+               int ry2 = ry1 + l.cellPx;
+               int fill;
+               boolean s = value.isStaticSet(px, py);
+               boolean a = value.isActiveSet(px, py);
+               if (s && a) {
+                   fill = bothColor;
+               } else if (s) {
+                   fill = staticColor;
+               } else if (a) {
+                   fill = activeColor;
+               } else if (px == cx && py == cy) {
+                   fill = center;
+               } else {
+                   fill = (((px + py) & 1) == 0) ? empty0 : empty1;
+               }
+               context.fill(rx1, ry1, rx2, ry2, fill);
+           }
+       }
+
+       boolean activeSelected = value.getSelectedLayer() == CrosshairPainterValue.Layer.ACTIVE;
+       boolean staticSelected = value.getSelectedLayer() == CrosshairPainterValue.Layer.STATIC;
+       int btnBg = (new java.awt.Color(40, 40, 40, 180).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       int btnBgSel = (theme.BG_3.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.drawRoundedRect(context, l.activeBtnX1, l.activeBtnY1, l.activeBtnX2, l.activeBtnY2, 3, activeSelected ? btnBgSel : btnBg);
+       GuiRenderUtil.drawRoundedRectOutline(context, l.activeBtnX1, l.activeBtnY1, l.activeBtnX2, l.activeBtnY2, 3, border);
+       GuiRenderUtil.drawRoundedRect(context, l.staticBtnX1, l.staticBtnY1, l.staticBtnX2, l.staticBtnY2, 3, staticSelected ? btnBgSel : btnBg);
+       GuiRenderUtil.drawRoundedRectOutline(context, l.staticBtnX1, l.staticBtnY1, l.staticBtnX2, l.staticBtnY2, 3, border);
+
+       int labelColor = (theme.FONT_C.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       context.drawString(client.font, "AL", (int) (l.activeBtnX1 + (l.activeBtnX2 - l.activeBtnX1 - client.font.width("AL")) * 0.5f), (int) (l.activeBtnY1 + 4), labelColor, false);
+       context.drawString(client.font, "SL", (int) (l.staticBtnX1 + (l.staticBtnX2 - l.staticBtnX1 - client.font.width("SL")) * 0.5f), (int) (l.staticBtnY1 + 4), labelColor, false);
+
+       if (hoveredTooltipInfo != null) {
+           if (GuiRenderUtil.isHovered(l.activeBtnX1, l.activeBtnY1, l.activeBtnX2, l.activeBtnY2, mouseX, mouseY)) {
+               hoveredTooltipInfo.tooltip = "The crosshair in active layer will be given fancy animations.";
+               hoveredTooltipInfo.tooltipText = net.minecraft.network.chat.Component.literal(hoveredTooltipInfo.tooltip);
+               hoveredTooltipInfo.x = (int) (mouseX + 5);
+               hoveredTooltipInfo.y = (int) (mouseY + 5);
+           } else if (GuiRenderUtil.isHovered(l.staticBtnX1, l.staticBtnY1, l.staticBtnX2, l.staticBtnY2, mouseX, mouseY)) {
+               hoveredTooltipInfo.tooltip = "The crosshair in static layer is just a normal custom one.";
+               hoveredTooltipInfo.tooltipText = net.minecraft.network.chat.Component.literal(hoveredTooltipInfo.tooltip);
+               hoveredTooltipInfo.x = (int) (mouseX + 5);
+               hoveredTooltipInfo.y = (int) (mouseY + 5);
+           }
+       }
+
+       int resetBg = ((theme.BG_2.getRGB() & 0x00FFFFFF) | (localAlpha << 24));
+       GuiRenderUtil.draw3DRect(context, l.resetX1, l.resetY1, l.resetX2, l.resetY2, resetBg, 0f);
+       int resetTextColor = value.isResetArmed()
+           ? ((com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR & 0x00FFFFFF) | (localAlpha << 24))
+           : textColor;
+       context.drawString(client.font, l.resetText, (int) (l.resetX1 + (l.resetX2 - l.resetX1 - client.font.width(l.resetText)) * 0.5f), (int) (l.resetY1 + 4), resetTextColor, false);
+
+       drawPreviewCrosshair(context, l.previewX1, l.previewY1, l.previewX2 - l.previewX1, l.previewY2 - l.previewY1, value, localAlpha);
+   }
+
+   private static void drawPreviewCrosshair(GuiGraphics g, float x, float y, float w, float h, CrosshairPainterValue value, int localAlpha) {
+       int n = value.getSize();
+       int center = n / 2;
+       int pxSize = 1;
+       int cx = (int) (x + w * 0.5f);
+       int cy = (int) (y + h * 0.5f);
+
+       int staticColor = (localAlpha << 24) | 0xE6E6E6;
+       int activeColor = (localAlpha << 24) | 0xBEBEBE;
+       boolean chroma = com.shyeuar.baity.config.ConfigManager.crosshairChromaEnabled;
+       long nowMs = System.currentTimeMillis();
+       float triggerPeriodTicks = 10f;
+       float fallTicks = 3.5f;
+       float maxExtra = 20f;
+       float previewTick = (nowMs % 100000L) / 50f;
+       float sinceTrigger = previewTick % triggerPeriodTicks;
+       float previewExtra = sinceTrigger >= fallTicks ? 0f : (maxExtra * (1f - sinceTrigger / fallTicks));
+
+       for (int py = 0; py < n; py++) {
+           for (int px = 0; px < n; px++) {
+               boolean s = value.isStaticSet(px, py);
+               if (!s) continue;
+               int dx = px - center;
+               int dy = py - center;
+               int rx = cx + dx * pxSize;
+               int ry = cy + dy * pxSize;
+               int color = chroma ? (0xFF000000 | chromaColor(nowMs, py * n + px, n * n)) : staticColor;
+               g.fill(rx, ry, rx + pxSize, ry + pxSize, color);
+           }
+       }
+
+       for (int py = 0; py < n; py++) {
+           for (int px = 0; px < n; px++) {
+               boolean a = value.isActiveSet(px, py);
+               if (!a) continue;
+               int dx = px - center;
+               int dy = py - center;
+               int drawDx = dx;
+               int drawDy = dy;
+
+               if (a) {
+                   double len = Math.sqrt((double) dx * dx + (double) dy * dy);
+                   if (len > 0.0) {
+                       drawDx = (int) Math.round(dx + (dx / len) * previewExtra);
+                       drawDy = (int) Math.round(dy + (dy / len) * previewExtra);
+                   }
+               }
+
+               int rx = cx + drawDx * pxSize;
+               int ry = cy + drawDy * pxSize;
+               int color = chroma ? (0xFF000000 | chromaColor(nowMs, py * n + px, n * n)) : activeColor;
+               g.fill(rx, ry, rx + pxSize, ry + pxSize, color);
+           }
+       }
+   }
+
+   private static int chromaColor(long nowMs, int idx, int len) {
+       double lightness = Math.max(0.2, Math.min(1.0, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaLightness));
+       double chroma = Math.max(0.0, Math.min(0.4, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaChroma));
+       double size = Math.max(0.1, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaSize);
+       double speed = Math.max(0.0, Math.min(8.0, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaSpeed));
+       double phase = (nowMs / 1000.0) * (speed * 0.5);
+       double progress = len <= 1 ? 0.0 : (double) idx / (double) (len - 1);
+       float saturation = (float) (chroma / 0.4);
+       float hue = (float) (((progress / size) - phase) % 1.0);
+       if (hue < 0f) hue += 1f;
+       return net.minecraft.util.Mth.hsvToRgb(hue, saturation, (float) lightness);
    }
 
    public static void renderGradientEditorValue(GuiGraphics context, Minecraft client, GradientEditorValue value, Theme theme,

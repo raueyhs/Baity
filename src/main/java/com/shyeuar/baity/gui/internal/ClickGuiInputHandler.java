@@ -13,6 +13,7 @@ import com.shyeuar.baity.gui.value.SliderValue;
 import com.shyeuar.baity.gui.value.TextLineInputValue;
 import com.shyeuar.baity.gui.value.ValueTreeUtils;
 import com.shyeuar.baity.gui.value.ValueTypeRegistry;
+import com.shyeuar.baity.gui.value.CrosshairPainterValue;
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.utils.TimerUtils;
 import com.shyeuar.baity.utils.KeyMappingUtils;
@@ -30,6 +31,11 @@ public class ClickGuiInputHandler {
     private final ClickGuiState state;
     private final TimerUtils timer;
     private final BiConsumer<com.shyeuar.baity.gui.module.Module, com.shyeuar.baity.gui.value.ButtonValue> onTriggerValueClick;
+    private String painterDragModule = null;
+    private String painterDragValue = null;
+    private int painterDragButton = -1;
+    private int painterLastPx = Integer.MIN_VALUE;
+    private int painterLastPy = Integer.MIN_VALUE;
     
     public ClickGuiInputHandler(ClickGuiState state, TimerUtils timer, 
                                BiConsumer<com.shyeuar.baity.gui.module.Module, com.shyeuar.baity.gui.value.ButtonValue> onTriggerValueClick) {
@@ -487,6 +493,9 @@ public class ClickGuiInputHandler {
             state.setDraggingSlider(null);
             state.setDraggingGradient(null);
         }
+        if (button == painterDragButton || button == 1) {
+            clearPainterDrag();
+        }
     }
    
     public void handleMouseMove(double mouseX, double mouseY) {
@@ -499,6 +508,87 @@ public class ClickGuiInputHandler {
         }
         if (state.getDraggingGradient() != null) {
             handleGradientDrag(mouseX, mouseY);
+        }
+        handlePainterDrag(mouseX, mouseY);
+    }
+
+    private void clearPainterDrag() {
+        painterDragModule = null;
+        painterDragValue = null;
+        painterDragButton = -1;
+        painterLastPx = Integer.MIN_VALUE;
+        painterLastPy = Integer.MIN_VALUE;
+    }
+
+    private void handlePainterDrag(double mouseX, double mouseY) {
+        if (painterDragModule == null || painterDragValue == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null) return;
+        long win = GLFW.glfwGetCurrentContext();
+        boolean leftDown = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        boolean rightDown = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_RIGHT) == GLFW.GLFW_PRESS;
+        if ((painterDragButton == 0 && !leftDown) || (painterDragButton == 1 && !rightDown)) {
+            clearPainterDrag();
+            return;
+        }
+
+        Module module = ModuleManager.getModuleByName(painterDragModule);
+        if (module == null || !module.isExpanded()) return;
+        Value found = ValueTreeUtils.findByName(module, painterDragValue);
+        if (!(found instanceof CrosshairPainterValue painter)) return;
+
+        ClickGuiLayout.ScaledCoordinates coords = ClickGuiLayout.getScaledCoordinates(state, mouseX, mouseY);
+        float contentX = ClickGuiState.SIDEBAR_WIDTH;
+        float contentY = ClickGuiState.HEADER_HEIGHT;
+        float contentWidth = ClickGuiState.CONTENT_WIDTH;
+        float modY = contentY + 10 - state.getScrollOffset();
+        List<Module> modules = getFilteredModules();
+        for (Module m : modules) {
+            modY += 30;
+            if (m != module) {
+                if (m.isExpanded()) modY += getSubOptionContainerHeight(m);
+                continue;
+            }
+            java.util.List<ValueTreeUtils.ValueEntry> entries = ValueTreeUtils.getVisibleEntries(m);
+            int extraHeight = ClickGuiLayout.calculateExtraHeight(entries);
+            float visibleHeight = ClickGuiState.HEIGHT - ClickGuiState.HEADER_HEIGHT - ClickGuiState.FOOTER_HEIGHT;
+            ClickGuiLayout.ContainerDimensions dims = ClickGuiLayout.calculateSubOptionContainer(entries.size(), visibleHeight, extraHeight);
+            float containerX1 = contentX + 20;
+            float containerX2 = contentX + contentWidth - 20;
+            float subModY = modY + dims.padding;
+            Value previous = null;
+            for (ValueTreeUtils.ValueEntry entry : entries) {
+                Value v = entry.value();
+                int depth = entry.depth();
+                if (v.needsSeparatorBefore(previous)) subModY += 12;
+                float currentHeight = dims.subOptionHeight;
+                if (v.getStyle() == ValueStyle.COLOR_PALETTE) currentHeight = dims.subOptionHeight * 2;
+                else if (v.getStyle() == ValueStyle.GRADIENT_EDITOR) currentHeight = dims.subOptionHeight * 6;
+                else if (v.getStyle() == ValueStyle.CROSSHAIR_PAINTER) currentHeight = dims.subOptionHeight * 8;
+                if (v == found) {
+                    int subX1 = (int)(containerX1 + 4 + depth * 12);
+                    int subX2 = (int)(containerX2 - 4 - depth * 8);
+                    com.shyeuar.baity.gui.render.ValueStyleRenderer.CrosshairPainterLayout l =
+                        com.shyeuar.baity.gui.render.ValueStyleRenderer.computeCrosshairPainterLayout(mc, painter, subX1, subModY, subX2, dims.subOptionHeight);
+                    if (!GuiRenderUtil.isHovered(l.canvasX1, l.canvasY1, l.canvasX2, l.canvasY2, coords.mouseX, coords.mouseY)) return;
+                    int n = painter.getSize();
+                    int px = (int)((coords.mouseX - l.gridX1) / Math.max(1, l.cellPx));
+                    int py = (int)((coords.mouseY - l.gridY1) / Math.max(1, l.cellPx));
+                    if (px < 0 || py < 0 || px >= n || py >= n) return;
+                    if (px == painterLastPx && py == painterLastPy) return;
+                    if (painterDragButton == 0) painter.togglePixel(px, py);
+                    else painter.clearPixel(px, py);
+                    painterLastPx = px;
+                    painterLastPy = py;
+                    if (ConfigSynchronizer.hasValueConfig(module.getName(), found.getName())) {
+                        ConfigSynchronizer.handleValueUpdate(module.getName(), found.getName(), painter.getValue());
+                    }
+                    return;
+                }
+                subModY += currentHeight;
+                previous = v;
+            }
+            return;
         }
     }
     
@@ -1199,6 +1289,71 @@ public class ClickGuiInputHandler {
                     timer.reset();
                     return true;
                 }
+            } else if ((button == 0 || button == 1) && style == ValueStyle.CROSSHAIR_PAINTER && value instanceof CrosshairPainterValue painter) {
+                Minecraft client = Minecraft.getInstance();
+                if (client == null) return false;
+                com.shyeuar.baity.gui.render.ValueStyleRenderer.CrosshairPainterLayout l =
+                    com.shyeuar.baity.gui.render.ValueStyleRenderer.computeCrosshairPainterLayout(client, painter, subX1, subModY, subX2, dims.subOptionHeight);
+
+                boolean hitAnyButton = false;
+                if (GuiRenderUtil.isHovered(l.activeBtnX1, l.activeBtnY1, l.activeBtnX2, l.activeBtnY2, coords.mouseX, coords.mouseY)) {
+                    painter.selectLayer(CrosshairPainterValue.Layer.ACTIVE);
+                    painter.disarmReset();
+                    hitAnyButton = true;
+                    SoundUtils.playBubble();
+                } else if (GuiRenderUtil.isHovered(l.staticBtnX1, l.staticBtnY1, l.staticBtnX2, l.staticBtnY2, coords.mouseX, coords.mouseY)) {
+                    painter.selectLayer(CrosshairPainterValue.Layer.STATIC);
+                    painter.disarmReset();
+                    hitAnyButton = true;
+                    SoundUtils.playBubble();
+                } else if (GuiRenderUtil.isHovered(l.resetX1, l.resetY1, l.resetX2, l.resetY2, coords.mouseX, coords.mouseY)) {
+                    hitAnyButton = true;
+                    if (!painter.isResetArmed()) {
+                        painter.armReset();
+                    } else {
+                        painter.confirmResetSelectedLayer();
+                        if (ConfigSynchronizer.hasValueConfig(module.getName(), value.getName())) {
+                            ConfigSynchronizer.handleValueUpdate(module.getName(), value.getName(), painter.getValue());
+                        }
+                    }
+                    SoundUtils.playBubble();
+                }
+
+                if (!hitAnyButton && painter.isResetArmed()) {
+                    painter.disarmReset();
+                }
+
+                if (GuiRenderUtil.isHovered(l.canvasX1, l.canvasY1, l.canvasX2, l.canvasY2, coords.mouseX, coords.mouseY)) {
+                    int n = painter.getSize();
+                    int px = (int) ((coords.mouseX - l.gridX1) / Math.max(1, l.cellPx));
+                    int py = (int) ((coords.mouseY - l.gridY1) / Math.max(1, l.cellPx));
+                    if (px < 0 || py < 0 || px >= n || py >= n) {
+                        return true;
+                    }
+                    if (button == 0) {
+                        painter.togglePixel(px, py);
+                    } else {
+                        painter.clearPixel(px, py);
+                    }
+                    painterDragModule = module.getName();
+                    painterDragValue = value.getName();
+                    painterDragButton = button;
+                    painterLastPx = px;
+                    painterLastPy = py;
+                    if (ConfigSynchronizer.hasValueConfig(module.getName(), value.getName())) {
+                        ConfigSynchronizer.handleValueUpdate(module.getName(), value.getName(), painter.getValue());
+                    }
+                    timer.reset();
+                    return true;
+                }
+
+                if (hitAnyButton) {
+                    if (ConfigSynchronizer.hasValueConfig(module.getName(), value.getName())) {
+                        ConfigSynchronizer.handleValueUpdate(module.getName(), value.getName(), painter.getValue());
+                    }
+                    timer.reset();
+                    return true;
+                }
             } else if (button == 0 && style == ValueStyle.TEXT_LINE_INPUT && value instanceof TextLineInputValue) {
                 float lineX1 = subX1 + (subX2 - subX1) * 0.52f;
                 float lineX2 = subX2 - 10;
@@ -1234,6 +1389,8 @@ public class ClickGuiInputHandler {
                 currentHeight = dims.subOptionHeight * 2;
             } else if (style == ValueStyle.GRADIENT_EDITOR) {
                 currentHeight = dims.subOptionHeight * 6;
+            } else if (style == ValueStyle.CROSSHAIR_PAINTER) {
+                currentHeight = dims.subOptionHeight * 8;
             }
             subModY += currentHeight;
             previousValue = value;
@@ -1280,6 +1437,7 @@ public class ClickGuiInputHandler {
                 float currentHeight = dims.subOptionHeight;
                 if (value.getStyle() == ValueStyle.COLOR_PALETTE) currentHeight = dims.subOptionHeight * 2;
                 else if (value.getStyle() == ValueStyle.GRADIENT_EDITOR) currentHeight = dims.subOptionHeight * 6;
+                else if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) currentHeight = dims.subOptionHeight * 8;
                 subModY += currentHeight;
                 previousValue = value;
             }
@@ -1333,6 +1491,7 @@ public class ClickGuiInputHandler {
                 float currentHeight = dims.subOptionHeight;
                 if (value.getStyle() == ValueStyle.COLOR_PALETTE) currentHeight = dims.subOptionHeight * 2;
                 else if (value.getStyle() == ValueStyle.GRADIENT_EDITOR) currentHeight = dims.subOptionHeight * 6;
+                else if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) currentHeight = dims.subOptionHeight * 8;
                 subModY += currentHeight;
                 previousValue = value;
             }
@@ -1390,6 +1549,8 @@ public class ClickGuiInputHandler {
                 currentHeight = dims.subOptionHeight * 2;
             } else if (value.getStyle() == ValueStyle.GRADIENT_EDITOR) {
                 currentHeight = dims.subOptionHeight * 6;
+            } else if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) {
+                currentHeight = dims.subOptionHeight * 8;
             }
             subModY += currentHeight;
             previousValue = value;

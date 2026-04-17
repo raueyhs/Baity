@@ -11,6 +11,7 @@ public enum ValueStyle {
     COLOR_PALETTE,
     GROUP,
     GRADIENT_EDITOR,
-    TEXT_LINE_INPUT
+    TEXT_LINE_INPUT,
+    CROSSHAIR_PAINTER
 }
 

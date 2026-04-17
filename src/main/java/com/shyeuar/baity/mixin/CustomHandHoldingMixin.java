@@ -3,6 +3,7 @@ package com.shyeuar.baity.mixin;
 import com.shyeuar.baity.features.CustomHandHoldingManager;
 import com.shyeuar.baity.gui.module.Module;
 import com.shyeuar.baity.gui.module.ModuleManager;
+import com.shyeuar.baity.utils.BlockAnimationUtils;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.api.EnvType;
 import net.minecraft.client.Minecraft;
@@ -14,6 +15,7 @@ import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import com.shyeuar.baity.mixin.accessor.ItemInHandRendererAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -51,9 +53,15 @@ public class CustomHandHoldingMixin {
             if (FabricLoader.getInstance().getEnvironmentType() != EnvType.CLIENT) return;
             Minecraft mc = Minecraft.getInstance();
             if (mc == null || mc.player == null) return;
-            
-            Module customHandHoldingModule = ModuleManager.getModuleByName("CustomHandHolding");
-            if (customHandHoldingModule == null || !customHandHoldingModule.isEnabled()) return;
+
+            boolean disable = BlockAnimationUtils.isFeatureActive();
+            if (!disable) {
+                Module customHandHoldingModule = ModuleManager.getModuleByName("CustomHandHolding");
+                disable = customHandHoldingModule != null
+                    && customHandHoldingModule.isEnabled()
+                    && CustomHandHoldingManager.getInstance().isNoSwingEnabled();
+            }
+            if (!disable) return;
 
             Player self = (Player) (Object) this;
             if (self != mc.player) return;
@@ -64,6 +72,18 @@ public class CustomHandHoldingMixin {
 
     @Mixin(value = ItemInHandRenderer.class, priority = 300)
     public static abstract class HeldItemTransformMixin {
+        @Inject(method = "itemUsed(Lnet/minecraft/world/InteractionHand;)V", at = @At("HEAD"), cancellable = true)
+        private void baity$disableRodUseJitter(InteractionHand hand, CallbackInfo ci) {
+            Module customHandHoldingModule = ModuleManager.getModuleByName("CustomHandHolding");
+            if (customHandHoldingModule == null || !customHandHoldingModule.isEnabled()) return;
+            if (!CustomHandHoldingManager.getInstance().isNoSwingEnabled()) return;
+
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null || mc.player == null) return;
+            ItemStack held = mc.player.getItemInHand(hand);
+            if (held == null || !held.is(Items.FISHING_ROD)) return;
+            ci.cancel();
+        }
 
         @Inject(
             method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
@@ -107,9 +127,9 @@ public class CustomHandHoldingMixin {
             if (mc.player == null || player != mc.player) return;
             if (item.isEmpty()) return;
 
-            if (com.shyeuar.baity.utils.BlockAnimationUtils.isFeatureActive() 
-                    && com.shyeuar.baity.utils.BlockAnimationUtils.isPlayerBlockingWithSword(player)) {
-                InteractionHand blockingHand = com.shyeuar.baity.utils.BlockAnimationUtils.getBlockingHand(player);
+            if (BlockAnimationUtils.isFeatureActive()
+                    && BlockAnimationUtils.isPlayerBlockingWithSword(player)) {
+                InteractionHand blockingHand = BlockAnimationUtils.getBlockingHand(player);
                 if (blockingHand == hand) {
                     return;
                 }
@@ -143,8 +163,8 @@ public class CustomHandHoldingMixin {
                 return;
             }
 
-            if (com.shyeuar.baity.utils.BlockAnimationUtils.isFeatureActive() 
-                    && com.shyeuar.baity.utils.BlockAnimationUtils.isPlayerBlockingWithSword(mc.player)) {
+            if (BlockAnimationUtils.isFeatureActive()
+                    && BlockAnimationUtils.isPlayerBlockingWithSword(mc.player)) {
                 return;
             }
 

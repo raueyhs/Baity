@@ -16,11 +16,13 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Shulker;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
+import java.lang.reflect.Method;
 import java.util.OptionalDouble;
 
 @Environment(EnvType.CLIENT)
@@ -58,6 +60,7 @@ public class ShulkerHighlights implements WorldRenderEvents.AfterEntities {
         if (module == null || !module.isEnabled()) return;
         if (!ConfigManager.highlightsShulkerEnabled) return;
         if (MC.level == null || MC.player == null) return;
+        if (!isInGalatea()) return;
 
         Vec3 cameraPos = context.worldState().cameraRenderState.pos;
         PoseStack matrices = context.matrices();
@@ -112,6 +115,72 @@ public class ShulkerHighlights implements WorldRenderEvents.AfterEntities {
             drawLine(pose, lines, x1, y2, z2, x1, y2, z1, r, g, b, a);
 
             matrices.popPose();
+        }
+    }
+
+    private static boolean isInGalatea() {
+        try {
+            if (MC.getConnection() != null) {
+                for (var entry : MC.getConnection().getOnlinePlayers()) {
+                    String line = removeColorCodes(entry.getTabListDisplayName() != null
+                        ? entry.getTabListDisplayName().getString()
+                        : entry.getProfile().name());
+                    if (line == null || line.isBlank()) continue;
+                    String lower = line.toLowerCase(java.util.Locale.ROOT);
+                    if ((lower.contains("area:") || lower.contains("island:")) && lower.contains("galatea")) {
+                        return true;
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+
+        try {
+            var level = MC.level;
+            if (level == null || level.getScoreboard() == null) return false;
+            var scoreboard = level.getScoreboard();
+            var objective = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
+            if (objective == null) return false;
+            for (var holder : tryGetSortedScores(scoreboard, objective)) {
+                String line = removeColorCodes(extractScoreOwnerText(holder));
+                if (line != null && line.toLowerCase(java.util.Locale.ROOT).contains("galatea")) {
+                    return true;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    private static String removeColorCodes(String s) {
+        if (s == null) return "";
+        return s.replaceAll("(?i)[\\u00A7&][0-9A-FK-OR]", "").trim();
+    }
+
+    private static java.util.List<?> tryGetSortedScores(Object scoreboard, Object objective) {
+        try {
+            Method m = scoreboard.getClass().getMethod("listPlayerScores", objective.getClass());
+            Object res = m.invoke(scoreboard, objective);
+            if (res instanceof java.util.List<?>) return (java.util.List<?>) res;
+        } catch (Exception ignored) {
+        }
+        return java.util.Collections.emptyList();
+    }
+
+    private static String extractScoreOwnerText(Object holder) {
+        try {
+            Method owner = holder.getClass().getMethod("owner");
+            Object ownerObj = owner.invoke(holder);
+            if (ownerObj == null) return "";
+            try {
+                Method name = ownerObj.getClass().getMethod("getName");
+                Object n = name.invoke(ownerObj);
+                return n == null ? "" : n.toString();
+            } catch (Exception ignored) {
+            }
+            return ownerObj.toString();
+        } catch (Exception ignored) {
+            return "";
         }
     }
 

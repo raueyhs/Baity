@@ -321,6 +321,18 @@ public class ClickGui extends BaseOwoScreen<FlowLayout> {
             if (mc != null) {
                 mc.setScreen(new SmolFriendsScreen(this));
             }
+            return;
+        }
+
+        if ("Crosshair".equals(module.getName()) && "anima mode".equals(buttonValue.getName())) {
+            String current = String.valueOf(buttonValue.getValue());
+            String next = "bow only".equalsIgnoreCase(current) ? "always" : "bow only";
+            buttonValue.setValue(next);
+            ConfigManager.crosshairAnimaMode = next;
+            ConfigManager.requestSave();
+            if (ConfigSynchronizer.hasValueConfig(module.getName(), buttonValue.getName())) {
+                ConfigSynchronizer.handleValueUpdate(module.getName(), buttonValue.getName(), next);
+            }
         }
     }
     

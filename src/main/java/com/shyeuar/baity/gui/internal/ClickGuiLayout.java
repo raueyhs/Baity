@@ -85,6 +85,8 @@ public class ClickGuiLayout {
                 extraHeight += 20;
             } else if (value.getStyle() == ValueStyle.GRADIENT_EDITOR) {
                 extraHeight += 100;
+            } else if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) {
+                extraHeight += 140;
             }
             if (value.needsSeparatorBefore(previousValue)) {
                 extraHeight += 12;
