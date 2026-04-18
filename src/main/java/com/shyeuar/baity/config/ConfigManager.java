@@ -68,6 +68,7 @@ public class ConfigManager {
     public static boolean cullingHideDyingMob = true;
     public static boolean cullingHideNonStarredNametag = true;
     public static boolean cullingRemoveUnderwaterFog = true;
+    public static boolean cullingRemoveRainSnow = true;
     
     public static boolean skinLayer3DEnabled = false;
     
@@ -309,6 +310,9 @@ public class ConfigManager {
         registerField("CullingRemoveUnderwaterFog", Boolean.class,
             c -> ConfigManager.cullingRemoveUnderwaterFog,
             (c, v) -> ConfigManager.cullingRemoveUnderwaterFog = (Boolean) v);
+        registerField("CullingRemoveRainSnow", Boolean.class,
+            c -> ConfigManager.cullingRemoveRainSnow,
+            (c, v) -> ConfigManager.cullingRemoveRainSnow = (Boolean) v);
         registerField("3DSkins", Boolean.class,
             c -> ConfigManager.skinLayer3DEnabled,
             (c, v) -> ConfigManager.skinLayer3DEnabled = (Boolean) v);

@@ -411,7 +411,8 @@ public class ModuleManager {
             new Option[]{
                 new Option("hide dying mob", "hide dying mob", false, ModuleCategory.RENDER),
                 new Option("hide non-starred mob nametag", "hide non-starred mob nametag", false, ModuleCategory.RENDER),
-                withSeparator(new Option("remove underwater fog", "remove underwater fog", false, ModuleCategory.RENDER))
+                withSeparator(new Option("remove underwater fog", "remove underwater fog", false, ModuleCategory.RENDER)),
+                new Option("remove rain&snow", "remove rain&snow", true, ModuleCategory.RENDER)
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
@@ -428,6 +429,11 @@ public class ModuleManager {
                     "remove underwater fog",
                     () -> ConfigManager.cullingRemoveUnderwaterFog,
                     val -> ConfigManager.cullingRemoveUnderwaterFog = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "remove rain&snow",
+                    () -> ConfigManager.cullingRemoveRainSnow,
+                    val -> ConfigManager.cullingRemoveRainSnow = (Boolean) val
                 )
             }
         );

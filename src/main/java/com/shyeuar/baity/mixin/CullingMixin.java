@@ -19,11 +19,16 @@ import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.WeatherEffectRenderer;
 import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.FogRenderer;
 import net.minecraft.client.renderer.fog.environment.FogEnvironment;
+import net.minecraft.client.renderer.state.WeatherRenderState;
+import net.minecraft.server.level.ParticleStatus;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.material.FogType;
+import net.minecraft.world.phys.Vec3;
 
 public class CullingMixin {
     @Mixin(value = FogRenderer.class, priority = 1500)
@@ -58,6 +63,43 @@ public class CullingMixin {
                     break;
                 }
             }
+        }
+    }
+    
+    @Mixin(WeatherEffectRenderer.class)
+    public static class RemoveRainSnowVisualMixin {
+        
+        @Inject(
+            method = "render(Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/state/WeatherRenderState;)V",
+            at = @At("HEAD"),
+            cancellable = true
+        )
+        private void baity$skipRainSnowRender(
+                MultiBufferSource bufferSource,
+                Vec3 cameraPosition,
+                WeatherRenderState renderState,
+                CallbackInfo ci) {
+            Module m = ModuleManager.getModuleByName("Culling");
+            if (m == null || !m.isEnabled()) return;
+            if (!ConfigManager.cullingRemoveRainSnow) return;
+            ci.cancel();
+        }
+        
+        @Inject(
+            method = "tickRainParticles(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/Camera;ILnet/minecraft/server/level/ParticleStatus;)V",
+            at = @At("HEAD"),
+            cancellable = true
+        )
+        private void baity$skipRainSnowParticles(
+                ClientLevel level,
+                Camera camera,
+                int ticks,
+                ParticleStatus particleStatus,
+                CallbackInfo ci) {
+            Module m = ModuleManager.getModuleByName("Culling");
+            if (m == null || !m.isEnabled()) return;
+            if (!ConfigManager.cullingRemoveRainSnow) return;
+            ci.cancel();
         }
     }
     
