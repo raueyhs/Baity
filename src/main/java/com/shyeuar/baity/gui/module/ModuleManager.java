@@ -31,8 +31,24 @@ public class ModuleManager {
             "BlockAnimation", "BlockAnimation", ModuleCategory.MISC,
             () -> ConfigManager.blockAnimationMode,
             val -> ConfigManager.blockAnimationMode = val,
-            new Option[]{},
-            new ModuleRegistry.ValueConfigInfo[]{}
+            new com.shyeuar.baity.gui.value.Value[]{
+                new ButtonValue(
+                    "anima mode",
+                    "anima mode",
+                    ConfigManager.blockAnimationAnimaMode,
+                    "default",
+                    ModuleCategory.MISC,
+                    ButtonValue.ButtonValueType.TRIGGER,
+                    false
+                )
+            },
+            new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "anima mode",
+                    () -> ConfigManager.blockAnimationAnimaMode,
+                    val -> ConfigManager.blockAnimationAnimaMode = (String) val
+                )
+            }
         );
         
         GroupValue customHandPosGroup = new GroupValue("pos", "pos", ModuleCategory.MISC)

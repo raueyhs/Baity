@@ -72,6 +72,11 @@ public class ModuleInitializer {
         Module blockAnimation = ModuleManager.getModuleByName("BlockAnimation");
         if (blockAnimation != null) {
             blockAnimation.setEnabled(ConfigManager.blockAnimationMode);
+            for (Value v : blockAnimation.getValues()) {
+                if ("anima mode".equals(v.getName())) {
+                    v.setValue(ConfigManager.blockAnimationAnimaMode);
+                }
+            }
         }
     }
     

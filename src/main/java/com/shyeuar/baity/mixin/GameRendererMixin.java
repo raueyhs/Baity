@@ -6,6 +6,7 @@ import com.shyeuar.baity.mixin.accessor.CameraRenderStateAccessor;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.state.CameraRenderState;
+import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -22,7 +23,12 @@ public abstract class GameRendererMixin {
 	@Inject(method = "extractCamera", at = @At("TAIL"))
 	private void baity$populateCameraRenderState(CallbackInfo ci, @Local CameraRenderState cameraRenderState) {
 		CameraRenderStateAccessor cameraAccessor = (CameraRenderStateAccessor) cameraRenderState;
-		cameraAccessor.baity$setId(this.mainCamera.getEntity().getId());
+		Entity cameraEntity = this.mainCamera.getEntity();
+		if (cameraEntity != null) {
+			cameraAccessor.baity$setId(cameraEntity.getId());
+		} else {
+			cameraAccessor.baity$setId(-1);
+		}
 		cameraAccessor.baity$setPartialTickTime(this.mainCamera.getPartialTickTime());
 		cameraAccessor.baity$setOldEyeHeight(((CameraAccessor) this.mainCamera).baity$getOldEyeHeight());
 		cameraAccessor.baity$setEyeHeight(((CameraAccessor) this.mainCamera).baity$getEyeHeight());

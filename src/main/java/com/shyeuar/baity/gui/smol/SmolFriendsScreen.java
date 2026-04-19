@@ -2,11 +2,14 @@ package com.shyeuar.baity.gui.smol;
 
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.features.smolpeople.SmolFriendManager;
+import com.shyeuar.baity.gui.internal.ClickGuiState;
 import com.shyeuar.baity.gui.render.GuiRenderUtil;
 import com.shyeuar.baity.gui.theme.LinearTheme;
 import com.shyeuar.baity.utils.MessageUtils;
+import com.shyeuar.baity.utils.SoundUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -17,6 +20,7 @@ import java.util.List;
 
 @Environment(EnvType.CLIENT)
 public class SmolFriendsScreen extends Screen {
+    /** 与 ClickGui 相同的逻辑尺寸（BASE_GUI_SCALE=3 下的设计像素） */
     private static final int PANEL_WIDTH = 560;
     private static final int PANEL_HEIGHT = 280;
     private static final int ROW_HEIGHT = 16;
@@ -35,6 +39,17 @@ public class SmolFriendsScreen extends Screen {
         this.parentScreen = parentScreen;
     }
 
+    private static float actualGuiScale(Minecraft mc) {
+        if (mc == null || mc.options == null) return 3f;
+        int guiScaleOption = mc.options.guiScale().get();
+        return (guiScaleOption <= 0) ? (float) mc.getWindow().getGuiScale() : guiScaleOption;
+    }
+
+    /** 与 ClickGuiLayout / ClickGuiRootComponent 一致：界面在屏幕上的缩放比例 */
+    private static float scaleRatio(Minecraft mc) {
+        return ClickGuiState.BASE_GUI_SCALE / actualGuiScale(mc);
+    }
+
     @Override
     protected void init() {
         super.init();
@@ -49,10 +64,33 @@ public class SmolFriendsScreen extends Screen {
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
         this.renderMenuBackground(guiGraphics);
 
-        int panelX = (this.width - PANEL_WIDTH) / 2;
-        int panelY = (this.height - PANEL_HEIGHT) / 2;
-        int panelX2 = panelX + PANEL_WIDTH;
-        int panelY2 = panelY + PANEL_HEIGHT;
+        Minecraft mc = Minecraft.getInstance();
+        float sr = scaleRatio(mc);
+        float dispW = PANEL_WIDTH * sr;
+        float dispH = PANEL_HEIGHT * sr;
+        float originX = (this.width - dispW) / 2f;
+        float originY = (this.height - dispH) / 2f;
+
+        float localMx = (mouseX - originX) / sr;
+        float localMy = (mouseY - originY) / sr;
+
+        var pose = guiGraphics.pose();
+        pose.pushMatrix();
+        pose.translate(originX, originY);
+        pose.scale(sr, sr);
+
+        renderPanelContent(guiGraphics, localMx, localMy, delta);
+
+        pose.popMatrix();
+
+        super.render(guiGraphics, mouseX, mouseY, delta);
+    }
+
+    private void renderPanelContent(GuiGraphics guiGraphics, float mouseX, float mouseY, float delta) {
+        int panelX = 0;
+        int panelY = 0;
+        int panelX2 = PANEL_WIDTH;
+        int panelY2 = PANEL_HEIGHT;
 
         GuiRenderUtil.drawFrostedGlass(guiGraphics, panelX, panelY, panelX2, panelY2, LinearTheme.BG_SECONDARY.getRGB(), 8f);
         GuiRenderUtil.draw3DRect(guiGraphics, panelX, panelY, panelX2, panelY2, LinearTheme.BG_SECONDARY.getRGB(), 8f);
@@ -84,8 +122,10 @@ public class SmolFriendsScreen extends Screen {
 
         lobbyScroll = clampScroll(lobbyScroll, lobbyPlayers.size(), listBottom - listTop);
         friendsScroll = clampScroll(friendsScroll, friends.size(), listBottom - listTop);
-        drawList(guiGraphics, lobbyPlayers, lobbyListX1, listTop, lobbyListX2, listBottom, lobbyScroll, selectedLobbyPlayer, mouseX, mouseY);
-        drawList(guiGraphics, friends, friendsListX1, listTop, friendsListX2, listBottom, friendsScroll, selectedFriend, mouseX, mouseY);
+        int imx = (int) mouseX;
+        int imy = (int) mouseY;
+        drawList(guiGraphics, lobbyPlayers, lobbyListX1, listTop, lobbyListX2, listBottom, lobbyScroll, selectedLobbyPlayer, imx, imy);
+        drawList(guiGraphics, friends, friendsListX1, listTop, friendsListX2, listBottom, friendsScroll, selectedFriend, imx, imy);
 
         int buttonY = panelY2 - 30;
         int addX1 = panelX + 18;
@@ -99,13 +139,11 @@ public class SmolFriendsScreen extends Screen {
             && !SmolFriendManager.isFriend(lobbyPlayers.get(selectedLobbyPlayer));
         boolean canRemove = selectedFriend >= 0 && selectedFriend < friends.size();
 
-        drawButton(guiGraphics, addX1, buttonY, addX2, buttonY + 18, "Add", canAdd, mouseX, mouseY);
-        drawButton(guiGraphics, removeX1, buttonY, removeX2, buttonY + 18, "Remove", canRemove, mouseX, mouseY);
+        drawButton(guiGraphics, addX1, buttonY, addX2, buttonY + 18, "Add", canAdd, imx, imy);
+        drawButton(guiGraphics, removeX1, buttonY, removeX2, buttonY + 18, "Remove", canRemove, imx, imy);
         String toggleText = ConfigManager.smolFriendsEnabled ? "FriendSmol ON" : "FriendSmol OFF";
-        drawButton(guiGraphics, toggleX1, buttonY, toggleX2, buttonY + 18, toggleText, true, mouseX, mouseY);
+        drawButton(guiGraphics, toggleX1, buttonY, toggleX2, buttonY + 18, toggleText, true, imx, imy);
         guiGraphics.drawString(this.font, "Select player on the left click Add, or use /baity fadd <name>.", panelX + 12, panelY2 - 44, LinearTheme.TEXT_TERTIARY.getRGB(), false);
-
-        super.render(guiGraphics, mouseX, mouseY, delta);
     }
 
     @Override
@@ -114,10 +152,19 @@ public class SmolFriendsScreen extends Screen {
             return super.mouseClicked(click, isInsideWindow);
         }
 
-        int panelX = (this.width - PANEL_WIDTH) / 2;
-        int panelY = (this.height - PANEL_HEIGHT) / 2;
-        int panelX2 = panelX + PANEL_WIDTH;
-        int panelY2 = panelY + PANEL_HEIGHT;
+        Minecraft mc = Minecraft.getInstance();
+        float sr = scaleRatio(mc);
+        float dispW = PANEL_WIDTH * sr;
+        float dispH = PANEL_HEIGHT * sr;
+        float originX = (this.width - dispW) / 2f;
+        float originY = (this.height - dispH) / 2f;
+        double lx = (click.x() - originX) / sr;
+        double ly = (click.y() - originY) / sr;
+
+        int panelX = 0;
+        int panelY = 0;
+        int panelX2 = PANEL_WIDTH;
+        final int panelY2 = PANEL_HEIGHT;
         int listTop = panelY + 42;
         int listBottom = panelY + PANEL_HEIGHT - 54;
         int totalListWidth = PANEL_WIDTH - LIST_PADDING * 2 - LIST_GAP;
@@ -130,16 +177,18 @@ public class SmolFriendsScreen extends Screen {
         List<String> lobbyPlayers = SmolFriendManager.getCurrentLobbyPlayers();
         List<String> friends = SmolFriendManager.getFriends();
 
-        int clickedLobbyPlayer = getClickedIndex(click.x(), click.y(), lobbyListX1, listTop, lobbyListX2, listBottom, lobbyScroll, lobbyPlayers.size());
+        int clickedLobbyPlayer = getClickedIndex(lx, ly, lobbyListX1, listTop, lobbyListX2, listBottom, lobbyScroll, lobbyPlayers.size());
         if (clickedLobbyPlayer >= 0) {
             selectedLobbyPlayer = clickedLobbyPlayer;
             selectedLobbyPlayerName = lobbyPlayers.get(clickedLobbyPlayer);
+            SoundUtils.playWoodenButton();
             return true;
         }
 
-        int clickedFriend = getClickedIndex(click.x(), click.y(), friendsListX1, listTop, friendsListX2, listBottom, friendsScroll, friends.size());
+        int clickedFriend = getClickedIndex(lx, ly, friendsListX1, listTop, friendsListX2, listBottom, friendsScroll, friends.size());
         if (clickedFriend >= 0) {
             selectedFriend = clickedFriend;
+            SoundUtils.playWoodenButton();
             return true;
         }
 
@@ -151,7 +200,8 @@ public class SmolFriendsScreen extends Screen {
         int toggleX1 = panelX2 - 150;
         int toggleX2 = panelX2 - 18;
 
-        if (GuiRenderUtil.isHovered(addX1, buttonY, addX2, buttonY + 18, (float) click.x(), (float) click.y())) {
+        if (GuiRenderUtil.isHovered(addX1, buttonY, addX2, buttonY + 18, (float) lx, (float) ly)) {
+            SoundUtils.playBubble();
             if (selectedLobbyPlayer >= 0 && selectedLobbyPlayer < lobbyPlayers.size()) {
                 String name = lobbyPlayers.get(selectedLobbyPlayer);
                 if (SmolFriendManager.addFriend(name)) {
@@ -166,7 +216,8 @@ public class SmolFriendsScreen extends Screen {
             return true;
         }
 
-        if (GuiRenderUtil.isHovered(removeX1, buttonY, removeX2, buttonY + 18, (float) click.x(), (float) click.y())) {
+        if (GuiRenderUtil.isHovered(removeX1, buttonY, removeX2, buttonY + 18, (float) lx, (float) ly)) {
+            SoundUtils.playBubble();
             if (selectedFriend >= 0 && selectedFriend < friends.size()) {
                 String name = friends.get(selectedFriend);
                 if (SmolFriendManager.removeFriend(name)) {
@@ -179,7 +230,8 @@ public class SmolFriendsScreen extends Screen {
             return true;
         }
 
-        if (GuiRenderUtil.isHovered(toggleX1, buttonY, toggleX2, buttonY + 18, (float) click.x(), (float) click.y())) {
+        if (GuiRenderUtil.isHovered(toggleX1, buttonY, toggleX2, buttonY + 18, (float) lx, (float) ly)) {
+            SoundUtils.playBubble();
             ConfigManager.smolFriendsEnabled = !ConfigManager.smolFriendsEnabled;
             ConfigManager.saveConfig();
             MessageUtils.sendBaityMessage("FriendSmol is now " + (ConfigManager.smolFriendsEnabled ? "enabled" : "disabled") + ".");
@@ -195,9 +247,18 @@ public class SmolFriendsScreen extends Screen {
             return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
         }
 
-        int panelX = (this.width - PANEL_WIDTH) / 2;
-        int panelY = (this.height - PANEL_HEIGHT) / 2;
-        int panelX2 = panelX + PANEL_WIDTH;
+        Minecraft mc = Minecraft.getInstance();
+        float sr = scaleRatio(mc);
+        float dispW = PANEL_WIDTH * sr;
+        float dispH = PANEL_HEIGHT * sr;
+        float originX = (this.width - dispW) / 2f;
+        float originY = (this.height - dispH) / 2f;
+        double lx = (mouseX - originX) / sr;
+        double ly = (mouseY - originY) / sr;
+
+        int panelX = 0;
+        int panelY = 0;
+        int panelX2 = PANEL_WIDTH;
         int listTop = panelY + 42;
         int listBottom = panelY + PANEL_HEIGHT - 54;
         int totalListWidth = PANEL_WIDTH - LIST_PADDING * 2 - LIST_GAP;
@@ -207,15 +268,17 @@ public class SmolFriendsScreen extends Screen {
         int friendsListX1 = lobbyListX2 + LIST_GAP;
         int friendsListX2 = panelX2 - LIST_PADDING;
 
-        if (GuiRenderUtil.isHovered(lobbyListX1, listTop, lobbyListX2, listBottom, (float) mouseX, (float) mouseY)) {
+        if (GuiRenderUtil.isHovered(lobbyListX1, listTop, lobbyListX2, listBottom, (float) lx, (float) ly)) {
             lobbyScroll += verticalAmount > 0 ? -1 : 1;
             lobbyScroll = clampScroll(lobbyScroll, SmolFriendManager.getCurrentLobbyPlayers().size(), listBottom - listTop);
+            SoundUtils.playWoodenButton();
             return true;
         }
 
-        if (GuiRenderUtil.isHovered(friendsListX1, listTop, friendsListX2, listBottom, (float) mouseX, (float) mouseY)) {
+        if (GuiRenderUtil.isHovered(friendsListX1, listTop, friendsListX2, listBottom, (float) lx, (float) ly)) {
             friendsScroll += verticalAmount > 0 ? -1 : 1;
             friendsScroll = clampScroll(friendsScroll, SmolFriendManager.getFriends().size(), listBottom - listTop);
+            SoundUtils.playWoodenButton();
             return true;
         }
 
@@ -225,6 +288,7 @@ public class SmolFriendsScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent input) {
         if (input.input() == 256) {
+            SoundUtils.playWoodenButton();
             this.onClose();
             return true;
         }

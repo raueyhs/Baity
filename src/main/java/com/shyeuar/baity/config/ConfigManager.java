@@ -13,6 +13,7 @@ public class ConfigManager {
     public static boolean blockAnimationMode = false;
     public static boolean blockAnimationInteractAnimations = true;
     public static boolean blockAnimationNoReequipWhenUsing = true;
+    public static String blockAnimationAnimaMode = "default";
     public static boolean crosshairEnabled = false;
     public static boolean customCrosshairEnabled = false;
     public static boolean thirdPersonBackCrosshairEnabled = true;
@@ -157,6 +158,9 @@ public class ConfigManager {
         registerField("BlockAnimationNoReequipWhenUsing", Boolean.class,
             c -> ConfigManager.blockAnimationNoReequipWhenUsing,
             (c, v) -> ConfigManager.blockAnimationNoReequipWhenUsing = (Boolean) v);
+        registerField("BlockAnimationAnimaMode", String.class,
+            c -> ConfigManager.blockAnimationAnimaMode,
+            (c, v) -> ConfigManager.blockAnimationAnimaMode = (String) v);
         registerField("CrosshairEnabled", Boolean.class,
             c -> ConfigManager.crosshairEnabled,
             (c, v) -> ConfigManager.crosshairEnabled = (Boolean) v);

@@ -9,6 +9,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemUseAnimation;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -32,12 +33,32 @@ public final class BlockAnimationUtils {
         return com.shyeuar.baity.config.ConfigManager.blockAnimationNoReequipWhenUsing;
     }
 
+    public static boolean isCircleAnimaMode() {
+        return "circle".equalsIgnoreCase(com.shyeuar.baity.config.ConfigManager.blockAnimationAnimaMode);
+    }
+
+    public static boolean isRotorAnimaMode() {
+        return "rotor".equalsIgnoreCase(com.shyeuar.baity.config.ConfigManager.blockAnimationAnimaMode);
+    }
+
+    public static boolean isSpinAnimaMode() {
+        return isCircleAnimaMode() || isRotorAnimaMode();
+    }
+
     public static boolean isPlayerBlockingWithSword(Player player) {
         if (!isFeatureActive()) return false;
         if (player == null) return false;
         return isPlayerRightClicking() && canSwordBlock(player);
     }
- 
+
+    public static boolean isUsingConsumableAnimation(Player player) {
+        if (player == null || !player.isUsingItem()) return false;
+        ItemStack stack = player.getUseItem();
+        if (stack.isEmpty()) return false;
+        ItemUseAnimation anim = stack.getUseAnimation();
+        return anim == ItemUseAnimation.EAT || anim == ItemUseAnimation.DRINK;
+    }
+
     public static boolean isPlayerRightClicking() {
         Minecraft client = Minecraft.getInstance();
         if (client == null || client.options == null) return false;
@@ -95,19 +116,21 @@ public final class BlockAnimationUtils {
         }
     }
 
-    public static void applySwingWhilstMining(ClientLevel level, Player player, HitResult hitResult) {
+    public static void applySwingWhileUsingConsumable(ClientLevel level, Player player, HitResult hitResult) {
         if (player == null) return;
-        InteractionHand activeHand = player.getUsedItemHand();
-        InteractionHand hand = InteractionHand.MAIN_HAND;
-        if (!activeHand.equals(hand)) return;
-        if (hitResult == null || hitResult.getType() != HitResult.Type.BLOCK) return;
+        if (!player.isUsingItem()) return;
+        if (!isUsingConsumableAnimation(player)) return;
+        if (player.getItemInHand(player.getUsedItemHand()).isEmpty()) return;
 
-        BlockHitResult bhr = (BlockHitResult) hitResult;
-        BlockPos pos = bhr.getBlockPos();
-        if (level != null && !level.getBlockState(pos).isAir()) {
-            level.addBreakingBlockEffect(pos, bhr.getDirection());
+        fakeHandSwing(player, InteractionHand.MAIN_HAND);
+
+        if (hitResult != null && hitResult.getType() == HitResult.Type.BLOCK && level != null) {
+            BlockHitResult bhr = (BlockHitResult) hitResult;
+            BlockPos pos = bhr.getBlockPos();
+            if (!level.getBlockState(pos).isAir()) {
+                level.addBreakingBlockEffect(pos, bhr.getDirection());
+            }
         }
-        fakeHandSwing(player, hand);
     }
 }
 

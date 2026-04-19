@@ -316,22 +316,33 @@ public class ClickGui extends BaseOwoScreen<FlowLayout> {
             return;
         }
 
+        if ("Crosshair".equals(module.getName()) && "anima mode".equals(buttonValue.getName())) {
+            String current = buttonValue.getValue() == null ? "always" : String.valueOf(buttonValue.getValue());
+            String next = "bow only".equalsIgnoreCase(current) ? "always" : "bow only";
+            buttonValue.setValue(next);
+            ConfigSynchronizer.handleValueUpdate(module.getName(), buttonValue.getName(), next);
+            return;
+        }
+
+        if ("BlockAnimation".equals(module.getName()) && "anima mode".equals(buttonValue.getName())) {
+            String current = buttonValue.getValue() == null ? "default" : String.valueOf(buttonValue.getValue());
+            String next;
+            if ("default".equalsIgnoreCase(current)) {
+                next = "circle";
+            } else if ("circle".equalsIgnoreCase(current)) {
+                next = "rotor";
+            } else {
+                next = "default";
+            }
+            buttonValue.setValue(next);
+            ConfigSynchronizer.handleValueUpdate(module.getName(), buttonValue.getName(), next);
+            return;
+        }
+
         if ("SmolPeople".equals(module.getName()) && "friends".equals(buttonValue.getName())) {
             Minecraft mc = Minecraft.getInstance();
             if (mc != null) {
                 mc.setScreen(new SmolFriendsScreen(this));
-            }
-            return;
-        }
-
-        if ("Crosshair".equals(module.getName()) && "anima mode".equals(buttonValue.getName())) {
-            String current = String.valueOf(buttonValue.getValue());
-            String next = "bow only".equalsIgnoreCase(current) ? "always" : "bow only";
-            buttonValue.setValue(next);
-            ConfigManager.crosshairAnimaMode = next;
-            ConfigManager.requestSave();
-            if (ConfigSynchronizer.hasValueConfig(module.getName(), buttonValue.getName())) {
-                ConfigSynchronizer.handleValueUpdate(module.getName(), buttonValue.getName(), next);
             }
         }
     }

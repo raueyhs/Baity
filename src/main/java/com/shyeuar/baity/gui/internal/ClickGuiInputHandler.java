@@ -1030,6 +1030,7 @@ public class ClickGuiInputHandler {
             if (button == 0 && GuiRenderUtil.isHovered(keyBoxX1, keyBoxY1, keyBoxX2, keyBoxY2, 
                                                       coords.mouseX, coords.mouseY)) {
                 state.setListeningForKey(true);
+                SoundUtils.playWoodenButton();
                 timer.reset();
                 return true;
             }
@@ -1137,10 +1138,12 @@ public class ClickGuiInputHandler {
                 if (GuiRenderUtil.isHovered(boxX1, boxY1, boxX2, boxY2, coords.mouseX, coords.mouseY)) {
                     if (buttonValue.getButtonValueType() == ButtonValue.ButtonValueType.KEYBIND) {
                         state.setListeningButtonValue(module.getName(), value.getName());
+                        SoundUtils.playWoodenButton();
                         timer.reset();
                         return true;
                     } else if (buttonValue.getButtonValueType() == ButtonValue.ButtonValueType.TRIGGER ||
                                buttonValue.getButtonValueType() == ButtonValue.ButtonValueType.FONT_SELECTOR) {
+                        SoundUtils.playWoodenButton();
                         if (onTriggerValueClick != null) {
                             onTriggerValueClick.accept(module, buttonValue);
                         }
@@ -1166,6 +1169,7 @@ public class ClickGuiInputHandler {
                     resetBoxY + resetBoxHeight + resetClickMargin, 
                     coords.mouseX, coords.mouseY)) {
                     sliderValue.resetToDefault();
+                    SoundUtils.playWoodenButton();
                     if (ConfigSynchronizer.hasValueConfig(module.getName(), value.getName())) {
                         ConfigSynchronizer.handleValueUpdate(module.getName(), value.getName(), sliderValue.getValue());
                     }

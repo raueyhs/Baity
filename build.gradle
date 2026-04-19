@@ -37,7 +37,7 @@ dependencies {
     
     include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")))
     
-    // owo-lib 依赖
+    // owo-lib（Modrinth：0.12.24+1.21.9 标记支持 1.21.9–1.21.10 Fabric）
     modImplementation "io.wispforest:owo-lib:0.12.24+1.21.9"
     include "io.wispforest:owo-sentinel:0.12.24+1.21.9"
     

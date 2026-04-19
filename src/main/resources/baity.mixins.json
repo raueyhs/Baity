@@ -14,6 +14,7 @@
     "BlockAnimationMixin$MinecraftMixin",
     "BlockAnimationMixin$HumanoidModelMixin",
     "BlockAnimationMixin$PlayerItemInHandLayerMixin",
+    "BlockAnimationMixin$LivingEntitySwingMixin",
     "accessor.ItemStackRenderStateAccessor$ItemStackRenderStateAccessorImpl",
     "accessor.ItemStackRenderStateAccessor$LayerRenderStateAccessor",
     "accessor.ItemInHandRendererAccessor",
