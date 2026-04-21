@@ -27,6 +27,7 @@ public final class NickRenderUtils {
     private static volatile String cachePlayerName = "";
     private static volatile List<Target> cachedTargets = List.of();
     private static final ThreadLocal<Boolean> PREVIEW_OVERRIDE = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    private static final ThreadLocal<Boolean> CLICK_GUI_RENDER_SCOPE = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final int MATCH_CACHE_MAX = 2048;
     private static final Object MATCH_CACHE_LOCK = new Object();
     private static final LinkedHashMap<String, TargetMatch[]> MATCH_CACHE = new LinkedHashMap<>(16, 0.75f, true) {
@@ -63,10 +64,7 @@ public final class NickRenderUtils {
         if (Boolean.TRUE.equals(PREVIEW_OVERRIDE.get())) {
             return false;
         }
-        Minecraft client = Minecraft.getInstance();
-        if (client == null) return false;
-        if (client.screen == null) return false;
-        return client.screen instanceof com.shyeuar.baity.gui.ClickGui;
+        return Boolean.TRUE.equals(CLICK_GUI_RENDER_SCOPE.get());
     }
     
 
@@ -125,6 +123,14 @@ public final class NickRenderUtils {
     }
     public static void endPreviewOverride() {
         PREVIEW_OVERRIDE.set(Boolean.FALSE);
+    }
+
+    public static void beginClickGuiRenderScope() {
+        CLICK_GUI_RENDER_SCOPE.set(Boolean.TRUE);
+    }
+
+    public static void endClickGuiRenderScope() {
+        CLICK_GUI_RENDER_SCOPE.set(Boolean.FALSE);
     }
 
     

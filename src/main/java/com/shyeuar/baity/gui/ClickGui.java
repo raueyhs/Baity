@@ -13,6 +13,7 @@ import com.shyeuar.baity.gui.module.ModuleManager;
 import com.shyeuar.baity.gui.tooltip.TooltipManager;
 import com.shyeuar.baity.gui.value.ButtonValue;
 import com.shyeuar.baity.sync.BaityPresenceSync;
+import com.shyeuar.baity.utils.NickRenderUtils;
 import com.shyeuar.baity.utils.TimerUtils;
 import io.wispforest.owo.ui.base.BaseOwoScreen;
 import io.wispforest.owo.ui.container.Containers;
@@ -183,7 +184,12 @@ public class ClickGui extends BaseOwoScreen<FlowLayout> {
         }
         
         if (graphics != null) {
-            super.render(graphics, mouseX, mouseY, delta);
+            NickRenderUtils.beginClickGuiRenderScope();
+            try {
+                super.render(graphics, mouseX, mouseY, delta);
+            } finally {
+                NickRenderUtils.endClickGuiRenderScope();
+            }
         }
     }
     

@@ -1,5 +1,5 @@
 {
-  "required": true,
+  "required": false,
   "package": "com.shyeuar.baity.mixin",
   "refmap": "baity.refmap.json",
   "compatibilityLevel": "JAVA_21",
@@ -49,6 +49,8 @@
     "NoSwapAnimationMixin",
     "ImmuneReactionMixin$ChatDetectorMixin",
     "NickTweaksMixin",
+    "NametagOffsetMixin",
+    "NametagOffsetMixin$LayoutCompatMixin",
     "ImmuneReactionMixin$PlayerTickMixin",
     "InvisibleBugHighlightsMixin$ParticlePacketMixin",
     "InvisibleBugHighlightsMixin$EntityRemovalMixin",
@@ -70,6 +72,6 @@
     "accessor.CameraRenderStateAccessor"
   ],
   "injectors": {
-    "defaultRequire": 1
+    "defaultRequire": 0
   }
 }

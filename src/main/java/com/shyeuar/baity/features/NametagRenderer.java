@@ -16,6 +16,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
@@ -27,6 +28,8 @@ public class NametagRenderer implements WorldRenderEvents.AfterEntities {
     private static long lastTimeUpdate = 0;
     private static double cachedSinValue = 0.0;
     private static final Object NAME_CACHE_LOCK = new Object();
+    private static volatile long nametagLayoutVersion = 0L;
+    private static volatile String lastLayoutSignature = "";
     private static final java.util.LinkedHashMap<String, CachedName> NAME_CACHE = new java.util.LinkedHashMap<>(64, 0.75f, true) {
         @Override
         protected boolean removeEldestEntry(java.util.Map.Entry<String, CachedName> eldest) {
@@ -52,6 +55,8 @@ public class NametagRenderer implements WorldRenderEvents.AfterEntities {
         if (defaultNametag) {
             return;
         }
+
+        refreshLayoutVersionIfNeeded(m);
         
         if (mc.level == null || mc.player == null) return;
         
@@ -141,9 +146,15 @@ public class NametagRenderer implements WorldRenderEvents.AfterEntities {
         boolean showDistance = ModuleUtils.getOptionBoolean(module, "show distance", true);
         boolean forcePinkColor = ModuleUtils.getOptionBoolean(module, "force pink color", true);
         
+        FormattedText nickProcessed = NickRenderUtils.handleFormattedText(originalNameComponent);
+        boolean nickTweaksModifiesDisplay = nickProcessed != originalNameComponent;
+
         Component nameComponent;
         String baseName;
-        if (forcePinkColor) {
+        if (nickTweaksModifiesDisplay) {
+            nameComponent = (Component) nickProcessed;
+            baseName = originalNameComponent.getString();
+        } else if (forcePinkColor) {
             baseName = originalNameComponent.getString();
             if (baseName.indexOf('\u00A7') >= 0) {
                 StringBuilder sb = new StringBuilder(baseName.length());
@@ -165,7 +176,7 @@ public class NametagRenderer implements WorldRenderEvents.AfterEntities {
         
         Font textRenderer = mc.font;
 
-        String cacheKey = NickRenderUtils.getTargetsCacheAt() + "|" + baseName;
+        String cacheKey = nametagLayoutVersion + "|" + baseName;
         CachedName cached;
         synchronized (NAME_CACHE_LOCK) {
             cached = NAME_CACHE.get(cacheKey);
@@ -231,5 +242,47 @@ public class NametagRenderer implements WorldRenderEvents.AfterEntities {
             cachedSinValue = Math.sin(currentTime * 0.001) * 0.08; 
             lastTimeUpdate = currentTime;
         }
+    }
+
+    private static void refreshLayoutVersionIfNeeded(Module nametagModule) {
+        String signature = buildLayoutSignature(nametagModule);
+        if (signature.equals(lastLayoutSignature)) {
+            return;
+        }
+
+        synchronized (NAME_CACHE_LOCK) {
+            if (signature.equals(lastLayoutSignature)) {
+                return;
+            }
+            lastLayoutSignature = signature;
+            nametagLayoutVersion++;
+            NAME_CACHE.clear();
+        }
+    }
+
+    private static String buildLayoutSignature(Module nametagModule) {
+        boolean showDistance = ModuleUtils.getOptionBoolean(nametagModule, "show distance", true);
+        boolean forcePinkColor = ModuleUtils.getOptionBoolean(nametagModule, "force pink color", true);
+        boolean focusPlayerNametag = ModuleUtils.getOptionBoolean(nametagModule, "focus player nametag", false);
+        boolean showOwnNametag = ModuleUtils.getOptionBoolean(nametagModule, "show own nametag", false);
+        boolean nickTweaksEnabled = com.shyeuar.baity.config.ConfigManager.nickTweaksEnabled;
+        boolean nickTweaksChromaEnabled = com.shyeuar.baity.config.ConfigManager.nickTweaksChromaEnabled;
+        boolean nickTweaksCustomNickColorEnabled = com.shyeuar.baity.config.ConfigManager.nickTweaksCustomNickColorEnabled;
+        boolean nickTweaksBoldSelf = com.shyeuar.baity.config.ConfigManager.nickTweaksBoldSelf;
+        String nickChanger = com.shyeuar.baity.config.ConfigManager.nickTweaksNickChanger;
+        if (nickChanger == null) {
+            nickChanger = "";
+        }
+
+        return showDistance
+            + "|" + forcePinkColor
+            + "|" + focusPlayerNametag
+            + "|" + showOwnNametag
+            + "|" + nickTweaksEnabled
+            + "|" + nickTweaksChromaEnabled
+            + "|" + nickTweaksCustomNickColorEnabled
+            + "|" + nickTweaksBoldSelf
+            + "|" + nickChanger
+            + "|" + NickRenderUtils.getTargetsCacheAt();
     }
 }

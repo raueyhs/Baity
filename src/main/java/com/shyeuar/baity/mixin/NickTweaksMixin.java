@@ -4,11 +4,14 @@ import com.shyeuar.baity.utils.NickRenderUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.Font;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.FormattedText;
 import net.minecraft.util.FormattedCharSequence;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Environment(EnvType.CLIENT)
 @Mixin(Font.class)
@@ -36,9 +39,10 @@ public class NickTweaksMixin {
         return NickRenderUtils.handleString(text);
     }
 
-    @ModifyVariable(method = "width(Lnet/minecraft/network/chat/FormattedText;)I", at = @At("HEAD"), argsOnly = true)
-    private FormattedText baity$chromaWidthFormattedText(FormattedText text) {
-        return NickRenderUtils.handleFormattedText(text);
+    @Inject(method = "width(Lnet/minecraft/network/chat/FormattedText;)I", at = @At("HEAD"), cancellable = true)
+    private void baity$chromaWidthFormattedText(FormattedText text, CallbackInfoReturnable<Integer> cir) {
+        FormattedCharSequence visualOrder = Language.getInstance().getVisualOrder(text);
+        cir.setReturnValue(((Font) (Object) this).width(visualOrder));
     }
 
     @ModifyVariable(method = "width(Lnet/minecraft/util/FormattedCharSequence;)I", at = @At("HEAD"), argsOnly = true)
