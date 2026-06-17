@@ -5,6 +5,7 @@ import com.shyeuar.baity.gui.value.Option;
 import com.shyeuar.baity.gui.value.ButtonValue;
 import com.shyeuar.baity.gui.value.GroupValue;
 import com.shyeuar.baity.gui.value.EnchantLoreColorEditorValue;
+import com.shyeuar.baity.gui.value.ChromaFishingLineColorEditorValue;
 import com.shyeuar.baity.gui.value.GradientEditorValue;
 import com.shyeuar.baity.features.enchantlore.EnchantLoreColorSettings;
 import com.shyeuar.baity.gui.value.TextLineInputValue;
@@ -671,6 +672,135 @@ public class ModuleManager {
             () -> ConfigManager.noTextShadowEnabled,
             val -> ConfigManager.noTextShadowEnabled = val
         );
+
+        ModuleRegistry.registerModuleWithValues(
+            "VanillaHudHider", "VanillaHudHider", ModuleCategory.RENDER,
+            () -> ConfigManager.vanillaHudHiderEnabled,
+            val -> ConfigManager.vanillaHudHiderEnabled = val,
+            new Option[]{
+                new Option("armor bar", "armor bar", false, ModuleCategory.RENDER),
+                new Option("health bar", "health bar", false, ModuleCategory.RENDER),
+                new Option("food bar", "food bar", false, ModuleCategory.RENDER),
+                new Option("air bar", "air bar", false, ModuleCategory.RENDER),
+                new Option("mount health", "mount health", false, ModuleCategory.RENDER),
+                new Option("experience bar", "experience bar", false, ModuleCategory.RENDER)
+            },
+            new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "armor bar",
+                    () -> ConfigManager.vanillaHudHiderArmorBar,
+                    val -> ConfigManager.vanillaHudHiderArmorBar = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "health bar",
+                    () -> ConfigManager.vanillaHudHiderHealthBar,
+                    val -> ConfigManager.vanillaHudHiderHealthBar = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "food bar",
+                    () -> ConfigManager.vanillaHudHiderFoodBar,
+                    val -> ConfigManager.vanillaHudHiderFoodBar = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "air bar",
+                    () -> ConfigManager.vanillaHudHiderAirBar,
+                    val -> ConfigManager.vanillaHudHiderAirBar = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "mount health",
+                    () -> ConfigManager.vanillaHudHiderMountHealth,
+                    val -> ConfigManager.vanillaHudHiderMountHealth = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "experience bar",
+                    () -> ConfigManager.vanillaHudHiderExperienceBar,
+                    val -> ConfigManager.vanillaHudHiderExperienceBar = (Boolean) val
+                )
+            }
+        );
+
+        GroupValue chromaFishingLineChromaGroup = new GroupValue("chroma settings", "chroma settings", ModuleCategory.RENDER)
+            .setExpanded(ConfigManager.chromaFishingLineChromaGroupExpanded)
+            .setSubModuleSwitchChildName("chroma settings enabled")
+            .addChild(new Option("chroma settings enabled", "enabled", ConfigManager.chromaFishingLineChromaEnabled, ModuleCategory.RENDER))
+            .addChild(new com.shyeuar.baity.gui.value.SliderValue(
+                "chroma lightness", "chroma lightness", 0.8, 0.2, 1.0, 0.05, ModuleCategory.RENDER
+            ))
+            .addChild(new com.shyeuar.baity.gui.value.SliderValue(
+                "chroma chroma", "chroma chroma", 0.2, 0.0, 0.4, 0.01, ModuleCategory.RENDER
+            ))
+            .addChild(new com.shyeuar.baity.gui.value.SliderValue(
+                "chroma size", "chroma size", 3.1, 0.5, 10.0, 0.1, ModuleCategory.RENDER
+            ))
+            .addChild(new com.shyeuar.baity.gui.value.SliderValue(
+                "chroma speed", "chroma speed", 1.0, 0.1, 8.0, 0.1, ModuleCategory.RENDER
+            ))
+            .addChild(new Option("reverse direction", "reverse direction", ConfigManager.chromaFishingLineChromaReverseDirection, ModuleCategory.RENDER));
+
+        ModuleRegistry.registerModuleWithValues(
+            "ChromaFishingLine", "ChromaFishingLine", ModuleCategory.RENDER,
+            () -> ConfigManager.chromaFishingLineEnabled,
+            val -> ConfigManager.chromaFishingLineEnabled = val,
+            new com.shyeuar.baity.gui.value.Value[]{
+                new ChromaFishingLineColorEditorValue(
+                    "gradient editor", "gradient editor", ModuleCategory.RENDER
+                ),
+                chromaFishingLineChromaGroup
+            },
+            new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "gradient editor",
+                    () -> String.format("#%06X,#%06X",
+                            ConfigManager.chromaFishingLineGradientStart & 0xFFFFFF,
+                            ConfigManager.chromaFishingLineGradientEnd & 0xFFFFFF),
+                    val -> {
+                        if (!(val instanceof String raw)) return;
+                        String[] parts = raw.split(",", 2);
+                        if (parts.length != 2) return;
+                        String start = parts[0].trim().replace("#", "");
+                        String end = parts[1].trim().replace("#", "");
+                        if (!start.matches("^[0-9A-Fa-f]{6}$") || !end.matches("^[0-9A-Fa-f]{6}$")) return;
+                        ConfigManager.chromaFishingLineGradientStart = Integer.parseInt(start, 16);
+                        ConfigManager.chromaFishingLineGradientEnd = Integer.parseInt(end, 16);
+                    }
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma settings",
+                    () -> ConfigManager.chromaFishingLineChromaGroupExpanded,
+                    val -> ConfigManager.chromaFishingLineChromaGroupExpanded = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma settings enabled",
+                    () -> ConfigManager.chromaFishingLineChromaEnabled,
+                    val -> ConfigManager.chromaFishingLineChromaEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma lightness",
+                    () -> ConfigManager.chromaFishingLineChromaLightness,
+                    val -> ConfigManager.chromaFishingLineChromaLightness = ((Number) val).doubleValue()
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma chroma",
+                    () -> ConfigManager.chromaFishingLineChromaChroma,
+                    val -> ConfigManager.chromaFishingLineChromaChroma = ((Number) val).doubleValue()
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma size",
+                    () -> ConfigManager.chromaFishingLineChromaSize,
+                    val -> ConfigManager.chromaFishingLineChromaSize = ((Number) val).doubleValue()
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "chroma speed",
+                    () -> ConfigManager.chromaFishingLineChromaSpeed,
+                    val -> ConfigManager.chromaFishingLineChromaSpeed = ((Number) val).doubleValue()
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "reverse direction",
+                    () -> ConfigManager.chromaFishingLineChromaReverseDirection,
+                    val -> ConfigManager.chromaFishingLineChromaReverseDirection = (Boolean) val
+                )
+            }
+        );
         
         ModuleRegistry.registerModuleWithValues(
             "Nodebuff", "Nodebuff", ModuleCategory.RENDER,
@@ -933,6 +1063,16 @@ public class ModuleManager {
         TooltipManager.registerTooltip("arabic numerals", "Replace roman number with arabic number.", 0xFFFFFF);
         TooltipManager.registerTooltip("transparentize other tags", "Remove the black background of tags.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoTextShadow", "Disable all the text shadow in game.", 0xFFFFFF);
+        TooltipManager.registerTooltip(
+            "ChromaFishingLine",
+            "Customize the fishing line color.",
+            0xFFFFFF
+        );
+        TooltipManager.registerTooltip(
+            "VanillaHudHider",
+            "Selectively hide the original hud, such as health, satiety, etc.",
+            0xFFFFFF
+        );
         TooltipManager.registerTooltip("sync non-critical dmg",
             "Apply preset colors to plain non-crit damage.", 0xFFFFFF);
     }

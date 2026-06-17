@@ -8,6 +8,7 @@ import com.shyeuar.baity.gui.value.ValueStyle;
 import com.shyeuar.baity.gui.value.ButtonValue;
 import com.shyeuar.baity.gui.value.CrosshairPainterValue;
 import com.shyeuar.baity.gui.value.EnchantLoreColorEditorValue;
+import com.shyeuar.baity.gui.value.ChromaFishingLineColorEditorValue;
 import com.shyeuar.baity.gui.value.GradientEditorValue;
 import com.shyeuar.baity.features.enchantlore.EnchantLore;
 import com.shyeuar.baity.gui.value.GroupValue;
@@ -423,6 +424,8 @@ public class ValueStyleRenderer {
           renderFancyDmgColorEditorValue(context, client, fancyEditor, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, editingGradient, gradientInputText, gradientInputCaretCp, hoveredTooltipInfo);
       } else if (style == ValueStyle.ENCHANT_LORE_COLOR_EDITOR && value instanceof EnchantLoreColorEditorValue) {
           renderEnchantLoreColorEditorValue(context, client, (EnchantLoreColorEditorValue) value, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, editingGradient, gradientInputText, gradientInputCaretCp, hoveredTooltipInfo);
+      } else if (style == ValueStyle.CHROMA_FISHING_LINE_COLOR_EDITOR && value instanceof ChromaFishingLineColorEditorValue chromaEditor) {
+          renderChromaFishingLineColorEditorValue(context, client, chromaEditor, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, editingGradient, gradientInputText, gradientInputCaretCp, hoveredTooltipInfo);
       } else if (style == ValueStyle.CROSSHAIR_PAINTER && value instanceof CrosshairPainterValue) {
           renderCrosshairPainterValue(context, client, (CrosshairPainterValue) value, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, hoveredTooltipInfo);
       } else if (style == ValueStyle.TEXT_LINE_INPUT && value instanceof TextLineInputValue) {
@@ -1398,6 +1401,104 @@ public class ValueStyleRenderer {
                    .withStyle(net.minecraft.network.chat.Style.EMPTY.withColor(com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR));
            hoveredTooltipInfo.x = (int) (mouseX + 5);
            hoveredTooltipInfo.y = (int) (mouseY + 5);
+       }
+   }
+
+   public static void renderChromaFishingLineColorEditorValue(GuiGraphics context, Minecraft client,
+                                                        ChromaFishingLineColorEditorValue value,
+                                                        Theme theme, float x1, float y, float x2, float subOptionHeight,
+                                                        float mouseX, float mouseY, int localAlpha,
+                                                        com.shyeuar.baity.gui.internal.ClickGuiState.GradientInputInfo editingGradient,
+                                                        String gradientInputText,
+                                                        Integer gradientInputCaretCp,
+                                                        ModuleStyleRenderer.TooltipInfo hoveredTooltipInfo) {
+       GradientEditorValue gradient = value.gradient();
+       float blockHeight = getGradientEditorHeight(subOptionHeight);
+       int bg = (new java.awt.Color(35, 35, 35, 180).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.drawRoundedRect(context, x1, y, x2, y + blockHeight, 6, bg);
+
+       int textColor = (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       context.drawString(client.font, value.getDisplayName(), (int) (x1 + 8), (int) (y + 6), textColor, false);
+
+       String selectedHex = gradient.getSelectedHex();
+       if (editingGradient != null && value.getName().equals(editingGradient.valueName)) {
+           selectedHex = "#" + gradientInputText.toUpperCase(java.util.Locale.ROOT);
+       }
+       GradientEditorBottomLayout bottom = computeGradientEditorBottomLayout(client, x1, y, x2, blockHeight, selectedHex, true);
+       float mapX1 = bottom.mapX1;
+       float mapY1 = bottom.mapY1;
+       float mapX2 = bottom.mapX2;
+       float mapY2 = bottom.mapY2;
+       drawHueSatMap(context, mapX1, mapY1, mapX2, mapY2, localAlpha);
+
+       float p1x = mapX1 + gradient.getSelectedHue() * (mapX2 - mapX1);
+       float p1y = mapY1 + (1f - gradient.getSelectedSat()) * (mapY2 - mapY1);
+       int pointFill = java.awt.Color.HSBtoRGB(gradient.getSelectedHue(), gradient.getSelectedSat(), GradientEditorValue.MAP_FIXED_VALUE) & 0xFFFFFF;
+       int selectorColor = (pointFill & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.drawRoundedRect(context, p1x - 2, p1y - 2, p1x + 3, p1y + 3, 0, selectorColor);
+       float mapMidY = (mapY1 + mapY2) * 0.5f;
+       int pointBorderBase = p1y >= mapMidY ? 0x000000 : 0xFFFFFF;
+       int pointBorder = (pointBorderBase & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.drawRoundedRectOutline(context, p1x - 3, p1y - 3, p1x + 4, p1y + 4, 0, pointBorder);
+
+       float sliderX1 = x2 - 48;
+       float sliderX2 = x2 - 36;
+       drawValueSlider(context, sliderX1, mapY1, sliderX2, mapY2, gradient.getSelectedHue(), gradient.getSelectedSat(), localAlpha);
+       float knobY = mapY2 - gradient.getSelectedVal() * (mapY2 - mapY1);
+       int knobColor = (new java.awt.Color(0, 0, 0, 255).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       int knobBorder = (new java.awt.Color(255, 255, 255, 255).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.drawRoundedRect(context, sliderX1 - 2, knobY - 2, sliderX2 + 2, knobY + 2, 1, knobColor);
+       GuiRenderUtil.drawRoundedRectOutline(context, sliderX1 - 3, knobY - 3, sliderX2 + 3, knobY + 3, 1, knobBorder);
+
+       float box1X1 = x2 - 30;
+       float box1X2 = x2 - 12;
+       float box1Y1 = y + 24;
+       float box1Y2 = y + 42;
+       float box2Y2 = mapY2;
+       float box2Y1 = box2Y2 - 18;
+       int color1 = (0xFF000000 | gradient.getStartColor() & 0xFFFFFF);
+       int color2 = (0xFF000000 | gradient.getEndColor() & 0xFFFFFF);
+       GuiRenderUtil.drawRoundedRect(context, box1X1 + 1, box1Y1 + 1, box1X2 - 1, box1Y2 - 1, 2, color1);
+       GuiRenderUtil.drawRoundedRect(context, box1X1 + 1, box2Y1 + 1, box1X2 - 1, box2Y2 - 1, 2, color2);
+       int themeDarkBorder = new java.awt.Color(50, 50, 50, 255).getRGB();
+       boolean hoverL = GuiRenderUtil.isHovered(box1X1, box1Y1, box1X2, box1Y2, mouseX, mouseY);
+       boolean hoverR = GuiRenderUtil.isHovered(box1X1, box2Y1, box1X2, box2Y2, mouseX, mouseY);
+       int borderL = (gradient.getSelectedPoint() == 0 || hoverL ? theme.BG_3.getRGB() : themeDarkBorder) & 0x00FFFFFF | (localAlpha << 24);
+       int borderR = (gradient.getSelectedPoint() == 1 || hoverR ? theme.BG_3.getRGB() : themeDarkBorder) & 0x00FFFFFF | (localAlpha << 24);
+       GuiRenderUtil.drawRoundedRectOutline(context, box1X1, box1Y1, box1X2, box1Y2, 2, borderL);
+       GuiRenderUtil.drawRoundedRectOutline(context, box1X1, box2Y1, box1X2, box2Y2, 2, borderR);
+       if (gradient.getSelectedPoint() == 0) {
+           GuiRenderUtil.drawRoundedRectOutline(context, box1X1 - 1, box1Y1 - 1, box1X2 + 1, box1Y2 + 1, 3, borderL);
+       } else {
+           GuiRenderUtil.drawRoundedRectOutline(context, box1X1 - 1, box2Y1 - 1, box1X2 + 1, box2Y2 + 1, 3, borderR);
+       }
+       drawScaledLabel(context, client, "L", box1X1 + 6, box1Y2 + 2, textColor, 0.85f);
+       drawScaledLabel(context, client, "R", box1X1 + 6, box2Y1 - 8, textColor, 0.85f);
+
+       boolean editingHex = editingGradient != null && value.getName().equals(editingGradient.valueName);
+       renderGradientEditorBottomControls(context, client, theme, bottom, selectedHex, editingHex, gradientInputCaretCp,
+               null, false, null, localAlpha, hoveredTooltipInfo, mouseX, mouseY, "Set the selected color to the unselected color.");
+
+       int rodSize = 16;
+       float previewY = y + blockHeight - rodSize - 4;
+       float rodX = x1 + 10;
+       context.renderItem(new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.FISHING_ROD), (int) rodX, (int) previewY);
+
+       float lineX1 = rodX + rodSize + 4;
+       float lineX2 = Math.min(x2 - 12, lineX1 + 72);
+       float lineY = previewY + rodSize * 0.55f;
+       int segments = 16;
+       long nowMs = System.currentTimeMillis();
+       for (int i = 0; i < segments; i++) {
+           float t0 = i / (float) segments;
+           float t1 = (i + 1) / (float) segments;
+           float sx = lineX1 + (lineX2 - lineX1) * t0;
+           float ex = lineX1 + (lineX2 - lineX1) * t1;
+           float mid = (t0 + t1) * 0.5f;
+           int argb = com.shyeuar.baity.features.fishing.ChromaFishingLine.previewColorArgb(
+                   1.0f - mid, gradient.getStartColor(), gradient.getEndColor(), nowMs);
+           int lineColor = (argb & 0x00FFFFFF) | (localAlpha << 24);
+           drawThickLine(context, sx, lineY, ex, lineY, 2, lineColor);
        }
    }
 

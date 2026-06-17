@@ -75,7 +75,10 @@
     "accessor.LivingEntityAccessor",
     "accessor.CameraAccessor",
     "accessor.AvatarRenderStateAccessor",
-    "accessor.CameraRenderStateAccessor"
+    "accessor.CameraRenderStateAccessor",
+    "ChromaFishingLineMixin",
+    "FishingHookRenderStateMixin",
+    "accessor.FishingHookRendererInvoker"
   ],
   "injectors": {
     "defaultRequire": 0

@@ -98,6 +98,25 @@ public class ConfigManager {
     public static boolean nodebuffEnabled = false;
     public static boolean nodebuffRemoveNausea = true;
     public static boolean nodebuffRemoveBlindness = true;
+
+    public static boolean vanillaHudHiderEnabled = false;
+    public static boolean vanillaHudHiderArmorBar = false;
+    public static boolean vanillaHudHiderHealthBar = false;
+    public static boolean vanillaHudHiderFoodBar = false;
+    public static boolean vanillaHudHiderAirBar = false;
+    public static boolean vanillaHudHiderMountHealth = false;
+    public static boolean vanillaHudHiderExperienceBar = false;
+
+    public static boolean chromaFishingLineEnabled = false;
+    public static int chromaFishingLineGradientStart = 0x000000;
+    public static int chromaFishingLineGradientEnd = 0x000000;
+    public static boolean chromaFishingLineChromaEnabled = false;
+    public static double chromaFishingLineChromaLightness = 0.8;
+    public static double chromaFishingLineChromaChroma = 0.2;
+    public static double chromaFishingLineChromaSize = 3.1;
+    public static double chromaFishingLineChromaSpeed = 1.0;
+    public static boolean chromaFishingLineChromaReverseDirection = false;
+    public static boolean chromaFishingLineChromaGroupExpanded = false;
     
     public static boolean soundsEnabled = true;
     
@@ -441,6 +460,57 @@ public class ConfigManager {
         registerField("  RemoveBlindness", Boolean.class,
             c -> ConfigManager.nodebuffRemoveBlindness,
             (c, v) -> ConfigManager.nodebuffRemoveBlindness = (Boolean) v);
+        registerField("VanillaHudHider", Boolean.class,
+            c -> ConfigManager.vanillaHudHiderEnabled,
+            (c, v) -> ConfigManager.vanillaHudHiderEnabled = (Boolean) v);
+        registerField("  ArmorBar", Boolean.class,
+            c -> ConfigManager.vanillaHudHiderArmorBar,
+            (c, v) -> ConfigManager.vanillaHudHiderArmorBar = (Boolean) v);
+        registerField("  HealthBar", Boolean.class,
+            c -> ConfigManager.vanillaHudHiderHealthBar,
+            (c, v) -> ConfigManager.vanillaHudHiderHealthBar = (Boolean) v);
+        registerField("  FoodBar", Boolean.class,
+            c -> ConfigManager.vanillaHudHiderFoodBar,
+            (c, v) -> ConfigManager.vanillaHudHiderFoodBar = (Boolean) v);
+        registerField("  AirBar", Boolean.class,
+            c -> ConfigManager.vanillaHudHiderAirBar,
+            (c, v) -> ConfigManager.vanillaHudHiderAirBar = (Boolean) v);
+        registerField("  MountHealth", Boolean.class,
+            c -> ConfigManager.vanillaHudHiderMountHealth,
+            (c, v) -> ConfigManager.vanillaHudHiderMountHealth = (Boolean) v);
+        registerField("  ExperienceBar", Boolean.class,
+            c -> ConfigManager.vanillaHudHiderExperienceBar,
+            (c, v) -> ConfigManager.vanillaHudHiderExperienceBar = (Boolean) v);
+        registerField("ChromaFishingLine", Boolean.class,
+            c -> ConfigManager.chromaFishingLineEnabled,
+            (c, v) -> ConfigManager.chromaFishingLineEnabled = (Boolean) v);
+        registerField("ChromaFishingLineGradientStart", Integer.class,
+            c -> ConfigManager.chromaFishingLineGradientStart,
+            (c, v) -> ConfigManager.chromaFishingLineGradientStart = (Integer) v);
+        registerField("ChromaFishingLineGradientEnd", Integer.class,
+            c -> ConfigManager.chromaFishingLineGradientEnd,
+            (c, v) -> ConfigManager.chromaFishingLineGradientEnd = (Integer) v);
+        registerField("ChromaFishingLineChromaEnabled", Boolean.class,
+            c -> ConfigManager.chromaFishingLineChromaEnabled,
+            (c, v) -> ConfigManager.chromaFishingLineChromaEnabled = (Boolean) v);
+        registerField("ChromaFishingLineChromaLightness", Double.class,
+            c -> ConfigManager.chromaFishingLineChromaLightness,
+            (c, v) -> ConfigManager.chromaFishingLineChromaLightness = (Double) v);
+        registerField("ChromaFishingLineChromaChroma", Double.class,
+            c -> ConfigManager.chromaFishingLineChromaChroma,
+            (c, v) -> ConfigManager.chromaFishingLineChromaChroma = (Double) v);
+        registerField("ChromaFishingLineChromaSize", Double.class,
+            c -> ConfigManager.chromaFishingLineChromaSize,
+            (c, v) -> ConfigManager.chromaFishingLineChromaSize = (Double) v);
+        registerField("ChromaFishingLineChromaSpeed", Double.class,
+            c -> ConfigManager.chromaFishingLineChromaSpeed,
+            (c, v) -> ConfigManager.chromaFishingLineChromaSpeed = (Double) v);
+        registerField("ChromaFishingLineChromaReverseDirection", Boolean.class,
+            c -> ConfigManager.chromaFishingLineChromaReverseDirection,
+            (c, v) -> ConfigManager.chromaFishingLineChromaReverseDirection = (Boolean) v);
+        registerField("ChromaFishingLineChromaGroupExpanded", Boolean.class,
+            c -> ConfigManager.chromaFishingLineChromaGroupExpanded,
+            (c, v) -> ConfigManager.chromaFishingLineChromaGroupExpanded = (Boolean) v);
         registerField("Sounds", Boolean.class,
             c -> ConfigManager.soundsEnabled,
             (c, v) -> ConfigManager.soundsEnabled = (Boolean) v);

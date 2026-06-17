@@ -87,7 +87,8 @@ public class ClickGuiLayout {
                 extraHeight += (int) (com.shyeuar.baity.gui.render.ValueStyleRenderer.getFancyDmgPresetHeight(20) - 20);
             } else if (value.getStyle() == ValueStyle.GRADIENT_EDITOR
                     || value.getStyle() == ValueStyle.FANCY_DMG_COLOR_EDITOR
-                    || value.getStyle() == ValueStyle.ENCHANT_LORE_COLOR_EDITOR) {
+                    || value.getStyle() == ValueStyle.ENCHANT_LORE_COLOR_EDITOR
+                    || value.getStyle() == ValueStyle.CHROMA_FISHING_LINE_COLOR_EDITOR) {
                 extraHeight += 100;
             } else if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) {
                 extraHeight += 140;
