@@ -529,7 +529,7 @@ public class ModuleManager {
             }
         );
         
-        Module clickGUI = new Module("ClickGUI", "ClickGUI", ModuleCategory.UI);
+        Module clickGUI = new Module("ClickGUI", "ClickGUI", ModuleCategory.GUI);
         clickGUI.setEnabled(true);
         registerModule(clickGUI);
         ConfigSynchronizer.registerModuleConfig(
