@@ -1,6 +1,7 @@
 package com.shyeuar.baity.mixin;
 
 import com.llamalad7.mixinextras.sugar.Local;
+import com.shyeuar.baity.features.MotionBlur;
 import com.shyeuar.baity.mixin.accessor.CameraAccessor;
 import com.shyeuar.baity.mixin.accessor.CameraRenderStateAccessor;
 import net.minecraft.client.Camera;
@@ -37,5 +38,10 @@ public abstract class GameRendererMixin {
     @Inject(method = "renderLevel", at = @At("RETURN"))
     private void baity$endWorldRenderPhase(CallbackInfo ci) {
         com.shyeuar.baity.render.RenderScope.exitWorldRenderPhase();
+    }
+
+    @Inject(method = "renderLevel", at = @At("TAIL"))
+    private void baity$clearMotionBlurAllocator(CallbackInfo ci) {
+        MotionBlur.clearFrameAllocator();
     }
 }

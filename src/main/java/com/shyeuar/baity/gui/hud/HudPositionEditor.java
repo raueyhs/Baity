@@ -55,6 +55,12 @@ public class HudPositionEditor extends Screen {
     @Override
     public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         this.renderMenuBackground(guiGraphics);
+
+        for (HudElement element : manager.getElements()) {
+            if (element.shouldRender()) {
+                element.render(guiGraphics, partialTicks);
+            }
+        }
         
         int[] mousePos = HudScreenUtils.getMousePos();
         int guiMouseX = mousePos[0];

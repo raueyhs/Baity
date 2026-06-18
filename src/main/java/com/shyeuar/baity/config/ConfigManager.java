@@ -126,6 +126,7 @@ public class ConfigManager {
     public static boolean mufflerMutePortal = true;
     public static boolean mufflerMuteVampire = true;
     public static boolean mufflerMuteDrake = true;
+    public static boolean mufflerMuteWormhole = true;
     
     public static boolean highlightsEnabled = false;
     public static boolean highlightsShulkerEnabled = true;
@@ -135,6 +136,18 @@ public class ConfigManager {
     public static boolean highlightsPestGroupExpanded = false;
     
     public static boolean fancyCreeperVeilEnabled = false;
+
+    public static boolean motionBlurEnabled = false;
+    public static float motionBlurStrength = 0.6f;
+
+    public static boolean paperDollEnabled = false;
+    public static double paperDollX = 0.10;
+    public static double paperDollY = 0.35;
+    public static float paperDollScale = 3.0f;
+    public static boolean paperDollHeadRestore = false;
+    public static float paperDollFacingAngle = 200.0f;
+    public static float paperDollHeadYawRange = 30.0f;
+    public static float paperDollHeadPitchRange = 50.0f;
     
     public static boolean droppedItemEnabled = false;
 
@@ -532,6 +545,9 @@ public class ConfigManager {
         registerField("MufflerMuteDrake", Boolean.class,
             c -> ConfigManager.mufflerMuteDrake,
             (c, v) -> ConfigManager.mufflerMuteDrake = (Boolean) v);
+        registerField("MufflerMuteWormhole", Boolean.class,
+            c -> ConfigManager.mufflerMuteWormhole,
+            (c, v) -> ConfigManager.mufflerMuteWormhole = (Boolean) v);
         registerField("Highlights", Boolean.class,
             c -> ConfigManager.highlightsEnabled,
             (c, v) -> ConfigManager.highlightsEnabled = (Boolean) v);
@@ -553,6 +569,36 @@ public class ConfigManager {
         registerField("FancyCreeperVeil", Boolean.class,
             c -> ConfigManager.fancyCreeperVeilEnabled,
             (c, v) -> ConfigManager.fancyCreeperVeilEnabled = (Boolean) v);
+        registerField("MotionBlur", Boolean.class,
+            c -> ConfigManager.motionBlurEnabled,
+            (c, v) -> ConfigManager.motionBlurEnabled = (Boolean) v);
+        registerField("MotionBlurStrength", Float.class,
+            c -> ConfigManager.motionBlurStrength,
+            (c, v) -> ConfigManager.motionBlurStrength = (Float) v);
+        registerField("PaperDoll", Boolean.class,
+            c -> ConfigManager.paperDollEnabled,
+            (c, v) -> ConfigManager.paperDollEnabled = (Boolean) v);
+        registerField("PaperDollX", Double.class,
+            c -> ConfigManager.paperDollX,
+            (c, v) -> ConfigManager.paperDollX = (Double) v);
+        registerField("PaperDollY", Double.class,
+            c -> ConfigManager.paperDollY,
+            (c, v) -> ConfigManager.paperDollY = (Double) v);
+        registerField("PaperDollScale", Float.class,
+            c -> ConfigManager.paperDollScale,
+            (c, v) -> ConfigManager.paperDollScale = (Float) v);
+        registerField("PaperDollHeadRestore", Boolean.class,
+            c -> ConfigManager.paperDollHeadRestore,
+            (c, v) -> ConfigManager.paperDollHeadRestore = (Boolean) v);
+        registerField("PaperDollFacingAngle", Float.class,
+            c -> ConfigManager.paperDollFacingAngle,
+            (c, v) -> ConfigManager.paperDollFacingAngle = (Float) v);
+        registerField("PaperDollHeadYawRange", Float.class,
+            c -> ConfigManager.paperDollHeadYawRange,
+            (c, v) -> ConfigManager.paperDollHeadYawRange = (Float) v);
+        registerField("PaperDollHeadPitchRange", Float.class,
+            c -> ConfigManager.paperDollHeadPitchRange,
+            (c, v) -> ConfigManager.paperDollHeadPitchRange = (Float) v);
         registerField("DroppedItem", Boolean.class,
             c -> ConfigManager.droppedItemEnabled,
             (c, v) -> ConfigManager.droppedItemEnabled = (Boolean) v);

@@ -11,6 +11,7 @@ import com.shyeuar.baity.utils.KeyMappingUtils;
 import com.shyeuar.baity.items.CustomTotemItem;
 import com.shyeuar.baity.features.fancydmgsplash.FancyDmgSplash;
 import com.shyeuar.baity.features.fishing.HypixelFishingRodCatalog;
+import com.shyeuar.baity.features.paperdoll.PaperDoll;
 import com.shyeuar.baity.features.smolpeople.SmolFriendManager;
 import com.shyeuar.baity.features.highlights.PestEntityRegistry;
 import com.shyeuar.baity.features.highlights.PestHighlights;
@@ -57,6 +58,7 @@ public class Baity implements ClientModInitializer {
         ClientEntityEvents.ENTITY_LOAD.register((entity, world) -> PestEntityRegistry.onClientEntityLoad(entity));
         
         com.shyeuar.baity.features.fishing.FishHookTimer.init();
+        PaperDoll.init();
         com.shyeuar.baity.features.chat.ChatChannelSwitcher.init();
         com.shyeuar.baity.features.enchantlore.EnchantLore.init();
         com.shyeuar.baity.features.fishing.ChromaFishingLine.init();
@@ -99,6 +101,7 @@ public class Baity implements ClientModInitializer {
             SoundsHooks.tick(client);
             
             com.shyeuar.baity.features.fishing.FishHookTimer.getInstance().tick();
+            PaperDoll.getInstance().clientTick();
         });
         
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
@@ -116,6 +119,11 @@ public class Baity implements ClientModInitializer {
         HudRenderCallback.EVENT.register((guiGraphics, tickDelta) -> {
             var timer = com.shyeuar.baity.features.fishing.FishHookTimer.getInstance();
             if (timer.shouldRender()) timer.render(guiGraphics, 0.0f);
+
+            var doll = PaperDoll.getInstance();
+            if (doll.shouldRender()) {
+                doll.render(guiGraphics, tickDelta.getGameTimeDeltaPartialTick(true));
+            }
         });
     }
     

@@ -62,7 +62,11 @@ public class RenderScopeMixin {
 					if (worldContext && NoSwimPoseUtils.shouldForceStandingModelAppearance(avatarState)) {
 						NoSwimPoseUtils.clearSwimRenderState(avatarState);
 					} else if (!worldContext) {
-						NoSwimPoseUtils.restoreSwimRenderStateFromEntity(avatarState, mc.player);
+						if (RenderScope.isPaperDollRender() && NoSwimPoseUtils.isFeatureActive()) {
+							NoSwimPoseUtils.clearSwimRenderState(avatarState);
+						} else {
+							NoSwimPoseUtils.restoreSwimRenderStateFromEntity(avatarState, mc.player);
+						}
 					}
 				}
 			}

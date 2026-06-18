@@ -20,6 +20,7 @@ public class MufflerMixin {
     private static final Identifier ENDERMAN_STARE = Identifier.fromNamespaceAndPath("minecraft", "entity.enderman.stare");
     private static final Identifier PORTAL_AMBIENT = Identifier.fromNamespaceAndPath("minecraft", "block.portal.ambient");
     private static final Identifier ELDER_GUARDIAN_CURSE = Identifier.fromNamespaceAndPath("minecraft", "entity.elder_guardian.curse");
+    private static final Identifier ELDER_GUARDIAN_AMBIENT = Identifier.fromNamespaceAndPath("minecraft", "entity.elder_guardian.ambient");
     private static final Identifier WITHER_SPAWN = Identifier.fromNamespaceAndPath("minecraft", "entity.wither.spawn");
     private static final Identifier TOTEM_USE = Identifier.fromNamespaceAndPath("minecraft", "item.totem.use");
 
@@ -63,6 +64,12 @@ public class MufflerMixin {
             if (isInJerrysWorkshop() && soundId.equals(TOTEM_USE)) {
                 cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
                 return;
+            }
+        }
+
+        if (ModuleUtils.getOptionBoolean(m, "mute wormhole", true)) {
+            if (soundId.equals(ELDER_GUARDIAN_AMBIENT) && LocateUtils.isWormholeMuteIsland(Minecraft.getInstance())) {
+                cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
             }
         }
     }

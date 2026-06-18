@@ -11,7 +11,13 @@ public interface LivingEntityAccessor {
     int baity$getCurrentSwingDuration();
 
     @Accessor("swimAmount")
+    float baity$getSwimAmountField();
+
+    @Accessor("swimAmount")
     void baity$setSwimAmountField(float swimAmount);
+
+    @Accessor("swimAmountO")
+    float baity$getSwimAmountOField();
 
     @Accessor("swimAmountO")
     void baity$setSwimAmountOField(float swimAmountO);

@@ -76,6 +76,10 @@
     "accessor.CameraAccessor",
     "accessor.AvatarRenderStateAccessor",
     "accessor.CameraRenderStateAccessor",
+    "MotionBlurMixin$LevelRendererMixin",
+    "accessor.PostRenderAccessors$PostChainAccessor",
+    "accessor.PostRenderAccessors$PostPassAccessor",
+    "accessor.PostRenderAccessors$ShaderManagerAccessor",
     "ChromaFishingLineMixin",
     "FishingHookRenderStateMixin",
     "accessor.FishingHookRendererInvoker"
