@@ -2,7 +2,10 @@ package com.shyeuar.baity.utils;
 
 import com.shyeuar.baity.mixin.PlayerListHudMixin;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.PlayerTabOverlay;
+import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
 import net.minecraft.world.scores.Scoreboard;
@@ -147,39 +150,6 @@ public final class LocateUtils {
         return "Stillgore Château".equals(a) || "Oubliette".equals(a);
     }
 
-    public static boolean isWormholeMuteIsland(Minecraft mc) {
-        refresh(mc);
-        if (matchesWormholeIsland(cachedTabIslandName) || matchesWormholeIsland(cachedAreaIslandName)) {
-            return true;
-        }
-        for (String line : readTabHudScanPlainLines(mc)) {
-            Matcher tabLine = TAB_AREA_LINE.matcher(line);
-            if (tabLine.matches()) {
-                String label = line.toLowerCase(Locale.ROOT);
-                if (label.startsWith("island:") && matchesWormholeIsland(tabLine.group(1))) {
-                    return true;
-                }
-            }
-        }
-        for (String line : readSidebarPlainLines(mc)) {
-            if (matchesWormholeIsland(line)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean matchesWormholeIsland(String raw) {
-        if (raw == null || raw.isEmpty()) {
-            return false;
-        }
-        String n = normalizeAreaName(raw);
-        return "Lotus Atoll".equalsIgnoreCase(n)
-                || "Crimson Isle".equalsIgnoreCase(n)
-                || n.contains("Lotus Atoll")
-                || n.contains("Crimson Isle");
-    }
-
     private static boolean cachedAreaIslandNameRawLineDungeonPrefix;
 
     private static void refresh(Minecraft mc) {
@@ -313,17 +283,11 @@ public final class LocateUtils {
     }
 
     private static void scanTabList(Minecraft mc) {
-        if (mc.getConnection() == null) {
-            return;
-        }
         String area = null;
         String island = null;
         String dungeon = null;
-        for (var entry : mc.getConnection().getOnlinePlayers()) {
-            if (entry.getTabListDisplayName() == null) {
-                continue;
-            }
-            String text = removeColorCodes(entry.getTabListDisplayName().getString()).trim();
+        for (Component line : readSkyBlockTabListComponents(mc)) {
+            String text = removeColorCodes(line.getString()).trim();
             if (text.isEmpty()) {
                 continue;
             }
@@ -390,19 +354,61 @@ public final class LocateUtils {
     
     public static List<String> readTabListDisplayPlainLines(Minecraft mc) {
         List<String> lines = new ArrayList<>();
-        if (mc == null || mc.getConnection() == null) {
-            return lines;
-        }
-        for (var entry : mc.getConnection().getOnlinePlayers()) {
-            if (entry.getTabListDisplayName() == null) {
-                continue;
-            }
-            String plain = toPlainText(entry.getTabListDisplayName().getString());
+        for (Component line : readSkyBlockTabListComponents(mc)) {
+            String plain = toPlainText(line.getString());
             if (!plain.isEmpty()) {
                 lines.add(plain);
             }
         }
         return lines;
+    }
+
+    public static List<Component> readTabListDisplayComponents(Minecraft mc) {
+        return readSkyBlockTabListComponents(mc);
+    }
+
+    public static List<Component> readSkyBlockTabListComponents(Minecraft mc) {
+        List<Component> lines = new ArrayList<>();
+        if (mc == null || mc.player == null || mc.getConnection() == null || mc.gui == null) {
+            return lines;
+        }
+        PlayerTabOverlay tabOverlay = mc.gui.getTabList();
+        if (tabOverlay == null) {
+            return lines;
+        }
+        List<PlayerInfo> players = ((PlayerListHudMixin) tabOverlay).baity$getPlayerInfos();
+        if (players == null || players.isEmpty()) {
+            return lines;
+        }
+        players = new ArrayList<>(players);
+        players.sort(LocateUtils::compareTabPlayers);
+        for (PlayerInfo info : players) {
+            Component display = tabOverlay.getNameForDisplay(info);
+            if (display != null) {
+                lines.add(display);
+            }
+        }
+        if (lines.size() < 80 && !lines.isEmpty()) {
+            lines.remove(lines.size() - 1);
+        } else if (lines.size() > 80) {
+            lines = new ArrayList<>(lines.subList(0, 80));
+        }
+        return lines;
+    }
+
+    private static int compareTabPlayers(PlayerInfo left, PlayerInfo right) {
+        boolean leftSpectator = left.getGameMode() == GameType.SPECTATOR;
+        boolean rightSpectator = right.getGameMode() == GameType.SPECTATOR;
+        if (leftSpectator != rightSpectator) {
+            return leftSpectator ? 1 : -1;
+        }
+        String leftTeam = left.getTeam() != null ? left.getTeam().getName() : "";
+        String rightTeam = right.getTeam() != null ? right.getTeam().getName() : "";
+        int teamOrder = leftTeam.compareTo(rightTeam);
+        if (teamOrder != 0) {
+            return teamOrder;
+        }
+        return left.getProfile().name().compareTo(right.getProfile().name());
     }
 
     public static List<String> readTabHudScanPlainLines(Minecraft mc) {

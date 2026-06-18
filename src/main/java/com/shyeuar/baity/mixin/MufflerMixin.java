@@ -8,6 +8,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.SoundEngine;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -68,7 +70,7 @@ public class MufflerMixin {
         }
 
         if (ModuleUtils.getOptionBoolean(m, "mute wormhole", true)) {
-            if (soundId.equals(ELDER_GUARDIAN_AMBIENT) && LocateUtils.isWormholeMuteIsland(Minecraft.getInstance())) {
+            if (soundId.equals(ELDER_GUARDIAN_AMBIENT) && isWearingFroggles(Minecraft.getInstance())) {
                 cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
             }
         }
@@ -85,5 +87,12 @@ public class MufflerMixin {
         if (mc.player == null || mc.level == null) return false;
         return "Jerry's Workshop".equals(LocateUtils.areaIslandName(mc));
     }
-    
+
+    private static boolean isWearingFroggles(Minecraft mc) {
+        if (mc.player == null) return false;
+        ItemStack head = mc.player.getItemBySlot(EquipmentSlot.HEAD);
+        if (head.isEmpty()) return false;
+        String plainName = net.minecraft.ChatFormatting.stripFormatting(head.getHoverName().getString());
+        return plainName.contains("Froggles");
+    }
 }

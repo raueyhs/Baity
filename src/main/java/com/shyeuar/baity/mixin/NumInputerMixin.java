@@ -47,6 +47,14 @@ public abstract class NumInputerMixin implements NumInputer.NumInputerSignScreen
     }
 
     @Override
+    public void baity$backspaceFromSign() {
+        if (this.signField == null) {
+            return;
+        }
+        this.signField.removeCharsFromCursor(-1);
+    }
+
+    @Override
     public void baity$finishSignEditing() {
         ((AbstractSignEditScreenAccessor) this).baity$onDone();
     }

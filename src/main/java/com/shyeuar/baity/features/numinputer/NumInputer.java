@@ -25,6 +25,7 @@ public final class NumInputer {
     private static final double ANCHOR_X_RATIO = 0.75;
     private static final double ANCHOR_Y_RATIO = 0.5;
     private static final String ENTER_LABEL = "\u23CE";
+    private static final String BACKSPACE_LABEL = "\u232B";
 
     private static final int PANEL_BG = LinearTheme.BG_SECONDARY.getRGB();
     private static final int KEY_BG = LinearTheme.BG_TERTIARY.getRGB();
@@ -65,7 +66,7 @@ public final class NumInputer {
         }
 
         int mainWidth = KEY_SIZE * 3 + KEY_GAP * 2;
-        int contentWidth = Math.max(KEY_SIZE * 4 + KEY_GAP * 3, mainWidth + SECTION_GAP + KEY_SIZE);
+        int contentWidth = mainWidth + SECTION_GAP + KEY_SIZE;
         int panelWidth = PANEL_PADDING * 2 + contentWidth;
         int panelHeight = PANEL_PADDING * 2 + KEY_SIZE * 5 + KEY_GAP * 3 + SECTION_GAP;
 
@@ -74,29 +75,30 @@ public final class NumInputer {
 
         int contentX = panelX + PANEL_PADDING;
         int contentY = panelY + PANEL_PADDING;
+        int sideColX = contentX + mainWidth + SECTION_GAP;
 
         List<KeyButton> keys = new ArrayList<>();
 
         int operatorY = contentY;
-        addEqualSpacedRow(keys, contentX, operatorY, '+', '-', '*', '/');
+        addOperatorRow(keys, contentX, mainWidth, sideColX, operatorY);
 
         int numberY = operatorY + KEY_SIZE + SECTION_GAP;
         addEqualSpacedRow(keys, contentX, numberY, '7', '8', '9');
-        addSideKey(keys, contentX, mainWidth, numberY, 'k');
+        addSideKey(keys, sideColX, numberY, 'k');
 
         int row2Y = numberY + KEY_SIZE + KEY_GAP;
         addEqualSpacedRow(keys, contentX, row2Y, '4', '5', '6');
-        addSideKey(keys, contentX, mainWidth, row2Y, 'm');
+        addSideKey(keys, sideColX, row2Y, 'm');
 
         int row3Y = row2Y + KEY_SIZE + KEY_GAP;
         addEqualSpacedRow(keys, contentX, row3Y, '1', '2', '3');
-        addSideKey(keys, contentX, mainWidth, row3Y, 'b');
+        addSideKey(keys, sideColX, row3Y, 'b');
 
         int row4Y = row3Y + KEY_SIZE + KEY_GAP;
         keys.add(KeyButton.rect(contentX, row4Y, KEY_SIZE * 2 + KEY_GAP, KEY_SIZE, '0'));
         keys.add(KeyButton.rect(contentX + (KEY_SIZE + KEY_GAP) * 2, row4Y, KEY_SIZE, KEY_SIZE, '.'));
         keys.add(KeyButton.action(
-            contentX + mainWidth + SECTION_GAP,
+            sideColX,
             row4Y,
             KEY_SIZE,
             KEY_SIZE,
@@ -107,6 +109,18 @@ public final class NumInputer {
         layout = new Layout(panelX, panelY, panelX + panelWidth, panelY + panelHeight, keys, screen.width, screen.height);
     }
 
+    private static void addOperatorRow(List<KeyButton> keys, int contentX, int mainWidth, int sideColX, int y) {
+        char[] operators = {'+', '-', '*', '/'};
+        int opSize = (mainWidth - KEY_GAP * (operators.length - 1)) / operators.length;
+        float opYOffset = (KEY_SIZE - opSize) * 0.5f;
+        float x = contentX;
+        for (char op : operators) {
+            keys.add(KeyButton.rect(x, y + opYOffset, opSize, opSize, op));
+            x += opSize + KEY_GAP;
+        }
+        keys.add(KeyButton.action(sideColX, y, KEY_SIZE, KEY_SIZE, BACKSPACE_LABEL, KeyAction.BACKSPACE));
+    }
+
     private static void addEqualSpacedRow(List<KeyButton> keys, int x, int y, char... labels) {
         for (int i = 0; i < labels.length; i++) {
             int keyX = x + i * (KEY_SIZE + KEY_GAP);
@@ -114,9 +128,8 @@ public final class NumInputer {
         }
     }
 
-    private static void addSideKey(List<KeyButton> keys, int contentX, int mainWidth, int y, char label) {
-        int x = contentX + mainWidth + SECTION_GAP;
-        keys.add(KeyButton.rect(x, y, KEY_SIZE, KEY_SIZE, label));
+    private static void addSideKey(List<KeyButton> keys, int sideColX, int y, char label) {
+        keys.add(KeyButton.rect(sideColX, y, KEY_SIZE, KEY_SIZE, label));
     }
 
     private void renderInternal(AbstractSignEditScreen screen, GuiGraphics guiGraphics, int mouseX, int mouseY) {
@@ -142,12 +155,33 @@ public final class NumInputer {
                 GuiRenderUtil.draw3DRect(guiGraphics, key.x1, key.y1, key.x2, key.y2, KEY_BG, 4f);
             }
             GuiRenderUtil.stroke1px(guiGraphics, key.x1, key.y1, key.x2, key.y2, KEY_BORDER);
-
-            int textWidth = font.width(key.label);
-            int textX = (int) (key.x1 + (key.x2 - key.x1 - textWidth) * 0.5f);
-            int textY = (int) (key.y1 + (key.y2 - key.y1 - font.lineHeight) * 0.5f + 1);
-            guiGraphics.drawString(font, key.label, textX, textY, KEY_TEXT, false);
+            drawKeyLabel(guiGraphics, font, key);
         }
+    }
+
+    private static void drawKeyLabel(GuiGraphics guiGraphics, Font font, KeyButton key) {
+        float boxW = key.x2 - key.x1;
+        float boxH = key.y2 - key.y1;
+        if (key.action == KeyAction.BACKSPACE || key.action == KeyAction.ENTER) {
+            float scale = Math.min(boxW / Math.max(1, font.width(key.label)), boxH / Math.max(1, font.lineHeight)) * 0.82f;
+            scale = Math.max(scale, 1.0f);
+            float scaledW = font.width(key.label) * scale;
+            float scaledH = font.lineHeight * scale;
+            float textX = key.x1 + (boxW - scaledW) * 0.5f;
+            float textY = key.y1 + (boxH - scaledH) * 0.5f + 1;
+            var pose = guiGraphics.pose();
+            pose.pushMatrix();
+            pose.translate(textX, textY);
+            pose.scale(scale, scale);
+            guiGraphics.drawString(font, key.label, 0, 0, KEY_TEXT, false);
+            pose.popMatrix();
+            return;
+        }
+
+        int textWidth = font.width(key.label);
+        int textX = (int) (key.x1 + (boxW - textWidth) * 0.5f);
+        int textY = (int) (key.y1 + (boxH - font.lineHeight) * 0.5f + 1);
+        guiGraphics.drawString(font, key.label, textX, textY, KEY_TEXT, false);
     }
 
     private void tickMouseInternal(AbstractSignEditScreen screen) {
@@ -181,6 +215,9 @@ public final class NumInputer {
             if (key.action == KeyAction.ENTER) {
                 SoundUtils.playBubble();
                 access.baity$finishSignEditing();
+            } else if (key.action == KeyAction.BACKSPACE) {
+                SoundUtils.playWoodenButton();
+                access.baity$backspaceFromSign();
             } else if (key.insertChar != 0) {
                 SoundUtils.playWoodenButton();
                 access.baity$insertIntoSign(key.insertChar);
@@ -195,7 +232,8 @@ public final class NumInputer {
 
     private enum KeyAction {
         CHAR,
-        ENTER
+        ENTER,
+        BACKSPACE
     }
 
     private record KeyButton(float x1, float y1, float x2, float y2, String label, char insertChar, KeyAction action) {
@@ -210,6 +248,8 @@ public final class NumInputer {
 
     public interface NumInputerSignScreenAccess {
         void baity$insertIntoSign(char character);
+
+        void baity$backspaceFromSign();
 
         void baity$finishSignEditing();
     }

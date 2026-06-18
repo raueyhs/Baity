@@ -786,31 +786,31 @@ public class ModuleManager {
             }
         );
 
-        GroupValue chromaFishingLineChromaGroup = new GroupValue("chroma settings", "chroma settings", ModuleCategory.RENDER)
+        GroupValue chromaFishingLineChromaGroup = new GroupValue("chroma settings", "chroma settings", ModuleCategory.MISC)
             .setExpanded(ConfigManager.chromaFishingLineChromaGroupExpanded)
             .setSubModuleSwitchChildName("chroma settings enabled")
-            .addChild(new Option("chroma settings enabled", "enabled", ConfigManager.chromaFishingLineChromaEnabled, ModuleCategory.RENDER))
+            .addChild(new Option("chroma settings enabled", "enabled", ConfigManager.chromaFishingLineChromaEnabled, ModuleCategory.MISC))
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
-                "chroma lightness", "chroma lightness", 0.8, 0.2, 1.0, 0.05, ModuleCategory.RENDER
+                "chroma lightness", "chroma lightness", 0.8, 0.2, 1.0, 0.05, ModuleCategory.MISC
             ))
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
-                "chroma chroma", "chroma chroma", 0.2, 0.0, 0.4, 0.01, ModuleCategory.RENDER
+                "chroma chroma", "chroma chroma", 0.2, 0.0, 0.4, 0.01, ModuleCategory.MISC
             ))
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
-                "chroma size", "chroma size", 3.1, 0.5, 10.0, 0.1, ModuleCategory.RENDER
+                "chroma size", "chroma size", 3.1, 0.5, 10.0, 0.1, ModuleCategory.MISC
             ))
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
-                "chroma speed", "chroma speed", 1.0, 0.1, 8.0, 0.1, ModuleCategory.RENDER
+                "chroma speed", "chroma speed", 1.0, 0.1, 8.0, 0.1, ModuleCategory.MISC
             ))
-            .addChild(new Option("reverse direction", "reverse direction", ConfigManager.chromaFishingLineChromaReverseDirection, ModuleCategory.RENDER));
+            .addChild(new Option("reverse direction", "reverse direction", ConfigManager.chromaFishingLineChromaReverseDirection, ModuleCategory.MISC));
 
         ModuleRegistry.registerModuleWithValues(
-            "ChromaFishingLine", "ChromaFishingLine", ModuleCategory.RENDER,
+            "ChromaFishingLine", "ChromaFishingLine", ModuleCategory.MISC,
             () -> ConfigManager.chromaFishingLineEnabled,
             val -> ConfigManager.chromaFishingLineEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
                 new ChromaFishingLineColorEditorValue(
-                    "gradient editor", "gradient editor", ModuleCategory.RENDER
+                    "gradient editor", "gradient editor", ModuleCategory.MISC
                 ),
                 chromaFishingLineChromaGroup
             },
@@ -1147,6 +1147,7 @@ public class ModuleManager {
         );
         TooltipManager.registerTooltip("sync non-critical dmg",
             "Apply preset colors to plain non-crit damage.", 0xFFFFFF);
+        TooltipManager.registerTooltip("mute wormhole", "Only work when wearing froggles.", 0xFFFF00);
     }
     
     public static List<Module> getModules() {
