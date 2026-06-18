@@ -345,6 +345,12 @@ public class ModuleManager {
         );
 
         ModuleRegistry.registerSimpleModule(
+            "NumInputer", "NumInputer", ModuleCategory.QOL,
+            () -> ConfigManager.numInputerEnabled,
+            val -> ConfigManager.numInputerEnabled = val
+        );
+
+        ModuleRegistry.registerSimpleModule(
             "ChatChannelSwitcher", "ChatChannelSwitcher", ModuleCategory.QOL,
             () -> ConfigManager.chatChannelSwitcherEnabled,
             val -> ConfigManager.chatChannelSwitcherEnabled = val
@@ -1074,6 +1080,11 @@ public class ModuleManager {
         TooltipManager.registerTooltip("BlockAnimation", "Restore the blocking animation of version 1.7.", 0xFFFFFF);
         TooltipManager.registerTooltip("PepCat", "Play an animation and give pep talk when you died. It's a skill issue!", 0xFFFFFF);
         TooltipManager.registerTooltip("RadialMenu", "A roulette tool that invokes a shortcut command.", 0xFFFFFF);
+        TooltipManager.registerTooltip(
+            "NumInputer",
+            "On-screen numpad for sign editing with digits, math symbols, and k/m/b suffixes.",
+            0xFFFFFF
+        );
         TooltipManager.registerTooltip(
             "ChatChannelSwitcher",
             MessageUtils.createColoredText("Show quick chat-channel buttons.", 0xFFFFFF)

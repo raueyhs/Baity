@@ -28,6 +28,8 @@
     "CustomHandHoldingMixin$LevelRendererTickMixin",
     "RadialMenuMouseMixin",
     "ChatChannelSwitcherMixin",
+    "NumInputerMixin",
+    "accessor.AbstractSignEditScreenAccessor",
     "WarpMenuMovementMixin",
     "NoSwimPoseMixin$PlayerRendererTransformMixin",
     "NoSwimPoseMixin$PlayerModelPoseMixin",

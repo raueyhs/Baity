@@ -54,6 +54,7 @@ public class ConfigManager {
     
     public static boolean radialMenuEnabled = true;
     public static int radialMenuKeybind = 4;
+    public static boolean numInputerEnabled = true;
     public static boolean chatChannelSwitcherEnabled = false;
     public static String chatChannelSwitcherLastChannel = "";
     public static double chatChannelSwitcherX = Double.NaN;
@@ -356,6 +357,9 @@ public class ConfigManager {
         registerField("RadialMenuKeybind", Integer.class,
             c -> ConfigManager.radialMenuKeybind,
             (c, v) -> ConfigManager.radialMenuKeybind = (Integer) v);
+        registerField("NumInputer", Boolean.class,
+            c -> ConfigManager.numInputerEnabled,
+            (c, v) -> ConfigManager.numInputerEnabled = (Boolean) v);
         registerField("ChatChannelSwitcher", Boolean.class,
             c -> ConfigManager.chatChannelSwitcherEnabled,
             (c, v) -> ConfigManager.chatChannelSwitcherEnabled = (Boolean) v);
