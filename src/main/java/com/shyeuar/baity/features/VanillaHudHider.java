@@ -5,10 +5,12 @@ import com.shyeuar.baity.gui.module.ModuleManager;
 import com.shyeuar.baity.utils.ModuleUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudStatusBarHeightRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.StatusBarHeightProvider;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -17,6 +19,9 @@ import net.minecraft.world.entity.player.Player;
 @Environment(EnvType.CLIENT)
 public class VanillaHudHider {
     private static final int ROW_HEIGHT = 10;
+    private static final int HELD_ITEM_TOOLTIP_HEIGHT = 20;
+    private static final int OVERLAY_MESSAGE_HEIGHT = 29;
+    private static final int TEXT_HEIGHT_DELTA = 9;
     private static final String MODULE_NAME = "VanillaHudHider";
     private static final String EXPERIENCE_BAR_OPTION = "experience bar";
 
@@ -30,6 +35,51 @@ public class VanillaHudHider {
         registerVanillaHudStatusBar(VanillaHudElements.MOUNT_HEALTH, "mount health", VanillaHudHider::mountHealthHeight, false);
         registerVanillaHudElement(VanillaHudElements.INFO_BAR, EXPERIENCE_BAR_OPTION);
         registerVanillaHudElement(VanillaHudElements.EXPERIENCE_LEVEL, EXPERIENCE_BAR_OPTION);
+        ClientLifecycleEvents.CLIENT_STARTED.register(client -> client.execute(VanillaHudHider::cancelStatusBarTextOffsets));
+    }
+
+    private static void cancelStatusBarTextOffsets() {
+        cancelFabricTextOffset(VanillaHudElements.HELD_ITEM_TOOLTIP, false);
+        cancelFabricTextOffset(VanillaHudElements.OVERLAY_MESSAGE, true);
+    }
+
+    private static void cancelFabricTextOffset(Identifier id, boolean overlayMessage) {
+        HudElementRegistry.replaceElement(id, original -> (graphics, tickDelta) -> {
+            Player player = Minecraft.getInstance().player;
+            int fabricOffset = 0;
+            if (player != null) {
+                int maxHeight = maxStatusBarHeight(player);
+                if (overlayMessage) {
+                    fabricOffset = OVERLAY_MESSAGE_HEIGHT - Math.max(OVERLAY_MESSAGE_HEIGHT, maxHeight + TEXT_HEIGHT_DELTA);
+                } else {
+                    fabricOffset = HELD_ITEM_TOOLTIP_HEIGHT - Math.max(HELD_ITEM_TOOLTIP_HEIGHT, maxHeight);
+                }
+            }
+            if (fabricOffset != 0) {
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(0.0F, -fabricOffset);
+                original.extractRenderState(graphics, tickDelta);
+                graphics.pose().popMatrix();
+                return;
+            }
+            original.extractRenderState(graphics, tickDelta);
+        });
+    }
+
+    private static int maxStatusBarHeight(Player player) {
+        int left = statusBarHeight("health bar", VanillaHudHider::healthBarHeight, player)
+            + statusBarHeight("armor bar", VanillaHudHider::armorBarHeight, player);
+        int right = statusBarHeight("mount health", VanillaHudHider::mountHealthHeight, player)
+            + statusBarHeight("food bar", VanillaHudHider::foodBarHeight, player)
+            + statusBarHeight("air bar", VanillaHudHider::airBarHeight, player);
+        return Math.max(left, right);
+    }
+
+    private static int statusBarHeight(String optionName, StatusBarHeightProvider visibleHeight, Player player) {
+        if (shouldHideVanillaHudElement(optionName)) {
+            return 0;
+        }
+        return visibleHeight.getStatusBarHeight(player);
     }
 
     private static void registerVanillaHudElement(Identifier id, String optionName) {
