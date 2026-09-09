@@ -43,19 +43,10 @@ public final class SafariZoneUtils {
     }
 
     public static Zone zoneAt(double x, double z) {
-        if (z >= 22.0) {
-            return Zone.FOREST;
+        if (z >= 0) {
+            return x <= -49.0 ? Zone.CAVERN : Zone.FOREST;
         }
-        if (x <= -58.0 && z >= -18.0) {
-            return Zone.CAVERN;
-        }
-        if (x >= -58.0 && z < -18.0) {
-            return Zone.HAUNTED;
-        }
-        if (z < -18.0) {
-            return Zone.ICY;
-        }
-        return Zone.CAVERN;
+        return x <= -49.0 ? Zone.ICY : Zone.HAUNTED;
     }
 
     private static Zone fromSubAreaName(String raw) {
