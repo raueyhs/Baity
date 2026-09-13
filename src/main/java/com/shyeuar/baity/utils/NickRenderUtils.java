@@ -52,6 +52,15 @@ public final class NickRenderUtils {
             return size() > REPLACEMENT_CACHE_MAX;
         }
     };
+
+    private static final int REPLACEMENT_AFFIX_CACHE_MAX = 512;
+    private static final Object REPLACEMENT_AFFIX_CACHE_LOCK = new Object();
+    private static final LinkedHashMap<String, List<ReplacementAffix>> REPLACEMENT_AFFIX_CACHE = new LinkedHashMap<>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<String, List<ReplacementAffix>> eldest) {
+            return size() > REPLACEMENT_AFFIX_CACHE_MAX;
+        }
+    };
     private static final char[] HEX = "0123456789ABCDEF".toCharArray();
 
     private NickRenderUtils() {
@@ -447,6 +456,7 @@ public final class NickRenderUtils {
             int tLen = targetLower.length;
             if (tLen == 0 || tLen > codePoints.length) continue;
             int targetFirstLower = target.codePointsFirstLower();
+            List<ReplacementAffix> affixes = target.replacementAffixes();
 
             for (int i = 0; i <= codePoints.length - tLen; i++) {
                 if (lowerCodePoints[i] != targetFirstLower) continue;
@@ -465,6 +475,7 @@ public final class NickRenderUtils {
                 boolean leftBoundary = i == 0 || !isNameCodepoint(codePoints[i - 1]);
                 boolean rightBoundary = end >= codePoints.length || !isNameCodepoint(codePoints[end]);
                 if (!leftBoundary || !rightBoundary) continue;
+                if (isAlreadyReplaced(codePoints, i, end, affixes)) continue;
 
                 TargetMatch match = new TargetMatch(target, i, tLen);
                 for (int j = 0; j < tLen; j++) {
@@ -484,6 +495,43 @@ public final class NickRenderUtils {
 
     private static boolean isNameCodepoint(int codepoint) {
         return Character.isLetterOrDigit(codepoint) || codepoint == '_';
+    }
+
+    private static boolean isAlreadyReplaced(int[] codePoints, int start, int end, List<ReplacementAffix> affixes) {
+        for (ReplacementAffix affix : affixes) {
+            int[] prefix = affix.prefix();
+            int[] suffix = affix.suffix();
+
+            int before = start - prefix.length;
+            if (before < 0) continue;
+            if (end + suffix.length > codePoints.length) continue;
+
+            boolean matches = true;
+            for (int j = 0; j < prefix.length; j++) {
+                if (Character.toLowerCase(codePoints[before + j]) != Character.toLowerCase(prefix[j])) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (!matches) continue;
+            for (int j = 0; j < suffix.length; j++) {
+                if (Character.toLowerCase(codePoints[end + j]) != Character.toLowerCase(suffix[j])) {
+                    matches = false;
+                    break;
+                }
+            }
+            if (matches) return true;
+        }
+        return false;
+    }
+
+    private static boolean hasDiscriminatingCodepoint(int[] codePoints) {
+        for (int cp : codePoints) {
+            if (cp != '\u00A7' && !Character.isWhitespace(cp)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<Target> collectTargets() {
@@ -665,14 +713,16 @@ public final class NickRenderUtils {
             return Mth.hsvToRgb(hue, saturation, (float) lightness);
         }
 
-        List<ReplacementCodepoint> replacementCodepoints() {
-            String raw;
+        String replacementRaw() {
             if (local) {
-                raw = ConfigManager.nickTweaksNickChanger;
-                if (raw == null || raw.isBlank()) raw = name;
-            } else {
-                raw = displayName == null || displayName.isBlank() ? name : displayName;
+                String raw = ConfigManager.nickTweaksNickChanger;
+                return raw == null || raw.isBlank() ? name : raw;
             }
+            return displayName == null || displayName.isBlank() ? name : displayName;
+        }
+
+        List<ReplacementCodepoint> replacementCodepoints() {
+            String raw = replacementRaw();
 
             List<ReplacementCodepoint> cached;
             synchronized (REPLACEMENT_CACHE_LOCK) {
@@ -684,6 +734,57 @@ public final class NickRenderUtils {
                 REPLACEMENT_CACHE.put(raw, parsed);
             }
             return parsed;
+        }
+
+        List<ReplacementAffix> replacementAffixes() {
+            String key = name + "\u0000" + replacementRaw();
+            synchronized (REPLACEMENT_AFFIX_CACHE_LOCK) {
+                List<ReplacementAffix> cached = REPLACEMENT_AFFIX_CACHE.get(key);
+                if (cached != null) return cached;
+            }
+            List<ReplacementAffix> computed = computeReplacementAffixes(replacementCodepoints());
+            synchronized (REPLACEMENT_AFFIX_CACHE_LOCK) {
+                REPLACEMENT_AFFIX_CACHE.put(key, computed);
+            }
+            return computed;
+        }
+
+        private List<ReplacementAffix> computeReplacementAffixes(List<ReplacementCodepoint> replacement) {
+            int replacementLength = replacement.size();
+            int targetLength = codePoints.length;
+            if (replacementLength == 0 || targetLength == 0 || targetLength > replacementLength) {
+                return List.of();
+            }
+
+            int[] codepoints = new int[replacementLength];
+            int[] lower = new int[replacementLength];
+            for (int i = 0; i < replacementLength; i++) {
+                int cp = replacement.get(i).codepoint();
+                codepoints[i] = cp;
+                lower[i] = Character.toLowerCase(cp);
+            }
+
+            List<ReplacementAffix> affixes = new ArrayList<>();
+            for (int start = 0; start <= replacementLength - targetLength; start++) {
+                boolean same = true;
+                for (int j = 0; j < targetLength; j++) {
+                    if (lower[start + j] != codePointsLower[j]) {
+                        same = false;
+                        break;
+                    }
+                }
+                if (!same) continue;
+
+                int[] prefix = new int[start];
+                System.arraycopy(codepoints, 0, prefix, 0, start);
+                int suffixLength = replacementLength - start - targetLength;
+                int[] suffix = new int[suffixLength];
+                System.arraycopy(codepoints, start + targetLength, suffix, 0, suffixLength);
+
+                if (!hasDiscriminatingCodepoint(prefix) && !hasDiscriminatingCodepoint(suffix)) continue;
+                affixes.add(new ReplacementAffix(prefix, suffix));
+            }
+            return List.copyOf(affixes);
         }
     }
 
@@ -740,6 +841,9 @@ public final class NickRenderUtils {
             case 'f' -> 0xFFFFFF;
             default -> null;
         };
+    }
+
+    private record ReplacementAffix(int[] prefix, int[] suffix) {
     }
 
     private record ReplacementCodepoint(int codepoint, Integer explicitColor) {
