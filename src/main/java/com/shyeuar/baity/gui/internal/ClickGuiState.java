@@ -28,6 +28,7 @@ public class ClickGuiState {
     
     private float targetScrollOffset = 0f;
     private float animatedScrollOffset = 0f;
+    private final Map<ModuleCategory, Float> scrollOffsetByCategory = new HashMap<>();
     public static final float LIST_TOP_PADDING = 60f;
     public static final float ITEM_HEIGHT = 30f;
     
@@ -96,7 +97,16 @@ public class ClickGuiState {
     public void setGuiScale(float scale) { guiScale = scale; }
     
     public ModuleCategory getSelectedCategory() { return selectedCategory; }
-    public void setSelectedCategory(ModuleCategory category) { selectedCategory = category; }
+    public void setSelectedCategory(ModuleCategory category) {
+        if (category == null || category == selectedCategory) {
+            return;
+        }
+        scrollOffsetByCategory.put(selectedCategory, targetScrollOffset);
+        selectedCategory = category;
+        float restored = scrollOffsetByCategory.getOrDefault(category, 0f);
+        targetScrollOffset = restored;
+        animatedScrollOffset = restored;
+    }
     
     public float getScrollOffset() { return animatedScrollOffset; }
 
