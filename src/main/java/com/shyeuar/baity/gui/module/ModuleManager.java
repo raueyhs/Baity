@@ -23,9 +23,11 @@ import java.util.List;
 @Environment(EnvType.CLIENT)
 public class ModuleManager {
     private static final ArrayList<Module> modules = new ArrayList<>();
+    private static int modulesRevision = 0;
     
     public static void registerModule(Module module) {
         modules.add(module);
+        modulesRevision++;
     }
     
     public static void init() {
@@ -1592,6 +1594,10 @@ public class ModuleManager {
     
     public static List<Module> getModules() {
         return modules;
+    }
+    
+    public static int getModulesRevision() {
+        return modulesRevision;
     }
     
     public static List<Module> getModulesByCategory(ModuleCategory category) {

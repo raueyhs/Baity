@@ -5,6 +5,7 @@ import com.shyeuar.baity.gui.animation.ClickGuiOpenAnimation;
 import com.shyeuar.baity.gui.input.LineTextInput;
 import com.shyeuar.baity.gui.theme.Theme;
 import com.shyeuar.baity.gui.module.Module;
+import com.shyeuar.baity.gui.module.ModuleManager;
 import com.shyeuar.baity.gui.render.ModuleStyleRenderer;
 import com.shyeuar.baity.gui.render.ValueStyleRenderer;
 import com.shyeuar.baity.gui.value.Value;
@@ -33,6 +34,7 @@ public class ClickGuiRenderer {
     private List<Module> cachedFilteredModules = null;
     private String cachedSearchText = null;
     private ModuleCategory cachedCategory = null;
+    private int cachedModulesRevision = -1;
     private String cachedModVersion = null;
     private final ClickGuiTooltipAnimator tooltipAnimator = new ClickGuiTooltipAnimator();
     private final ScalarTransition motion = new ScalarTransition();
@@ -219,10 +221,12 @@ public class ClickGuiRenderer {
     private List<Module> getFilteredModules() {
         String searchText = state.getSearchInput().getText().toLowerCase().trim();
         ModuleCategory selectedCategory = state.getSelectedCategory();
+        int modulesRevision = ModuleManager.getModulesRevision();
         
         if (cachedFilteredModules != null && 
             cachedSearchText != null && cachedSearchText.equals(searchText) &&
-            cachedCategory == selectedCategory) {
+            cachedCategory == selectedCategory &&
+            cachedModulesRevision == modulesRevision) {
             return cachedFilteredModules;
         }
         
@@ -231,6 +235,7 @@ public class ClickGuiRenderer {
         cachedFilteredModules = modules;
         cachedSearchText = searchText;
         cachedCategory = selectedCategory;
+        cachedModulesRevision = modulesRevision;
         
         return modules;
     }
