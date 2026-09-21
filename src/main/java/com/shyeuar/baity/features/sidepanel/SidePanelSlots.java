@@ -42,7 +42,6 @@ public final class SidePanelSlots {
     private static final Identifier INVENTORY_BACKGROUND = InventoryScreen.INVENTORY_LOCATION;
     private static final RenderPipeline PANEL_PIPELINE = RenderPipelines.GUI_TEXTURED;
 
-    private static final Identifier SLOT_SPRITE = Identifier.withDefaultNamespace("container/slot");
     private static final Identifier SLOT_HIGHLIGHT_BACK = Identifier.withDefaultNamespace("container/slot_highlight_back");
     private static final Identifier SLOT_HIGHLIGHT_FRONT = Identifier.withDefaultNamespace("container/slot_highlight_front");
     private static final Minecraft MC = Minecraft.getInstance();
@@ -97,7 +96,7 @@ public final class SidePanelSlots {
         int slotMouseY = mouseY - topPos;
 
         for (DisplaySlot slot : visibleSlots()) {
-            graphics.blitSprite(RenderPipelines.GUI_TEXTURED, SLOT_SPRITE, slot.x - 1, slot.y - 1, 18, 18);
+            drawSlotBase(graphics, slot);
         }
 
         for (DisplaySlot slot : visibleSlots()) {
@@ -167,6 +166,19 @@ public final class SidePanelSlots {
     private static boolean isHovering(DisplaySlot slot, int slotMouseX, int slotMouseY) {
         return slotMouseX >= slot.x - 1 && slotMouseX < slot.x + 17
                 && slotMouseY >= slot.y - 1 && slotMouseY < slot.y + 17;
+    }
+
+    private static void drawSlotBase(GuiGraphicsExtractor graphics, DisplaySlot slot) {
+        boolean petPanel = SidePanel.isPetPanelEnabled();
+        blitInventory(
+                graphics,
+                slot.x - 1,
+                slot.y - 1,
+                18,
+                18,
+                slot.x + 23,
+                mapSrcV(slot.y - 1, panelPixelHeight(petPanel), petPanel)
+        );
     }
 
     private static void drawEmptySlotIcon(GuiGraphicsExtractor graphics, DisplaySlot slot) {

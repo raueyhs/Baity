@@ -2,6 +2,7 @@ package com.shyeuar.baity.mixin;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.shyeuar.baity.features.sidepanel.SidePanel;
+import com.shyeuar.baity.features.sidepanel.SidePanelEquipment;
 import com.shyeuar.baity.features.sidepanel.SidePanelPets;
 import com.shyeuar.baity.features.sidepanel.SidePanelSlots;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -9,6 +10,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.protocol.game.ClientboundContainerSetContentPacket;
 import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.ContainerInput;
@@ -29,6 +31,11 @@ public class SidePanelMixin {
         @Inject(method = "handleContainerSetSlot", at = @At("TAIL"))
         private void baity$sidePanelAfterContainerSlot(ClientboundContainerSetSlotPacket packet, CallbackInfo ci) {
             SidePanel.onContainerSlotPacket(packet.getContainerId(), packet.getSlot());
+        }
+
+        @Inject(method = "handleContainerContent", at = @At("TAIL"))
+        private void baity$sidePanelAfterContainerContent(ClientboundContainerSetContentPacket packet, CallbackInfo ci) {
+            SidePanel.onContainerContentPacket(packet.containerId());
         }
     }
 
@@ -100,6 +107,7 @@ public class SidePanelMixin {
         private void baity$trackPetsMenuClick(Slot slot, int slotId, int button, ContainerInput actionType, CallbackInfo ci) {
             AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
             SidePanelPets.trackMenuSlotClick(screen, slotId, button);
+            SidePanelEquipment.onMenuSlotClick(screen, slot);
         }
 
         @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)

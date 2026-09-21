@@ -4,7 +4,9 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.references.ItemIds;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 @Environment(EnvType.CLIENT)
@@ -46,7 +48,7 @@ public final class SidePanelEquipment {
         }
 
         registerPageRows(menu, page);
-        SidePanel.syncEquippedEquipmentFromMenu(menu);
+        SidePanel.syncEquippedEquipmentFromMenu(menu, page);
         previousPage = page;
         rescan = false;
     }
@@ -72,6 +74,16 @@ public final class SidePanelEquipment {
                 }
             }
         }
+    }
+
+    public static void onMenuSlotClick(AbstractContainerScreen<?> screen, Slot slot) {
+        if (screen == null || slot == null || !SidePanelMenus.isEquipmentSetsMenu(screen.getTitle())) {
+            return;
+        }
+        if (!slot.getItem().typeHolder().is(ItemIds.DYE.lime())) {
+            return;
+        }
+        SidePanel.clearEquippedSlots();
     }
 
     private static void reset() {

@@ -432,12 +432,27 @@ public final class SidePanelLoadouts {
 
     private static void applySnapshot(NameSnapshot snapshot, int page, int localIndex) {
         NameSnapshot resolved = reconcileAssociations(snapshot);
+        if (resolved.eqSetIndex() < 0 && snapshot.eqSetIndex() >= 0 && resolved.hasNamedEquipment()) {
+            resolved = withEquipmentIndex(resolved, snapshot.eqSetIndex());
+        }
         if (!resolved.equals(snapshot)) {
             namesByPage.computeIfAbsent(page, _ -> new HashMap<>()).put(localIndex, resolved);
             namesDirty = true;
         }
         applyEquipmentFromBoundSet(resolved);
         applyBoundPet(resolved);
+    }
+
+    private static NameSnapshot withEquipmentIndex(NameSnapshot snapshot, int eqSetIndex) {
+        return new NameSnapshot(
+                snapshot.necklace(),
+                snapshot.cloak(),
+                snapshot.belt(),
+                snapshot.gloves(),
+                snapshot.petLine(),
+                eqSetIndex,
+                snapshot.petIndex()
+        );
     }
 
     private static void applyEquipmentFromBoundSet(NameSnapshot snapshot) {

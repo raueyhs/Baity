@@ -17,13 +17,16 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.nbt.NbtIo;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.CustomData;
 import net.minecraft.references.ItemIds;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +52,12 @@ public final class SidePanel {
             .codec();
 
     private static final ItemStack[] SLOTS = new ItemStack[SlotKind.values().length];
+    private static final SlotKind[] EQUIPMENT_KINDS = {
+            SlotKind.NECKLACE,
+            SlotKind.CLOAK,
+            SlotKind.BELT,
+            SlotKind.GLOVES
+    };
     private static final Set<AbstractContainerScreen<?>> syncedOnOpen =
             Collections.newSetFromMap(new WeakHashMap<>());
     private static String loadedProfileId;
@@ -99,6 +108,7 @@ public final class SidePanel {
     private static Keybinds.MenuType suppressCloseResync = Keybinds.MenuType.NONE;
     private static int pendingAutoCloseSetIndex = -1;
     private static boolean pendingAutoCloseUnequip;
+    private static int activeEquipmentSetIndex = -1;
 
     public static void init() {
         ScreenEvents.AFTER_INIT.register((client, screen, _, _) -> {
@@ -651,7 +661,7 @@ public final class SidePanel {
         if (menuType == Keybinds.MenuType.EQUIPMENT) {
             SidePanelEquipment.requestRescan();
             if (onClose && !skipPassiveApply) {
-                syncEquippedEquipmentFromMenu(menu);
+                syncEquippedEquipmentFromMenu(menu, SidePanelMenus.equipmentPageFromTitle(screen.getTitle()));
             }
             return;
         }
@@ -703,6 +713,9 @@ public final class SidePanel {
         if (screen.getMenu().containerId != containerId) {
             return;
         }
+        if (slotIndex >= 0 && slotIndex < screen.getMenu().slots.size()) {
+            refreshKnownItem(screen.getMenu().getSlot(slotIndex).getItem());
+        }
 
         String title = screen.getTitle().getString().trim();
         if (SidePanelMenus.isEquipmentStatsMenu(title) && isEquipmentStatsSlot(slotIndex)) {
@@ -728,7 +741,7 @@ public final class SidePanel {
                 return;
             }
             if (slotIndex >= 36 && slotIndex <= 44) {
-                syncEquippedEquipmentFromMenu(screen.getMenu());
+                syncEquippedEquipmentFromMenu(screen.getMenu(), page);
             } else if (slotIndex >= 0 && slotIndex <= 35) {
                 SidePanelEquipment.requestRescan();
                 SidePanelEquipment.registerPageRows(screen.getMenu(), page);
@@ -741,22 +754,113 @@ public final class SidePanel {
         }
     }
 
-    static void syncEquippedEquipmentFromMenu(AbstractContainerMenu menu) {
+    public static void onContainerContentPacket(int containerId) {
+        var client = Minecraft.getInstance();
+        if (!isSyncActive(client)) {
+            return;
+        }
+        if (!(client.gui.screen() instanceof AbstractContainerScreen<?> screen)) {
+            return;
+        }
+        if (screen.getMenu().containerId != containerId) {
+            return;
+        }
+        ensureSessionReady(client);
+
+        if (SidePanelMenus.isEquipmentStatsMenu(screen.getTitle().getString().trim())) {
+            applyFixedSlots(screen.getMenu(), EQUIPMENT_MENU_SLOTS);
+        } else if (Keybinds.MenuType.fromTitle(screen.getTitle()) == Keybinds.MenuType.EQUIPMENT) {
+            int page = SidePanelMenus.equipmentPageFromTitle(screen.getTitle());
+            SidePanelEquipment.registerPageRows(screen.getMenu(), page);
+            syncEquippedEquipmentFromMenu(screen.getMenu(), page);
+        } else if (SidePanelMenus.isLoadoutsMenu(screen.getTitle())) {
+            applyLoadoutPreviewSlots(screen.getMenu());
+        }
+        refreshKnownItems(screen.getMenu());
+    }
+
+    private static void refreshKnownItems(AbstractContainerMenu menu) {
+        for (Slot slot : menu.slots) {
+            refreshKnownItem(slot.getItem(), false);
+        }
+    }
+
+    private static void refreshKnownItem(ItemStack stack) {
+        refreshKnownItem(stack, true);
+    }
+
+    private static void refreshKnownItem(ItemStack stack, boolean allowIdFallback) {
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        int setIndex = -1;
+        boolean changed = false;
+        for (SlotKind kind : EQUIPMENT_KINDS) {
+            ItemStack cached = get(kind);
+            if (cached.isEmpty()
+                    || !cached.getHoverName().getString().equals(stack.getHoverName().getString())) {
+                continue;
+            }
+            String uuid = itemUuid(stack);
+            String cachedUuid = itemUuid(cached);
+            boolean identified = uuid != null && uuid.equals(cachedUuid);
+            if (!identified && allowIdFallback && uuid == null && cachedUuid == null) {
+                String id = itemId(stack);
+                identified = id != null && id.equals(itemId(cached));
+            }
+            if (!identified || ItemStack.matches(cached, stack)) {
+                continue;
+            }
+            if (setIndex < 0) {
+                setIndex = resolveActiveEquipmentSetIndex();
+            }
+            set(kind, stack);
+            changed = true;
+        }
+        if (changed) {
+            registerActiveEquipmentSetRow(setIndex);
+            persistNow();
+        }
+    }
+
+    private static String itemUuid(ItemStack stack) {
+        return itemAttribute(stack, "uuid");
+    }
+
+    private static String itemId(ItemStack stack) {
+        return itemAttribute(stack, "id");
+    }
+
+    private static String itemAttribute(ItemStack stack, String key) {
+        if (stack == null || stack.isEmpty()) {
+            return null;
+        }
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        return data == null ? null : data.copyTag().getString(key).orElse(null);
+    }
+
+    static void syncEquippedEquipmentFromMenu(AbstractContainerMenu menu, int page) {
         if (menu == null || menu.slots.size() < 45) {
             return;
         }
         for (int slotIndex = 36; slotIndex <= 44; slotIndex++) {
             if (menu.getSlot(slotIndex).getItem().typeHolder().is(ItemIds.DYE.lime())) {
+                activeEquipmentSetIndex = SidePanelEquipment.globalSetIndex(page, slotIndex - 36);
                 readRowIntoState(menu, slotIndex - 36, slotIndex - 27, slotIndex - 18, slotIndex - 9, -1);
                 return;
             }
         }
-        set(SlotKind.NECKLACE, ItemStack.EMPTY);
-        set(SlotKind.CLOAK, ItemStack.EMPTY);
-        set(SlotKind.BELT, ItemStack.EMPTY);
-        set(SlotKind.GLOVES, ItemStack.EMPTY);
+        if (activeEquipmentSetIndex >= 0 && activeEquipmentSetIndex / 9 + 1 == page) {
+            clearEquippedSlots();
+        }
+    }
+
+    static void clearEquippedSlots() {
+        for (SlotKind kind : EQUIPMENT_KINDS) {
+            set(kind, ItemStack.EMPTY);
+        }
         SidePanelCache.registerCurrentPanelSlots();
-        persistIfNeeded();
+        persistNow();
     }
 
     private static void applyRiftPet(AbstractContainerMenu menu) {
@@ -774,7 +878,36 @@ public final class SidePanel {
         if (menu.slots.size() <= indices[4]) {
             return;
         }
+        int setIndex = resolveActiveEquipmentSetIndex();
         readRowIntoState(menu, indices[0], indices[1], indices[2], indices[3], indices[4]);
+        registerActiveEquipmentSetRow(setIndex);
+    }
+
+    private static int resolveActiveEquipmentSetIndex() {
+        return SidePanelCache.findBestSetIndex(
+                panelEquipmentName(SlotKind.NECKLACE),
+                panelEquipmentName(SlotKind.CLOAK),
+                panelEquipmentName(SlotKind.BELT),
+                panelEquipmentName(SlotKind.GLOVES)
+        );
+    }
+
+    private static void registerActiveEquipmentSetRow(int setIndex) {
+        if (setIndex < 0) {
+            return;
+        }
+        SidePanelCache.registerSetRow(
+                setIndex,
+                get(SlotKind.NECKLACE),
+                get(SlotKind.CLOAK),
+                get(SlotKind.BELT),
+                get(SlotKind.GLOVES)
+        );
+    }
+
+    private static String panelEquipmentName(SlotKind kind) {
+        ItemStack stack = get(kind);
+        return stack.isEmpty() ? "" : SidePanelUtils.normalizeDisplayName(stack.getHoverName().getString());
     }
 
     private static void readRowIntoState(
