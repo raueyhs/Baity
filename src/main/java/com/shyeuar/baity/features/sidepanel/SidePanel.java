@@ -294,6 +294,9 @@ public final class SidePanel {
             return;
         }
         boolean switchingProfile = loadedProfileId != null;
+        if (!profileId.equals(loadedProfileId)) {
+            activeEquipmentSetIndex = -1;
+        }
         if (loadedProfileId != null && loadedIsland != null) {
             saveCurrent(client, loadedProfileId, loadedIsland);
         }
@@ -348,6 +351,7 @@ public final class SidePanel {
         SidePanelLoadouts.clearSession();
         loadedProfileId = null;
         loadedIsland = null;
+        activeEquipmentSetIndex = -1;
         resetIslandDebounce();
     }
 
