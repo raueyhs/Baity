@@ -25,22 +25,17 @@ final class EnchantLoreRender {
     static List<Component> buildInsertLines(
             TreeSet<EnchantLoreParser.ParsedEnchant> ordered,
             boolean hasLore,
-            int maxEnchantsPerLine,
             int maxTooltipWidth,
             long nowMs
     ) {
         if (ordered.isEmpty()) {
             return List.of();
         }
-        int numEnchants = ordered.size();
         for (EnchantLoreParser.ParsedEnchant parsed : ordered) {
             maxTooltipWidth = Math.max(maxTooltipWidth, getRenderLength(parsed, nowMs));
         }
-        if (numEnchants != 1 && !hasLore) {
-            if ("compress".equalsIgnoreCase(ConfigManager.enchantLoreLayoutMode)) {
-                return compress(ordered, maxTooltipWidth, nowMs);
-            }
-            return normal(ordered, maxEnchantsPerLine, nowMs);
+        if (ordered.size() != 1 && !hasLore) {
+            return compress(ordered, maxTooltipWidth, nowMs);
         }
         return expand(ordered, hasLore, nowMs);
     }
@@ -51,6 +46,24 @@ final class EnchantLoreRender {
                 ? Integer.toString(parsed.level)
                 : RomanNumeralUtils.integerToRoman(parsed.level);
         return formatTierText(parsed.def.loreName + " " + levelText, entry, styleLevelFor(parsed), nowMs, 0.0f);
+    }
+
+    static Component formatInPlaceLine(List<EnchantLoreParser.ParsedEnchant> enchants, long nowMs) {
+        Font font = Minecraft.getInstance().font;
+        int commaLength = font.width(COMMA);
+        MutableComponent line = Component.empty();
+        float x = 0.0f;
+        for (int i = 0; i < enchants.size(); i++) {
+            EnchantLoreParser.ParsedEnchant parsed = enchants.get(i);
+            Component formatted = formatEnchant(parsed, nowMs);
+            line.append(formatted);
+            x += font.width(formatted);
+            if (i < enchants.size() - 1) {
+                appendCommaAfterEnchant(line, parsed, x, nowMs);
+                x += commaLength;
+            }
+        }
+        return line;
     }
 
     static Component formatTierPreview(EnchantLore.Tier tier, long nowMs) {
@@ -89,42 +102,6 @@ final class EnchantLoreRender {
             sb.append(c);
         }
         return sb.toString().trim();
-    }
-
-    private static List<Component> normal(
-            TreeSet<EnchantLoreParser.ParsedEnchant> ordered,
-            int maxEnchantsPerLine,
-            long nowMs
-    ) {
-        if (maxEnchantsPerLine <= 0) {
-            maxEnchantsPerLine = 1;
-        }
-        Font font = Minecraft.getInstance().font;
-        int commaLength = font.width(COMMA);
-        List<Component> lines = new ArrayList<>();
-        int i = 0;
-        MutableComponent loreLine = Component.empty();
-        float lineRainbowX = 0.0f;
-        for (EnchantLoreParser.ParsedEnchant parsed : ordered) {
-            Component formatted = formatEnchant(parsed, nowMs);
-            int renderLength = font.width(formatted);
-            loreLine.append(formatted);
-            lineRainbowX += renderLength;
-            if (i % maxEnchantsPerLine < maxEnchantsPerLine - 1) {
-                appendCommaAfterEnchant(loreLine, parsed, lineRainbowX, nowMs);
-                lineRainbowX += commaLength;
-            } else {
-                lines.add(loreLine);
-                loreLine = Component.empty();
-                lineRainbowX = 0.0f;
-            }
-            i++;
-        }
-        if (font.width(loreLine) >= commaLength) {
-            trimTrailingComma(loreLine);
-            lines.add(loreLine);
-        }
-        return lines;
     }
 
     private static List<Component> compress(
@@ -224,28 +201,12 @@ final class EnchantLoreRender {
     }
 
     private static Style baseStyle(EnchantLore.Entry entry, int styleLevel) {
-        EnchantLore.Tier styleTier = tierForStyle(entry.def(), styleLevel);
+        EnchantLore.Tier styleTier = entry.def().tierFor(styleLevel);
         Style style = Style.EMPTY;
         if (EnchantLoreColorSettings.isBold(styleTier)) {
             style = style.withBold(true);
         }
         return style;
-    }
-
-    private static EnchantLore.Tier tierForStyle(EnchantLoreParser.EnchantDef enchant, int level) {
-        if (enchant.ultimate) {
-            return EnchantLore.Tier.ULTIMATE;
-        }
-        if (level >= enchant.maxLevel) {
-            return EnchantLore.Tier.PERFECT;
-        }
-        if (level > enchant.goodLevel) {
-            return EnchantLore.Tier.GREAT;
-        }
-        if (level == enchant.goodLevel) {
-            return EnchantLore.Tier.GOOD;
-        }
-        return EnchantLore.Tier.POOR;
     }
 
     private static Component rainbowText(String text, Style base, long nowMs, float xStart) {

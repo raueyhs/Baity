@@ -669,7 +669,7 @@ public class ModuleManager {
                 "layout mode",
                 "layout mode",
                 ConfigManager.enchantLoreLayoutMode,
-                "normal",
+                "default",
                 ModuleCategory.RENDER,
                 ButtonValue.ButtonValueType.CYCLE,
                 false

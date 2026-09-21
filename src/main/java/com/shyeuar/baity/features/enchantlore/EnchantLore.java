@@ -25,6 +25,7 @@ public final class EnchantLore {
     }
 
     public static void init() {
+        EnchantCatalog.init();
         EnchantLoreColorSettings.initDefaults();
         EnchantLoreColorSettings.decode(ConfigManager.enchantLoreColorData);
         ItemTooltipCallback.EVENT.addPhaseOrdering(Event.DEFAULT_PHASE, TOOLTIP_LAST_PHASE);
@@ -60,6 +61,10 @@ public final class EnchantLore {
         return ConfigManager.enchantLoreEnabled;
     }
 
+    static boolean isDefaultLayout() {
+        return !"compress".equalsIgnoreCase(ConfigManager.enchantLoreLayoutMode);
+    }
+
     static void applyToTooltipLore(List<Component> lore, ItemStack stack) {
         if (!isEnabled() || lore == null || lore.isEmpty() || stack == null || stack.isEmpty()) {
             return;
@@ -80,17 +85,33 @@ public final class EnchantLore {
             LORE_CACHE.updateAfter(lore, stack, true);
             return;
         }
+        long nowMs = System.currentTimeMillis();
+        if (isDefaultLayout()) {
+            EnchantLoreParser.InPlaceResult inPlace = EnchantLoreParser.collectInPlace(lore, stack, section, nowMs);
+            if (inPlace.enchants().isEmpty()) {
+                EnchantLoreNumeralApplier.applyToTooltip(lore, null, null);
+                LORE_CACHE.updateAfter(lore, stack, true);
+                return;
+            }
+            for (int i = 0; i < inPlace.lines().size(); i++) {
+                Component replacement = inPlace.lines().get(i);
+                if (replacement != null) {
+                    lore.set(section.start() + i, replacement);
+                }
+            }
+            EnchantLoreNumeralApplier.applyToTooltip(lore, section.start(), section.end());
+            LORE_CACHE.updateAfter(lore, stack, !hasAnimatedRainbow(inPlace.enchants()));
+            return;
+        }
         EnchantLoreParser.CollectResult collected = EnchantLoreParser.collectEnchants(lore, stack, section);
         if (collected.ordered().isEmpty()) {
             EnchantLoreNumeralApplier.applyToTooltip(lore, null, null);
             LORE_CACHE.updateAfter(lore, stack, true);
             return;
         }
-        long nowMs = System.currentTimeMillis();
         List<Component> insertLines = EnchantLoreRender.buildInsertLines(
                 collected.ordered(),
                 collected.hasLore(),
-                collected.maxEnchantsPerLine(),
                 section.maxTooltipWidth(),
                 nowMs
         );
@@ -110,6 +131,7 @@ public final class EnchantLore {
         for (EnchantLoreParser.ParsedEnchant parsed : ordered) {
             if (parsed.level >= parsed.def.maxLevel
                     && !parsed.def.ultimate
+                    && !parsed.def.unknown
                     && EnchantLoreColorSettings.isRainbow(EnchantLore.Tier.PERFECT)) {
                 return true;
             }
@@ -135,7 +157,7 @@ public final class EnchantLore {
         return result < 0 ? result + mod : result;
     }
 
-    record Entry(EnchantLoreParser.EnchantDef def, int level, Tier tier, boolean rainbow)
+    record Entry(EnchantCatalog.EnchantDef def, int level, Tier tier, boolean rainbow)
             implements Comparable<Entry> {
         String name() {
             return def.loreName;

@@ -1,7 +1,5 @@
 package com.shyeuar.baity.features.enchantlore;
 
-import com.google.gson.Gson;
-import com.google.gson.annotations.SerializedName;
 import com.shyeuar.baity.utils.RomanNumeralUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -14,30 +12,20 @@ import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @Environment(EnvType.CLIENT)
 final class EnchantLoreParser {
-    private static final Gson GSON = new Gson();
     private static final Pattern ENCHANTMENT_PATTERN = Pattern.compile(
             "(?<enchant>[A-Za-z][A-Za-z -]+) (?<levelNumeral>(?=[MDCLXVI])M{0,3}(?:CM|CD|D?C{0,3})(?:XC|XL|L?X{0,3})(?:IX|IV|V?I{0,3}))(?=, |$| [\\d,]+$)"
     );
-    private static final Comparator<EnchantDef> ENCHANT_ORDER = Comparator
-            .comparingInt((EnchantDef e) -> e.ultimate ? 0 : 1)
-            .thenComparingInt(e -> e.stacking ? 0 : 1)
-            .thenComparing(e -> e.loreName);
-    private static Catalog catalog;
     private EnchantLoreParser() {
     }
 
@@ -80,23 +68,22 @@ final class EnchantLoreParser {
         TreeSet<ParsedEnchant> ordered = new TreeSet<>();
         ParsedEnchant lastEnchant = null;
         boolean hasLore = false;
-        int maxEnchantsPerLine = 0;
         for (int i = section.start(); i <= section.end(); i++) {
             Component originalLine = lore.get(i);
             String unformattedLine = EnchantLoreRender.stripColor(originalLine.getString());
             Matcher matcher = ENCHANTMENT_PATTERN.matcher(unformattedLine);
             boolean containsEnchant = false;
-            int counter = 0;
             while (matcher.find()) {
-                Optional<EnchantDef> def = catalog().fromLore(matcher.group("enchant"));
-                if (def.isEmpty() || !isEnchantOnItem(def.get(), enchantments, attributes)) {
+                EnchantCatalog.EnchantDef def = EnchantCatalog.resolve(
+                        matcher.group("enchant"), enchantments, attributes);
+                if (def == null) {
                     continue;
                 }
                 int level = RomanNumeralUtils.parseNumeral(matcher.group("levelNumeral"));
                 if (level <= 0) {
                     continue;
                 }
-                ParsedEnchant candidate = new ParsedEnchant(stack, def.get(), level);
+                ParsedEnchant candidate = new ParsedEnchant(stack, def, level);
                 if (!ordered.add(candidate)) {
                     for (ParsedEnchant existing : ordered) {
                         if (existing.compareTo(candidate) == 0) {
@@ -108,15 +95,61 @@ final class EnchantLoreParser {
                     lastEnchant = candidate;
                 }
                 containsEnchant = true;
-                counter++;
             }
-            maxEnchantsPerLine = Math.max(maxEnchantsPerLine, counter);
             if (!containsEnchant && lastEnchant != null) {
                 lastEnchant.addLore(originalLine);
                 hasLore = true;
             }
         }
-        return new CollectResult(ordered, hasLore, maxEnchantsPerLine);
+        return new CollectResult(ordered, hasLore);
+    }
+
+    static InPlaceResult collectInPlace(List<Component> lore, ItemStack stack, Section section, long nowMs) {
+        Map<String, Integer> enchantments = enchantmentsOn(stack);
+        Map<String, Integer> attributes = attributesOn(stack);
+        TreeSet<ParsedEnchant> enchants = new TreeSet<>();
+        List<Component> lines = new ArrayList<>(section.end() - section.start() + 1);
+        for (int i = section.start(); i <= section.end(); i++) {
+            List<ParsedEnchant> lineEnchants = new ArrayList<>();
+            String stripped = EnchantLoreRender.stripColor(lore.get(i).getString());
+            if (!collectLineEnchants(stripped, stack, enchantments, attributes, lineEnchants)) {
+                lines.add(null);
+                continue;
+            }
+            enchants.addAll(lineEnchants);
+            lines.add(EnchantLoreRender.formatInPlaceLine(lineEnchants, nowMs));
+        }
+        return new InPlaceResult(lines, enchants);
+    }
+
+    private static boolean collectLineEnchants(
+            String strippedLine,
+            ItemStack stack,
+            Map<String, Integer> enchantments,
+            Map<String, Integer> attributes,
+            List<ParsedEnchant> out
+    ) {
+        Matcher matcher = ENCHANTMENT_PATTERN.matcher(strippedLine);
+        int lastEnd = 0;
+        while (matcher.find()) {
+            if (!isEnchantSeparator(strippedLine.substring(lastEnd, matcher.start()))) {
+                return false;
+            }
+            EnchantCatalog.EnchantDef def = EnchantCatalog.resolve(
+                    matcher.group("enchant"), enchantments, attributes);
+            int level = RomanNumeralUtils.parseNumeral(matcher.group("levelNumeral"));
+            if (def == null || level <= 0) {
+                return false;
+            }
+            out.add(new ParsedEnchant(stack, def, level));
+            lastEnd = matcher.end();
+        }
+        return !out.isEmpty() && isEnchantSeparator(strippedLine.substring(lastEnd));
+    }
+
+    private static boolean isEnchantSeparator(String text) {
+        String trimmed = text.trim();
+        return trimmed.isEmpty() || ",".equals(trimmed);
     }
 
     static boolean isMiningTool(ItemStack stack) {
@@ -156,30 +189,11 @@ final class EnchantLoreParser {
     ) {
         Matcher matcher = ENCHANTMENT_PATTERN.matcher(strippedLine);
         while (matcher.find()) {
-            Optional<EnchantDef> def = catalog().fromLore(matcher.group("enchant"));
-            if (def.isPresent() && isEnchantOnItem(def.get(), enchantments, attributes)) {
+            if (EnchantCatalog.resolve(matcher.group("enchant"), enchantments, attributes) != null) {
                 return true;
             }
         }
         return false;
-    }
-
-    private static boolean isEnchantOnItem(
-            EnchantDef enchant,
-            Map<String, Integer> enchantments,
-            Map<String, Integer> attributes
-    ) {
-        if (!enchantments.containsKey(enchant.nbtName)) {
-            return false;
-        }
-        return !attributes.containsKey(enchant.nbtName);
-    }
-
-    private static Catalog catalog() {
-        if (catalog == null) {
-            catalog = Catalog.load();
-        }
-        return catalog;
     }
 
     private static Map<String, Integer> enchantmentsOn(ItemStack stack) {
@@ -236,15 +250,18 @@ final class EnchantLoreParser {
     record Section(int start, int end, int maxTooltipWidth) {
     }
 
-    record CollectResult(TreeSet<ParsedEnchant> ordered, boolean hasLore, int maxEnchantsPerLine) {
+    record CollectResult(TreeSet<ParsedEnchant> ordered, boolean hasLore) {
+    }
+
+    record InPlaceResult(List<Component> lines, TreeSet<ParsedEnchant> enchants) {
     }
 
     static final class ParsedEnchant implements Comparable<ParsedEnchant> {
         final ItemStack stack;
-        final EnchantDef def;
+        final EnchantCatalog.EnchantDef def;
         final int level;
         private final List<Component> loreDescription = new java.util.ArrayList<>();
-        ParsedEnchant(ItemStack stack, EnchantDef def, int level) {
+        ParsedEnchant(ItemStack stack, EnchantCatalog.EnchantDef def, int level) {
             this.stack = stack;
             this.def = def;
             this.level = level;
@@ -256,9 +273,10 @@ final class EnchantLoreParser {
             return loreDescription;
         }
         EnchantLore.Entry toEntry() {
-            EnchantLore.Tier tier = tierFor(def, level);
+            EnchantLore.Tier tier = def.tierFor(level);
             boolean rainbow = EnchantLore.isEnabled()
                     && !def.ultimate
+                    && !def.unknown
                     && level >= def.maxLevel
                     && EnchantLoreColorSettings.isRainbow(tier);
             return new EnchantLore.Entry(def, level, tier, rainbow);
@@ -267,102 +285,5 @@ final class EnchantLoreParser {
         public int compareTo(ParsedEnchant other) {
             return def.compareTo(other.def);
         }
-    }
-
-    private static EnchantLore.Tier tierFor(EnchantDef enchant, int level) {
-        if (enchant.ultimate) {
-            return EnchantLore.Tier.ULTIMATE;
-        }
-        if (level >= enchant.maxLevel) {
-            return EnchantLore.Tier.PERFECT;
-        }
-        if (level > enchant.goodLevel) {
-            return EnchantLore.Tier.GREAT;
-        }
-        if (level == enchant.goodLevel) {
-            return EnchantLore.Tier.GOOD;
-        }
-        return EnchantLore.Tier.POOR;
-    }
-
-    static final class EnchantDef implements Comparable<EnchantDef> {
-        final String loreName;
-        final String nbtName;
-        final int goodLevel;
-        final int maxLevel;
-        final boolean ultimate;
-        final boolean stacking;
-        EnchantDef(String loreName, String nbtName, int goodLevel, int maxLevel, boolean ultimate, boolean stacking) {
-            this.loreName = loreName;
-            this.nbtName = nbtName;
-            this.goodLevel = goodLevel;
-            this.maxLevel = maxLevel;
-            this.ultimate = ultimate;
-            this.stacking = stacking;
-        }
-        @Override
-        public int compareTo(EnchantDef other) {
-            return ENCHANT_ORDER.compare(this, other);
-        }
-    }
-
-    private static final class Catalog {
-        @SerializedName("NORMAL")
-        HashMap<String, RawEnchant> normal = new HashMap<>();
-        @SerializedName("ULTIMATE")
-        HashMap<String, RawEnchant> ultimate = new HashMap<>();
-        @SerializedName("STACKING")
-        HashMap<String, RawEnchant> stacking = new HashMap<>();
-        final Map<String, EnchantDef> byLoreKey = new HashMap<>();
-        static Catalog load() {
-            try (var reader = new InputStreamReader(
-                    EnchantLore.class.getResourceAsStream("/assets/baity/enchants.json"),
-                    StandardCharsets.UTF_8)) {
-                Catalog loaded = GSON.fromJson(reader, Catalog.class);
-                if (loaded != null) {
-                    loaded.index();
-                    return loaded;
-                }
-            } catch (Exception ignored) {
-            }
-            Catalog empty = new Catalog();
-            empty.index();
-            return empty;
-        }
-        void index() {
-            indexGroup(normal, false, false);
-            indexGroup(ultimate, true, false);
-            indexGroup(stacking, false, true);
-        }
-        void indexGroup(Map<String, RawEnchant> group, boolean ultimate, boolean stacking) {
-            for (RawEnchant raw : group.values()) {
-                EnchantDef def = new EnchantDef(
-                        raw.loreName,
-                        raw.nbtName,
-                        raw.goodLevel,
-                        raw.maxLevel,
-                        ultimate,
-                        stacking
-                );
-                byLoreKey.put(raw.loreName.toLowerCase(Locale.US), def);
-            }
-        }
-        Optional<EnchantDef> fromLore(String loreName) {
-            if (loreName == null || loreName.isBlank()) {
-                return Optional.empty();
-            }
-            return Optional.ofNullable(byLoreKey.get(loreName.trim().toLowerCase(Locale.US)));
-        }
-    }
-
-    private static final class RawEnchant {
-        @SerializedName("loreName")
-        String loreName;
-        @SerializedName("nbtName")
-        String nbtName;
-        @SerializedName("goodLevel")
-        int goodLevel;
-        @SerializedName("maxLevel")
-        int maxLevel;
     }
 }
