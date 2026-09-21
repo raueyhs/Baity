@@ -3,17 +3,23 @@ package com.shyeuar.baity.features;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.shyeuar.baity.config.ConfigManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import com.shyeuar.baity.utils.DurationParseUtils;
 import com.shyeuar.baity.utils.LocateUtils;
 import com.shyeuar.baity.utils.TickSchedulerUtils;
 import com.shyeuar.baity.utils.MessageUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.item.ItemStack;
@@ -22,9 +28,10 @@ import net.minecraft.world.item.Items;
 @Environment(EnvType.CLIENT)
 public class Reminder {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("Baity/Reminder");
     private static final int GOD_POTION_WARN_MINUTES = 30;
     private static final int COOKIE_SB_POLL_SECONDS = 30;
-    private static final long KAT_ENTER_NOTIFY_DELAY_MS = 3_000L;
+    private static final long KAT_ENTER_NOTIFY_TIMEOUT_MS = 15_000L;
     private static final long KAT_NOTIFY_COOLDOWN_MS = 10 * 60 * 1000L;
 
     private static Reminder instance;
@@ -71,7 +78,7 @@ public class Reminder {
         "\\[NPC] Kat: Come back in (.+?) to pick it up!"
     );
     private static final Pattern KAT_DURATION_REMIND_PATTERN = Pattern.compile(
-        "\\[NPC] Kat: You can pick it up in (.+?)\\.?"
+        "\\[NPC] Kat: You can pick it up in (.+?)(?:\\.|$)"
     );
 
     private boolean cookieAlreadyNotified = false;
@@ -84,6 +91,7 @@ public class Reminder {
     private int katNotifyTaskId = -1;
     private int katEnterNotifyTaskId = -1;
     private long lastKatNotifyMs = 0L;
+    private long katEnterNotifyDeadlineMs = 0L;
 
     public static Reminder getInstance() {
         if (instance == null) {
@@ -112,6 +120,19 @@ public class Reminder {
             return;
         }
         getInstance().handleKatChat(content.getString());
+    }
+
+    public static void attachSubCommands(LiteralArgumentBuilder<FabricClientCommandSource> root) {
+        root.then(
+            ClientCommands.literal("katclear")
+                .executes(context -> clearKatReminder())
+        );
+    }
+
+    private static int clearKatReminder() {
+        getInstance().clearKatUpgrade();
+        MessageUtils.sendBaityMessage("Kat reminder cleared.");
+        return 1;
     }
 
     private void startSkyBlockPresenceWatcher() {
@@ -296,10 +317,20 @@ public class Reminder {
         if (!hasKatUpgradeScheduled() || !isKatReminderConfigured()) {
             return;
         }
-        katEnterNotifyTaskId = TickSchedulerUtils.getInstance().runLaterMillis(() -> {
-            katEnterNotifyTaskId = -1;
-            onKatServerJoin();
-        }, KAT_ENTER_NOTIFY_DELAY_MS);
+        katEnterNotifyDeadlineMs = System.currentTimeMillis() + KAT_ENTER_NOTIFY_TIMEOUT_MS;
+        katEnterNotifyTaskId = TickSchedulerUtils.getInstance().runRepeating(this::tryKatServerJoinCheck, 1, TimeUnit.SECONDS);
+    }
+
+    private void tryKatServerJoinCheck() {
+        if (System.currentTimeMillis() > katEnterNotifyDeadlineMs) {
+            cancelKatEnterNotify();
+            return;
+        }
+        if (!hasKatUpgradeScheduled() || !isKatReminderConfigured() || !isInSkyBlock()) {
+            return;
+        }
+        cancelKatEnterNotify();
+        onKatServerJoin();
     }
 
     private void onKatServerJoin() {
@@ -346,16 +377,28 @@ public class Reminder {
         if (!isKatReminderConfigured() && !hasKatUpgradeScheduled()) {
             return;
         }
+        if (text.contains("[NPC] Kat: I was able to upgrade your pet ")) {
+            clearKatUpgrade();
+            return;
+        }
+        if (text.contains("[NPC] Kat: If you have any other pets you'd like to upgrade, you know where to find me!")) {
+            clearKatUpgrade();
+            return;
+        }
+        if (isKatIncomingCall(text)) {
+            clearKatUpgrade();
+            return;
+        }
         if (text.contains("[NPC] Kat: A flower? For me? How sweet!")) {
+            reduceKatReadyAt(TimeUnit.DAYS.toMillis(1));
+            return;
+        }
+        if (text.contains("[NPC] Kat: ✆ Aww, you shouldn't have!")) {
             reduceKatReadyAt(TimeUnit.DAYS.toMillis(1));
             return;
         }
         if (text.contains("[NPC] Kat: A bouquet? For me? How sweet!")) {
             reduceKatReadyAt(TimeUnit.DAYS.toMillis(5));
-            return;
-        }
-        if (text.contains("[NPC] Kat: If you have any other pets you'd like to upgrade, you know where to find me!")) {
-            clearKatUpgrade();
             return;
         }
 
@@ -380,7 +423,10 @@ public class Reminder {
         Matcher durationRemind = KAT_DURATION_REMIND_PATTERN.matcher(text);
         if (durationRemind.find()) {
             setKatReadyAtFromDuration(durationRemind.group(1).trim());
+            return;
         }
+
+        LOGGER.debug("[Kat] Unrecognized dialogue line: {}", text);
     }
 
     private void setKatPetName(String petName) {
@@ -394,6 +440,7 @@ public class Reminder {
     private void setKatReadyAtFromDuration(String durationText) {
         long seconds = DurationParseUtils.parseLongDurationToSeconds(durationText);
         if (seconds <= 0L) {
+            LOGGER.warn("[Kat] Unparseable upgrade duration: '{}'", durationText);
             return;
         }
         ConfigManager.reminderKatReadyAtMs = System.currentTimeMillis() + seconds * 1000L;
@@ -435,6 +482,18 @@ public class Reminder {
 
     private boolean isKatUpgradeReady() {
         return hasKatUpgradeScheduled() && System.currentTimeMillis() >= ConfigManager.reminderKatReadyAtMs;
+    }
+
+    private boolean isKatIncomingCall(String text) {
+        if (!text.contains("[NPC] Kat:") || !text.contains("✆")) {
+            return false;
+        }
+        return !text.contains("Friends? Sure!")
+                && !text.contains("I don't give my contact for everyone")
+                && !text.contains("You don't have what I need!")
+                && !text.contains("Aww, you shouldn't have!")
+                && !text.contains("Hello?")
+                && !text.contains("Do you want me to train your pet?");
     }
 
     private String normalizeKatChatMessage(String raw) {
@@ -511,6 +570,13 @@ public class Reminder {
                 .append(Component.literal(petName).withStyle(ChatFormatting.GOLD, ChatFormatting.BOLD))
                 .append(Component.literal(" is ready at Kat!").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
 
+        message.append(Component.literal(" "));
+        message.append(Component.literal("[错误提醒?click to cancel!]")
+                .withStyle(style -> style
+                        .withColor(ChatFormatting.YELLOW)
+                        .withUnderlined(true)
+                        .withClickEvent(new ClickEvent.RunCommand("/baity katclear"))));
+
         MessageUtils.sendCustomMessage(prefix.append(message));
         client.player.playSound(net.minecraft.sounds.SoundEvents.BLAZE_DEATH, 1.0f, 0.75f);
         showKatAnimation(client, client.player);
@@ -564,10 +630,6 @@ public class Reminder {
     private boolean isInSkyBlock() {
         Minecraft client = Minecraft.getInstance();
         if (client.level == null || client.player == null) return false;
-
-        if (client.isLocalServer()) {
-            return net.fabricmc.loader.api.FabricLoader.getInstance().isDevelopmentEnvironment();
-        }
 
         return com.shyeuar.baity.utils.LocateUtils.inSkyBlock(client);
     }

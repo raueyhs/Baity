@@ -23,6 +23,7 @@ public final class SyncCommands {
             });
 
         SmolFriendCommands.attachSubCommands(root);
+        com.shyeuar.baity.features.Reminder.attachSubCommands(root);
 
         root.then(
             ClientCommands.literal("notification")
