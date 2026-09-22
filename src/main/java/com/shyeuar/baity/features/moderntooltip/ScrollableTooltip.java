@@ -34,7 +34,6 @@ public final class ScrollableTooltip {
     private static double maxScrollX;
     private static int contentSignature = Integer.MIN_VALUE;
     private static int visibleTick = -1;
-    private static boolean fullPositionAnimation = false;
 
     private ScrollableTooltip() {
     }
@@ -151,10 +150,6 @@ public final class ScrollableTooltip {
                 persistScrollState(contentSignature);
                 restoreScrollState(signature);
             } else {
-                if (Math.abs(scrollX) > 0.01) {
-                    fullPositionAnimation = true;
-                    TooltipAnimation.offsetAnimatedPosition((float) scrollX);
-                }
                 resetScrollOffsets();
             }
             contentSignature = signature;
@@ -182,16 +177,6 @@ public final class ScrollableTooltip {
         }
         scrollX = saved.scrollX();
         scrollY = saved.scrollY();
-    }
-
-    public static boolean useFullPositionAnimation() {
-        return fullPositionAnimation;
-    }
-
-    public static void notifyPositionAnimationProgress(float animatedX, float targetX) {
-        if (fullPositionAnimation && Math.abs(animatedX - targetX) <= 0.5f) {
-            fullPositionAnimation = false;
-        }
     }
 
     private static void setVerticalScrollBounds(int contentHeight, int visibleHeight) {
@@ -254,7 +239,6 @@ public final class ScrollableTooltip {
         scrollStateBySignature.clear();
         contentSignature = Integer.MIN_VALUE;
         visibleTick = -1;
-        fullPositionAnimation = false;
     }
 
     private static void resetScrollOffsets() {

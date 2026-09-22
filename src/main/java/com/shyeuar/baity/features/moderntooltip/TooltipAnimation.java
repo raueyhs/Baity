@@ -77,10 +77,6 @@ public final class TooltipAnimation {
         return Math.max(1, Math.round(frame.animatedHeight()));
     }
 
-    public static void offsetAnimatedPosition(float deltaX) {
-        SIZE_ANIMATOR.offsetAnimatedX(deltaX);
-    }
-
     public static AnimatedBox prepareAnimatedBox(
             Font font,
             List<ClientTooltipComponent> components,
@@ -125,17 +121,7 @@ public final class TooltipAnimation {
             int targetX,
             int targetY
     ) {
-        boolean animatePositionX = ScrollableTooltip.isActive() && ScrollableTooltip.useFullPositionAnimation();
-        TooltipSizeAnimator.Frame frame = SIZE_ANIMATOR.update(
-                signature,
-                targetWidth,
-                targetHeight,
-                targetX,
-                targetY,
-                animatePositionX
-        );
-        ScrollableTooltip.notifyPositionAnimationProgress(frame.animatedX(), targetX);
-        return frame;
+        return SIZE_ANIMATOR.update(signature, targetWidth, targetHeight, targetX, targetY);
     }
 
     private static AnimationFrame prepare(

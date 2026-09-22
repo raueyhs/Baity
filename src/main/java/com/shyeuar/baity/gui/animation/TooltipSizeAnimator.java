@@ -20,7 +20,6 @@ public final class TooltipSizeAnimator {
     private boolean positionYTransitionActive;
     private float animatedWidth;
     private float animatedHeight;
-    private float animatedX;
     private float animatedY;
     private int lastSignature = Integer.MIN_VALUE;
 
@@ -39,18 +38,7 @@ public final class TooltipSizeAnimator {
     }
 
     public Frame update(int signature, float targetWidth, float targetHeight, float targetX, float targetY) {
-        return update(signature, targetWidth, targetHeight, targetX, targetY, false);
-    }
-
-    public Frame update(
-            int signature,
-            float targetWidth,
-            float targetHeight,
-            float targetX,
-            float targetY,
-            boolean animatePositionX
-    ) {
-        return update(signature, targetWidth, targetHeight, targetX, targetY, true, animatePositionX);
+        return update(signature, targetWidth, targetHeight, targetX, targetY, true);
     }
 
     private Frame update(
@@ -59,8 +47,7 @@ public final class TooltipSizeAnimator {
             float targetHeight,
             float targetX,
             float targetY,
-            boolean trackPosition,
-            boolean animatePositionX
+            boolean trackPosition
     ) {
         long now = System.currentTimeMillis();
         boolean memoryActive = initialized && now < sizeMemoryExpiryMs;
@@ -73,7 +60,6 @@ public final class TooltipSizeAnimator {
             animatedWidth = targetWidth;
             animatedHeight = targetHeight;
             if (trackPosition) {
-                animatedX = targetX;
                 animatedY = targetY;
             }
             sizeTransitionActive = false;
@@ -86,7 +72,6 @@ public final class TooltipSizeAnimator {
             lastSignature = signature;
             if (trackPosition) {
                 if (resumingWithMemory) {
-                    animatedX = targetX;
                     animatedY = targetY;
                     positionYTransitionActive = false;
                 } else {
@@ -103,7 +88,6 @@ public final class TooltipSizeAnimator {
             animatedHeight = targetHeight;
             if (trackPosition) {
                 animatedY = targetY;
-                animatedX = targetX;
             }
             lastSignature = signature;
         }
@@ -118,24 +102,15 @@ public final class TooltipSizeAnimator {
                 } else {
                     animatedY = targetY;
                 }
-                if (animatePositionX) {
-                    animatedX = moveLinear(animatedX, targetX, dt, SIZE_TRANSITION_SECONDS);
-                } else {
-                    animatedX = targetX;
-                }
             }
             boolean sizeSettled = Math.abs(animatedWidth - targetWidth) <= SNAP_EPSILON
                     && Math.abs(animatedHeight - targetHeight) <= SNAP_EPSILON;
             boolean positionSettled = !trackPosition
                     || (!positionYTransitionActive || Math.abs(animatedY - targetY) <= SNAP_EPSILON);
-            if (animatePositionX) {
-                positionSettled = positionSettled && Math.abs(animatedX - targetX) <= SNAP_EPSILON;
-            }
             if (sizeSettled && positionSettled) {
                 animatedWidth = targetWidth;
                 animatedHeight = targetHeight;
                 if (trackPosition) {
-                    animatedX = targetX;
                     animatedY = targetY;
                 }
                 sizeTransitionActive = false;
@@ -150,19 +125,15 @@ public final class TooltipSizeAnimator {
         boolean animatePositionY = trackPosition && positionYTransitionActive && (
                 sizeTransitionActive || Math.abs(animatedY - targetY) > SNAP_EPSILON
         );
-        boolean animatePositionXActive = trackPosition && animatePositionX && (
-                sizeTransitionActive || Math.abs(animatedX - targetX) > SNAP_EPSILON
-        );
         boolean needsTextClip = animateBackground;
 
-        float frameX = trackPosition ? animatedX : targetX;
         float frameY = trackPosition ? animatedY : targetY;
         return new Frame(
                 animatedWidth,
                 animatedHeight,
-                frameX,
+                targetX,
                 frameY,
-                animateBackground || animatePositionY || animatePositionXActive,
+                animateBackground || animatePositionY,
                 needsTextClip
         );
     }
@@ -186,7 +157,6 @@ public final class TooltipSizeAnimator {
         lastSignature = Integer.MIN_VALUE;
         animatedWidth = 0.0f;
         animatedHeight = 0.0f;
-        animatedX = 0.0f;
         animatedY = 0.0f;
         lastTimeMs = 0L;
         sizeMemoryExpiryMs = 0L;
@@ -195,12 +165,6 @@ public final class TooltipSizeAnimator {
     public void invalidate() {
         initialized = false;
         sizeMemoryExpiryMs = 0L;
-    }
-
-    public void offsetAnimatedX(float delta) {
-        if (initialized) {
-            animatedX += delta;
-        }
     }
 
     private float computeDeltaSeconds(long now) {
