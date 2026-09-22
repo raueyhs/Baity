@@ -48,7 +48,6 @@ public final class RadialWheelRenderer {
         BACK
     }
 
-    private static final int CENTER_HUB_RADIUS = 11;
 
     private static final int BG = LinearTheme.BG_PRIMARY.getRGB();
     private static final int BG3 = LinearTheme.BG_TERTIARY.getRGB();
@@ -156,9 +155,9 @@ public final class RadialWheelRenderer {
                 baseOuter - 0.2, baseOuter + 1.1, fringeColor, withAlpha(fringeColor, 0x00));
 
         int innerRadius = CENTER_RADIUS - 2;
-        int innerFace = lerpArgb(BG, BG3, 0.25f);
-        int innerRimHi = withAlpha(lerpArgb(innerFace, 0xFFFFFF, 0.28f), 0xA8);
-        int innerRimLo = withAlpha(lerpArgb(innerFace, 0x000000, 0.35f), 0x90);
+        int innerFace = lerpArgb(BG3, BG, 0.2f);
+        int innerRimHi = withAlpha(lerpArgb(innerFace, 0xFFFFFF, 0.30f), 0xA0);
+        int innerRimLo = withAlpha(lerpArgb(innerFace, 0x000000, 0.40f), 0x98);
 
         UiShapeRenderer.drawCircle(context, centerX, centerY,
                 segmentsForRadius(innerRadius), innerRadius, withAlpha(innerFace, 0xFF));
@@ -166,6 +165,14 @@ public final class RadialWheelRenderer {
                 innerRimHi, innerRimHi);
         drawLayoutRing(context, centerX, centerY, 50, 130, innerRadius - 1, innerRadius + 1,
                 innerRimLo, innerRimLo);
+
+        int centerWellShadow = withAlpha(lerpArgb(innerFace, 0x000000, 0.35f), 0x80);
+        drawRingSplit(context, centerX, centerY, 0, 360, 11.2, 14.0,
+                centerWellShadow, withAlpha(centerWellShadow, 0x00));
+
+        int shellInnerShadow = withAlpha(lerpArgb(BG, 0x000000, 0.45f), 0x80);
+        drawRingSplit(context, centerX, centerY, 0, 360, baseInner - 2.5, baseInner,
+                withAlpha(shellInnerShadow, 0x00), shellInnerShadow);
     }
 
     public static void drawSectorDividers(GuiGraphicsExtractor context, int centerX, int centerY,
@@ -193,16 +200,7 @@ public final class RadialWheelRenderer {
                 OUTER_RADIUS - 9, OUTER_RADIUS - 5, hi, hiOut);
     }
 
-    public static void drawCenterAvatarHub(GuiGraphicsExtractor context, int centerX, int centerY) {
-        int hubFace = withAlpha(lerpArgb(BG3, BG, 0.2f), 0xFF);
-        int hubRim = withAlpha(lerpArgb(BG3, BORDER, 0.35f), 0xEE);
-        drawCenterHub(context, centerX, centerY, hubFace, hubRim);
-    }
-
     public static void drawCenter(GuiGraphicsExtractor context, int centerX, int centerY, CenterStyle style) {
-        int hubFace = withAlpha(lerpArgb(BG3, BG, 0.2f), 0xFF);
-        int hubRim = withAlpha(lerpArgb(BG3, BORDER, 0.35f), 0xEE);
-        drawCenterHub(context, centerX, centerY, hubFace, hubRim);
         ItemStack stack = switch (style) {
             case EXIT -> new ItemStack(Items.BARRIER);
             case BACK -> new ItemStack(Items.STRUCTURE_VOID);
@@ -225,14 +223,6 @@ public final class RadialWheelRenderer {
         pose.translate(-centerX, -centerY);
         graphics.fakeItem(stack, drawX, drawY);
         pose.popMatrix();
-    }
-
-    private static void drawCenterHub(GuiGraphicsExtractor context, int centerX, int centerY, int hubFace, int hubRim) {
-        int hubSegments = segmentsForRadius(CENTER_HUB_RADIUS);
-        UiShapeRenderer.drawCircle(context, centerX, centerY, hubSegments, CENTER_HUB_RADIUS, hubRim);
-        UiShapeRenderer.drawCircle(context, centerX, centerY, hubSegments, 9.5, hubFace);
-        int hubHi = withAlpha(lerpArgb(hubFace, 0xFFFFFF, 0.35f), 0x80);
-        drawLayoutRing(context, centerX, centerY, -120, -60, 8.5, 10.5, hubHi, hubHi);
     }
 
     public static void drawCenterPlayerHead(GuiGraphicsExtractor graphics, int centerX, int centerY) {

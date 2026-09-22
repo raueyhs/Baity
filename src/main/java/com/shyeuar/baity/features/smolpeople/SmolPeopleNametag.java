@@ -18,16 +18,10 @@ public final class SmolPeopleNametag {
     }
 
     public static boolean usesSmolNametag(int entityId) {
-        if (!isSmolPeopleActive()) {
-            return false;
-        }
         return SmolFriendManager.shouldApplySmolTo(entityId);
     }
 
     public static float getMirrorNametagArmorStandOffset(int entityId) {
-        if (!isSmolPeopleActive()) {
-            return 0f;
-        }
         if (!SmolFriendManager.isMirrorNametagArmorStand(entityId)) {
             return 0f;
         }

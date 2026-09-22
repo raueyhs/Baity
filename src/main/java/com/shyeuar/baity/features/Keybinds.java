@@ -5,6 +5,7 @@ import com.shyeuar.baity.features.sidepanel.SidePanel;
 import com.shyeuar.baity.features.sidepanel.SidePanelEquipment;
 import com.shyeuar.baity.features.sidepanel.SidePanelMenus;
 import com.shyeuar.baity.gui.module.ModuleManager;
+import com.shyeuar.baity.utils.KeyMappingUtils;
 import com.shyeuar.baity.utils.LocateUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -102,6 +103,7 @@ public final class Keybinds {
                 || actionType == ContainerInput.SWAP
                 || actionType == ContainerInput.THROW
                 || actionType == ContainerInput.PICKUP_ALL
+                || actionType == ContainerInput.CLONE
                 || actionType == ContainerInput.QUICK_CRAFT;
     }
 
@@ -131,24 +133,21 @@ public final class Keybinds {
         if (!isActive() || stack == null || !isEquippedSetButton(stack)) {
             return false;
         }
-        boolean enabled;
         boolean prevent;
-        String holdMode;
+        int holdKey;
         if (menuType == MenuType.WARDROBE) {
-            enabled = ConfigManager.keybindsWardrobeEnabled;
             prevent = ConfigManager.keybindsWardrobePreventUnequip;
-            holdMode = ConfigManager.keybindsWardrobeHoldToUnequip;
+            holdKey = ConfigManager.keybindsWardrobeHoldToUnequip;
         } else if (menuType == MenuType.EQUIPMENT) {
-            enabled = ConfigManager.keybindsEquipmentEnabled;
             prevent = ConfigManager.keybindsEquipmentPreventUnequip;
-            holdMode = ConfigManager.keybindsEquipmentHoldToUnequip;
+            holdKey = ConfigManager.keybindsEquipmentHoldToUnequip;
         } else {
             return false;
         }
-        if (!enabled || !prevent) {
+        if (!prevent) {
             return false;
         }
-        return !isHoldToUnequipModifierHeld(holdMode);
+        return !isHoldToUnequipModifierHeld(holdKey);
     }
 
     public static boolean isEquippedSetButton(ItemStack stack) {
@@ -233,6 +232,10 @@ public final class Keybinds {
             Predicate<KeyMapping> matcher,
             MenuType menuType
     ) {
+        if (!isSetMenuEnabled(menuType)) {
+            return true;
+        }
+
         int hotbarIndex = resolveHotbarIndex(client, matcher);
         if (hotbarIndex < 0) {
             return true;
@@ -403,6 +406,14 @@ public final class Keybinds {
         };
     }
 
+    private static boolean isSetMenuEnabled(MenuType menuType) {
+        return switch (menuType) {
+            case WARDROBE -> ConfigManager.keybindsWardrobeEnabled;
+            case EQUIPMENT -> ConfigManager.keybindsEquipmentEnabled;
+            default -> false;
+        };
+    }
+
     private static void playLoadoutEquipSound(Minecraft client) {
         if (client.player != null) {
             client.player.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0f, 0.0f);
@@ -445,36 +456,15 @@ public final class Keybinds {
         }
     }
 
-    private static boolean isHoldToUnequipModifierHeld(String mode) {
-        if (mode == null) {
+    private static boolean isHoldToUnequipModifierHeld(int keyCode) {
+        if (keyCode == 0) {
             return false;
         }
         Minecraft client = Minecraft.getInstance();
         if (client == null || client.getWindow() == null) {
             return false;
         }
-        long windowHandle = client.getWindow().handle();
-        return switch (mode.toLowerCase()) {
-            case "ctrl" -> isCtrlDown(windowHandle);
-            case "shift" -> isShiftDown(windowHandle);
-            case "alt" -> isAltDown(windowHandle);
-            default -> false;
-        };
-    }
-
-    private static boolean isCtrlDown(long windowHandle) {
-        return GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_LEFT_CONTROL) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_RIGHT_CONTROL) == GLFW.GLFW_PRESS;
-    }
-
-    private static boolean isShiftDown(long windowHandle) {
-        return GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_LEFT_SHIFT) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_RIGHT_SHIFT) == GLFW.GLFW_PRESS;
-    }
-
-    private static boolean isAltDown(long windowHandle) {
-        return GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS
-                || GLFW.glfwGetKey(windowHandle, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
+        return KeyMappingUtils.isKeyPressed(client.getWindow().handle(), keyCode);
     }
 
     private static boolean tryConsumeClickCooldown() {

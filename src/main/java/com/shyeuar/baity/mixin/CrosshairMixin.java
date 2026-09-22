@@ -32,7 +32,7 @@ public class CrosshairMixin {
     private static boolean lastSwinging = false;
     private static int lastSwingTime = 0;
     private static float lastObservedNowTick = -1.0f;
-    private static final Identifier WHITE_1PX = Identifier.fromNamespaceAndPath("minecraft", "textures/misc/white.png");
+    private static final Identifier WHITE_1PX = Identifier.fromNamespaceAndPath("baity", "textures/misc/white.png");
 
     @ModifyExpressionValue(method = "extractCrosshair(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/CameraType;isFirstPerson()Z"), require = 1)
     private boolean baity$forceCrosshairInThirdPersonBack(boolean original) {

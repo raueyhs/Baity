@@ -5,8 +5,6 @@ import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.features.smolpeople.SmolFriendManager;
 import com.shyeuar.baity.features.smolpeople.SmolPeopleCamera;
 import com.shyeuar.baity.features.smolpeople.SmolPeopleNametag;
-import com.shyeuar.baity.gui.module.Module;
-import com.shyeuar.baity.gui.module.ModuleManager;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.player.PlayerModel;
@@ -63,10 +61,6 @@ public class SmolPeopleMixin {
 
         @Inject(method = "scale(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("TAIL"))
         private void baity$additionalScale(AvatarRenderState playerEntityRenderState, PoseStack matrixStack, CallbackInfo ci) {
-            Module smolPeopleModule = ModuleManager.getModuleByName("SmolPeople");
-            if (smolPeopleModule == null || !smolPeopleModule.isEnabled()) {
-                return;
-            }
             if (SmolFriendManager.shouldApplySmolTo(playerEntityRenderState.id)) {
                 matrixStack.scale(0.5f, 0.5f, 0.5f);
             }
@@ -78,10 +72,6 @@ public class SmolPeopleMixin {
 
         @Inject(method = "setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V", at = @At("TAIL"))
         private void baity$modifyModel(AvatarRenderState playerEntityRenderState, CallbackInfo ci) {
-            Module smolPeopleModule = ModuleManager.getModuleByName("SmolPeople");
-            if (smolPeopleModule == null || !smolPeopleModule.isEnabled()) {
-                return;
-            }
             if (!SmolFriendManager.shouldApplySmolTo(playerEntityRenderState.id)) {
                 return;
             }

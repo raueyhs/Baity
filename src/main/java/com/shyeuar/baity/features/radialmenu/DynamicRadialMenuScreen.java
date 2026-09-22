@@ -103,7 +103,6 @@ public class DynamicRadialMenuScreen extends Screen {
             }
 
             if (parentScreen == null) {
-                RadialWheelRenderer.drawCenterAvatarHub(context, centerX, centerY);
                 RadialWheelRenderer.drawCenterPlayerHead(context, centerX, centerY);
             } else if (isSecondLevel()) {
                 RadialWheelRenderer.drawCenter(context, centerX, centerY, RadialWheelRenderer.CenterStyle.EXIT);

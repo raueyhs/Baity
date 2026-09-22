@@ -3,6 +3,7 @@ package com.shyeuar.baity.features.enchantlore;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.shyeuar.baity.config.BaityConfigDir;
+import com.shyeuar.baity.utils.ProxyFallbacks;
 import com.shyeuar.baity.utils.RemoteFileFetcher;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -16,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -25,10 +27,10 @@ final class EnchantCatalog {
     private static final Logger LOGGER = LoggerFactory.getLogger("Baity/EnchantCatalog");
     private static final Gson GSON = new Gson();
 
-    private static final String[] REMOTE_CATALOG_URLS = {
+    private static final List<String> REMOTE_CATALOG_URLS = List.of(
         "https://raw.githubusercontent.com/hannibal002/SkyHanni-REPO/main/constants/Enchants.json",
         "https://raw.githubusercontent.com/hannibal002/SkyHanni-REPO/main/constants/enchants.json"
-    };
+    );
     private static final String CACHE_FILE_NAME = "enchants.json";
     private static final String EMBEDDED_RESOURCE = "/assets/baity/enchants.json";
 
@@ -82,13 +84,11 @@ final class EnchantCatalog {
     }
 
     private static void refreshFromRemote() {
-        String body = null;
-        for (String url : REMOTE_CATALOG_URLS) {
-            body = RemoteFileFetcher.fetchText(url, "EnchantCatalog");
-            if (body != null && !body.isBlank()) {
-                break;
-            }
-        }
+        String body = RemoteFileFetcher.fetchText(
+                REMOTE_CATALOG_URLS,
+                "EnchantCatalog",
+                ProxyFallbacks.proxies()
+        );
         if (body == null || body.isBlank()) {
             return;
         }

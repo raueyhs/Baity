@@ -376,10 +376,6 @@ public class ClickGui extends Screen {
         } else if ("FancyDmgSplash".equals(module.getName()) && "separator".equals(buttonValue.getName())) {
             next = ValueCycleUtils.cycle(current, new String[]{"none", "comma", "hyphen", "underscore"}, forward);
             com.shyeuar.baity.config.ConfigManager.fancyDmgSplashSeparator = next;
-        } else if ("Keybinds".equals(module.getName())
-                && ("wardrobe hold to unequip".equals(buttonValue.getName())
-                || "equipment hold to unequip".equals(buttonValue.getName()))) {
-            next = ValueCycleUtils.cycle(current, new String[]{"ctrl", "shift", "alt"}, forward);
         }
 
         if (next == null) {

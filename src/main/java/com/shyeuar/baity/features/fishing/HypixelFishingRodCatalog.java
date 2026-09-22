@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.shyeuar.baity.config.BaityConfigDir;
 import com.shyeuar.baity.utils.LocateUtils;
+import com.shyeuar.baity.utils.ProxyFallbacks;
 import com.shyeuar.baity.utils.RemoteFileFetcher;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -21,6 +22,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Environment(EnvType.CLIENT)
@@ -119,7 +121,11 @@ public final class HypixelFishingRodCatalog {
     }
 
     private static void fetchRemoteCatalogAndApply() {
-        String body = RemoteFileFetcher.fetchText(PUBLIC_ITEMS_JSON, "HypixelFishingRodCatalog");
+        String body = RemoteFileFetcher.fetchText(
+                List.of(PUBLIC_ITEMS_JSON),
+                "HypixelFishingRodCatalog",
+                ProxyFallbacks.proxies()
+        );
         if (body == null || body.isBlank()) {
             return;
         }

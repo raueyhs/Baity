@@ -535,9 +535,6 @@ public final class NickRenderUtils {
     }
 
     private static List<Target> collectTargets() {
-        Module module = ModuleManager.getModuleByName("NickTweaks");
-        if (module == null || !module.isEnabled()) return List.of();
-
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) return List.of();
         String selfName = client.player.getName().getString();
@@ -546,8 +543,11 @@ public final class NickRenderUtils {
             return cachedTargets;
         }
 
+        Module module = ModuleManager.getModuleByName("NickTweaks");
+        boolean localNickTweaksEnabled = module != null && module.isEnabled();
+
         List<Target> targets = new ArrayList<>();
-        if (selfName != null && !selfName.isBlank()) {
+        if (localNickTweaksEnabled && selfName != null && !selfName.isBlank()) {
             targets.add(Target.local(selfName));
         }
 

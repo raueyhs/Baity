@@ -1,6 +1,5 @@
 package com.shyeuar.baity.utils;
 
-import com.shyeuar.baity.config.ConfigManager;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -8,11 +7,7 @@ import com.google.gson.JsonParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.InetSocketAddress;
-import java.net.Proxy;
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
@@ -27,7 +22,6 @@ public class VersionCheckUtils {
     private static final Map<String, String> GITHUB_HEADERS = Map.of(
             "Accept", "application/vnd.github.v3+json"
     );
-    private static final int[] PROBE_PORTS = new int[]{7890, 7891, 7892};
 
     public static class VersionCheckResult {
         public final boolean isLatest;
@@ -67,20 +61,8 @@ public class VersionCheckUtils {
                 GITHUB_API_URL,
                 "VersionCheck",
                 GITHUB_HEADERS,
-                proxyFallbacks()
+                ProxyFallbacks.proxies()
         );
-    }
-
-    private static List<Proxy> proxyFallbacks() {
-        List<Proxy> proxies = new ArrayList<>();
-        String host = ConfigManager.baityPresenceProxyHost == null ? "" : ConfigManager.baityPresenceProxyHost.trim();
-        if (!host.isEmpty() && ConfigManager.baityPresenceProxyPort > 0) {
-            proxies.add(new Proxy(Proxy.Type.HTTP, new InetSocketAddress(host, ConfigManager.baityPresenceProxyPort)));
-        }
-        for (int port : PROBE_PORTS) {
-            proxies.add(new Proxy(Proxy.Type.HTTP, new InetSocketAddress("127.0.0.1", port)));
-        }
-        return proxies;
     }
 
     private static String extractVersionFromTag(String tagName) {

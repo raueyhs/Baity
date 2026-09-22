@@ -75,6 +75,7 @@ public final class BaityPresenceSync {
     private static volatile boolean autoStartupResultShownInWorld = false;
     private static volatile boolean autoSyncTriggeredInWorld = false;
 
+    private static volatile boolean remoteSmolUserPresent = false;
     private static final Map<UUID, RemoteUserState> USERS_BY_UUID = new ConcurrentHashMap<>();
     private static final Map<String, ChromaProfile> CHROMA_BY_NAME = new ConcurrentHashMap<>();
     private static final Map<String, String> CHROMA_DISPLAY_NAME_BY_LOWER = new ConcurrentHashMap<>();
@@ -470,6 +471,10 @@ public final class BaityPresenceSync {
         RemoteUserState state = USERS_BY_UUID.get(uuid);
         if (state == null) return null;
         return state.smolPeopleEnabled();
+    }
+
+    public static boolean hasRemoteSmolUser() {
+        return remoteSmolUserPresent;
     }
 
     public static ChromaProfile getChromaProfileByName(String name) {
@@ -949,6 +954,15 @@ public final class BaityPresenceSync {
         CHROMA_BY_NAME.putAll(newChromaByName);
         CHROMA_DISPLAY_NAME_BY_LOWER.clear();
         CHROMA_DISPLAY_NAME_BY_LOWER.putAll(newChromaDisplayByLower);
+
+        boolean anyRemoteSmol = false;
+        for (RemoteUserState state : newUsers.values()) {
+            if (state.smolPeopleEnabled()) {
+                anyRemoteSmol = true;
+                break;
+            }
+        }
+        remoteSmolUserPresent = anyRemoteSmol;
 
         if (overrideOwnState) {
             tryPushLocalIfRemoteDiffers(forceRemoteSync);

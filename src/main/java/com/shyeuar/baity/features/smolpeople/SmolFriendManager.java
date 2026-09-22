@@ -7,7 +7,6 @@ import com.mojang.authlib.properties.Property;
 import com.shyeuar.baity.config.BaityConfigDir;
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.sync.BaityPresenceSync;
-import com.shyeuar.baity.utils.AntiBotUtils;
 import com.shyeuar.baity.utils.LocateUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -31,6 +30,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 @Environment(EnvType.CLIENT)
@@ -47,6 +47,12 @@ public final class SmolFriendManager {
 
     private record SmolMirrorSource(UUID uuid, Player player, PlayerInfo tabInfo) {
     }
+
+    private record ProfileIdCacheEntry(String textureValue, UUID profileId) {
+    }
+
+    private static final Map<UUID, ProfileIdCacheEntry> PROFILE_ID_CACHE = new ConcurrentHashMap<>();
+    private static final UUID UNSET_SKIN_OWNER_ID = new UUID(0L, 0L);
 
     private SmolFriendManager() {
     }
@@ -69,9 +75,12 @@ public final class SmolFriendManager {
     }
 
     public static boolean shouldApplySmolTo(int entityId) {
+        if (!ConfigManager.smolpeopleMode && !BaityPresenceSync.hasRemoteSmolUser()) {
+            return false;
+        }
         Minecraft mc = Minecraft.getInstance();
         if (mc.player != null && entityId == mc.player.getId()) {
-            return true;
+            return ConfigManager.smolpeopleMode;
         }
 
         Player targetPlayer = getPlayerByEntityId(entityId);
@@ -83,16 +92,12 @@ public final class SmolFriendManager {
             return true;
         }
 
-        if (ConfigManager.smolAllPlayers && !AntiBotUtils.isBot(targetPlayer)) {
-            return true;
-        }
-
         Boolean remotePreference = BaityPresenceSync.getRemoteSmolPreference(targetPlayer.getUUID());
         if (remotePreference != null) {
             return remotePreference;
         }
 
-        if (!ConfigManager.smolFriendsEnabled) {
+        if (!ConfigManager.smolpeopleMode || !ConfigManager.smolFriendsEnabled) {
             return false;
         }
 
@@ -100,7 +105,7 @@ public final class SmolFriendManager {
     }
 
     public static boolean isMirrorNametagArmorStand(int entityId) {
-        if (!SmolPeopleNametag.isSmolPeopleActive()) {
+        if (!ConfigManager.smolpeopleMode && !BaityPresenceSync.hasRemoteSmolUser()) {
             return false;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -121,7 +126,11 @@ public final class SmolFriendManager {
                 continue;
             }
             for (Player mirrorPlayer : mc.level.players()) {
-                if (mirrorPlayer == source.player || !isMirrorOf(source, mirrorPlayer)) {
+                if (mirrorPlayer == source.player()) {
+                    continue;
+                }
+                UUID candidateSkinOwnerId = resolveSkinOwnerId(mirrorPlayer);
+                if (candidateSkinOwnerId == null || !isMirrorOf(source, mirrorPlayer, candidateSkinOwnerId)) {
                     continue;
                 }
                 if (isWithinMirrorArmorStandRadius(mirrorPlayer, armorStand)) {
@@ -137,18 +146,27 @@ public final class SmolFriendManager {
         if (mc.level == null || candidate == null) {
             return false;
         }
+        UUID candidateSkinOwnerId = resolveSkinOwnerId(candidate);
+        if (candidateSkinOwnerId == null) {
+            return false;
+        }
         for (SmolMirrorSource source : collectSmolMirrorSources(mc)) {
-            if (isMirrorOf(source, candidate)) {
+            if (isMirrorOf(source, candidate, candidateSkinOwnerId)) {
                 return true;
             }
         }
         return false;
     }
 
+    private static UUID resolveSkinOwnerId(Player player) {
+        UUID profileId = getSkinTextureProfileId(player);
+        return profileId == UNSET_SKIN_OWNER_ID ? null : profileId;
+    }
+
     private static List<SmolMirrorSource> collectSmolMirrorSources(Minecraft mc) {
         List<SmolMirrorSource> sources = new ArrayList<>();
         Set<UUID> seen = new HashSet<>();
-        if (mc.player != null) {
+        if (mc.player != null && ConfigManager.smolpeopleMode) {
             sources.add(new SmolMirrorSource(mc.player.getUUID(), mc.player, null));
             seen.add(mc.player.getUUID());
         }
@@ -174,24 +192,20 @@ public final class SmolFriendManager {
 
     private static boolean shouldSmolifySourcePlayer(Minecraft mc, UUID uuid, String name) {
         if (mc.player != null && uuid.equals(mc.player.getUUID())) {
-            return true;
-        }
-        if (ConfigManager.smolAllPlayers) {
-            return !AntiBotUtils.isBot(mc.level != null ? mc.level.getPlayerByUUID(uuid) : null);
+            return ConfigManager.smolpeopleMode;
         }
         Boolean remotePreference = BaityPresenceSync.getRemoteSmolPreference(uuid);
         if (remotePreference != null) {
             return remotePreference;
         }
-        return ConfigManager.smolFriendsEnabled && isFriend(name);
+        return ConfigManager.smolpeopleMode && ConfigManager.smolFriendsEnabled && isFriend(name);
     }
 
-    private static boolean isMirrorOf(SmolMirrorSource source, Player candidate) {
+    private static boolean isMirrorOf(SmolMirrorSource source, Player candidate, UUID candidateSkinOwnerId) {
         if (source == null || candidate == null || candidate == source.player()) {
             return false;
         }
-        UUID skinOwnerId = getSkinTextureProfileId(candidate);
-        if (skinOwnerId != null && skinOwnerId.equals(source.uuid())) {
+        if (candidateSkinOwnerId.equals(source.uuid())) {
             return true;
         }
         if (source.player() != null) {
@@ -319,20 +333,28 @@ public final class SmolFriendManager {
     }
 
     private static UUID getSkinTextureProfileId(Player player) {
+        if (player == null) {
+            return UNSET_SKIN_OWNER_ID;
+        }
+        UUID uuid = player.getUUID();
         String textureValue = getTexturesPropertyValue(player.getGameProfile());
+        ProfileIdCacheEntry cached = PROFILE_ID_CACHE.get(uuid);
+        if (cached != null && cached.textureValue().equals(textureValue)) {
+            UUID cachedProfileId = cached.profileId();
+            return cachedProfileId != null ? cachedProfileId : UNSET_SKIN_OWNER_ID;
+        }
         if (textureValue == null) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.getConnection() != null) {
-                PlayerInfo info = mc.getConnection().getPlayerInfo(player.getUUID());
+                PlayerInfo info = mc.getConnection().getPlayerInfo(uuid);
                 if (info != null && info.getProfile() != null) {
                     textureValue = getTexturesPropertyValue(info.getProfile());
                 }
             }
         }
-        if (textureValue == null) {
-            return null;
-        }
-        return parseProfileIdFromTextureValue(textureValue);
+        UUID profileId = textureValue != null ? parseProfileIdFromTextureValue(textureValue) : null;
+        PROFILE_ID_CACHE.put(uuid, new ProfileIdCacheEntry(textureValue, profileId));
+        return profileId != null ? profileId : UNSET_SKIN_OWNER_ID;
     }
 
     private static String getTexturesPropertyValue(GameProfile profile) {

@@ -1,6 +1,7 @@
 package com.shyeuar.baity.features.blockanimation;
 
 import com.shyeuar.baity.config.BaityConfigDir;
+import com.shyeuar.baity.utils.ProxyFallbacks;
 import com.shyeuar.baity.utils.RemoteFileFetcher;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -18,6 +19,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Environment(EnvType.CLIENT)
@@ -69,7 +71,11 @@ public final class BlockAnimationSwordCatalog {
     }
 
     private static void refreshFromRemote() {
-        String body = RemoteFileFetcher.fetchText(REMOTE_CATALOG_URL, "BlockAnimationSwordCatalog");
+        String body = RemoteFileFetcher.fetchText(
+                List.of(REMOTE_CATALOG_URL),
+                "BlockAnimationSwordCatalog",
+                ProxyFallbacks.proxies()
+        );
         if (body == null || body.isBlank()) {
             return;
         }

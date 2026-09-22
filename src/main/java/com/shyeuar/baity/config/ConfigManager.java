@@ -28,7 +28,6 @@ public class ConfigManager {
     public static double smolLimbSwingSpeed = 2.5;
     public static String smolFriendList = "";
     public static boolean smolFriendsEnabled = true;
-    public static boolean smolAllPlayers = false;
     public static boolean blockAnimationMode = false;
     public static boolean blockAnimationInteractAnimations = true;
     public static boolean blockAnimationNoReequipWhenUsing = true;
@@ -89,12 +88,12 @@ public class ConfigManager {
     public static boolean keybindsWardrobeEnabled = true;
     public static boolean keybindsWardrobeAutoCloseOnUse = false;
     public static boolean keybindsWardrobePreventUnequip = false;
-    public static String keybindsWardrobeHoldToUnequip = "ctrl";
+    public static int keybindsWardrobeHoldToUnequip = 341;
     public static boolean keybindsEquipmentGroupExpanded = false;
     public static boolean keybindsEquipmentEnabled = true;
     public static boolean keybindsEquipmentAutoCloseOnUse = false;
     public static boolean keybindsEquipmentPreventUnequip = false;
-    public static String keybindsEquipmentHoldToUnequip = "ctrl";
+    public static int keybindsEquipmentHoldToUnequip = 341;
     public static boolean keybindsLoadoutGroupExpanded = false;
     public static boolean keybindsLoadoutEnabled = true;
     public static boolean keybindsLoadoutAutoCloseOnUse = false;
@@ -317,9 +316,6 @@ public class ConfigManager {
         registerField("SmolFriendsEnabled", Boolean.class,
             c -> ConfigManager.smolFriendsEnabled,
             (c, v) -> ConfigManager.smolFriendsEnabled = (Boolean) v);
-        registerField("SmolAllPlayers", Boolean.class,
-            c -> ConfigManager.smolAllPlayers,
-            (c, v) -> ConfigManager.smolAllPlayers = (Boolean) v);
         registerField("BlockAnimation", Boolean.class,
             c -> ConfigManager.blockAnimationMode,
             (c, v) -> ConfigManager.blockAnimationMode = (Boolean) v);
@@ -494,9 +490,9 @@ public class ConfigManager {
         registerField("KeybindsWardrobePreventUnequip", Boolean.class,
             c -> ConfigManager.keybindsWardrobePreventUnequip,
             (c, v) -> ConfigManager.keybindsWardrobePreventUnequip = (Boolean) v);
-        registerField("KeybindsWardrobeHoldToUnequip", String.class,
+        registerField("KeybindsWardrobeHoldToUnequip", Integer.class,
             c -> ConfigManager.keybindsWardrobeHoldToUnequip,
-            (c, v) -> ConfigManager.keybindsWardrobeHoldToUnequip = (String) v);
+            (c, v) -> ConfigManager.keybindsWardrobeHoldToUnequip = resolveHoldToUnequipKey(v));
         registerField("KeybindsEquipmentGroupExpanded", Boolean.class,
             c -> ConfigManager.keybindsEquipmentGroupExpanded,
             (c, v) -> ConfigManager.keybindsEquipmentGroupExpanded = (Boolean) v);
@@ -509,9 +505,9 @@ public class ConfigManager {
         registerField("KeybindsEquipmentPreventUnequip", Boolean.class,
             c -> ConfigManager.keybindsEquipmentPreventUnequip,
             (c, v) -> ConfigManager.keybindsEquipmentPreventUnequip = (Boolean) v);
-        registerField("KeybindsEquipmentHoldToUnequip", String.class,
+        registerField("KeybindsEquipmentHoldToUnequip", Integer.class,
             c -> ConfigManager.keybindsEquipmentHoldToUnequip,
-            (c, v) -> ConfigManager.keybindsEquipmentHoldToUnequip = (String) v);
+            (c, v) -> ConfigManager.keybindsEquipmentHoldToUnequip = resolveHoldToUnequipKey(v));
         registerField("KeybindsLoadoutGroupExpanded", Boolean.class,
             c -> ConfigManager.keybindsLoadoutGroupExpanded,
             (c, v) -> ConfigManager.keybindsLoadoutGroupExpanded = (Boolean) v);
@@ -1002,6 +998,25 @@ public class ConfigManager {
         CONFIG_FIELDS.put(key, new SettingField(key, getter, setter, type));
     }
 
+    private static int resolveHoldToUnequipKey(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value instanceof String string) {
+            String raw = string.trim();
+            try {
+                return Integer.parseInt(raw);
+            } catch (NumberFormatException ignored) {
+                return switch (raw.toLowerCase(java.util.Locale.ROOT)) {
+                    case "shift" -> 340;
+                    case "alt" -> 342;
+                    default -> 341;
+                };
+            }
+        }
+        return 341;
+    }
+
     private static String normalizePresenceProxySource(String raw) {
         if (raw == null) {
             return "none";
@@ -1302,6 +1317,14 @@ public class ConfigManager {
         }
         if ("ModernTooltipSmoothGroupExpanded".equals(key)) {
             seenKeys.add(key);
+            return;
+        }
+        if ("KeybindsWardrobeHoldToUnequip".equals(key) || "KeybindsEquipmentHoldToUnequip".equals(key)) {
+            SettingField legacyField = CONFIG_FIELDS.get(key);
+            if (legacyField != null) {
+                seenKeys.add(key);
+                legacyField.setValue(null, valueStr);
+            }
             return;
         }
 

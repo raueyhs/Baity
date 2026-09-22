@@ -1,6 +1,7 @@
 {
   "required": false,
   "package": "com.shyeuar.baity.mixin",
+  "plugin": "com.shyeuar.baity.mixin.BaityMixinPlugin",
   "compatibilityLevel": "JAVA_25",
   "mixins": [
     "SmolPeopleMixin$SmolNameTagMixin",

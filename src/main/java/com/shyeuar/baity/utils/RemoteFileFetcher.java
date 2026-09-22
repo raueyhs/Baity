@@ -10,6 +10,7 @@ import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.security.SecureRandom;
@@ -27,8 +28,9 @@ public final class RemoteFileFetcher {
 
     private static final String USER_AGENT = "Baity";
     private static final int CONNECT_TIMEOUT_MS = 10_000;
-    private static final int READ_TIMEOUT_MS = 30_000;
+    private static final int READ_TIMEOUT_MS = 10_000;
     private static final int MAX_ATTEMPTS = 3;
+    private static final int MAX_LIST_ATTEMPTS = 4;
     private static final long RETRY_BACKOFF_MS = 500L;
 
     private static volatile boolean networkInitialized;
@@ -76,6 +78,50 @@ public final class RemoteFileFetcher {
             }
         }
         return null;
+    }
+
+    public static String fetchText(List<String> urls, String logLabel, List<Proxy> proxyFallbacks) {
+        init();
+        String label = logLabel == null || logLabel.isBlank() ? String.valueOf(urls) : logLabel;
+        List<FetchTarget> targets = buildFetchTargets(urls, proxyFallbacks);
+        int limit = Math.min(targets.size(), MAX_LIST_ATTEMPTS);
+        for (int index = 0; index < limit; index++) {
+            FetchTarget target = targets.get(index);
+            FetchAttempt result = fetchOnce(target.url(), null, target.proxy());
+            if (result.success()) {
+                LOGGER.info("[{}] fetched successfully ({} bytes)", label, result.body().length());
+                return result.body();
+            }
+            if (index + 1 < limit) {
+                LOGGER.warn("[{}] attempt {}/{} failed: {}; trying next source...", label, index + 1, limit, result.error());
+            } else {
+                LOGGER.warn("[{}] fetch failed after {} attempts: {}", label, limit, result.error());
+            }
+        }
+        return null;
+    }
+
+    private static List<FetchTarget> buildFetchTargets(List<String> urls, List<Proxy> proxyFallbacks) {
+        List<FetchTarget> targets = new ArrayList<>();
+        if (urls == null || urls.isEmpty()) {
+            return targets;
+        }
+        for (String url : urls) {
+            if (url != null && !url.isBlank()) {
+                targets.add(new FetchTarget(url, null));
+            }
+        }
+        if (proxyFallbacks == null || proxyFallbacks.isEmpty()) {
+            return targets;
+        }
+        for (Proxy proxy : proxyFallbacks) {
+            for (String url : urls) {
+                if (url != null && !url.isBlank()) {
+                    targets.add(new FetchTarget(url, proxy));
+                }
+            }
+        }
+        return targets;
     }
 
     private static String fetchTextWithRetries(String url, String label, Map<String, String> requestHeaders, Proxy proxy) {
@@ -200,6 +246,8 @@ public final class RemoteFileFetcher {
         }
         return trimmed.substring(0, maxLen) + "...";
     }
+
+    private record FetchTarget(String url, Proxy proxy) {}
 
     private record FetchAttempt(boolean success, String body, String error) {
         static FetchAttempt ok(String body) {

@@ -194,9 +194,6 @@ public class ModuleManager {
             () -> ConfigManager.smolpeopleMode,
             val -> ConfigManager.smolpeopleMode = val,
             new com.shyeuar.baity.gui.value.Value[]{
-                new Option(
-                        "toggle all players into smol", "toggle all players into smol",
-                        ConfigManager.smolAllPlayers, ModuleCategory.MISC),
                 new com.shyeuar.baity.gui.value.SliderValue(
                         "limb swing speed", "Limb Swing Speed",
                         2.5, 0.5, 5.0, 0.1, ModuleCategory.MISC),
@@ -208,11 +205,6 @@ public class ModuleManager {
                         false))
             },
             new ModuleRegistry.ValueConfigInfo[]{
-                new ModuleRegistry.ValueConfigInfo(
-                    "toggle all players into smol",
-                    () -> ConfigManager.smolAllPlayers,
-                    val -> ConfigManager.smolAllPlayers = (Boolean) val
-                ),
                 new ModuleRegistry.ValueConfigInfo(
                     "limb swing speed",
                     () -> ConfigManager.smolLimbSwingSpeed,
@@ -384,9 +376,8 @@ public class ModuleManager {
                 "wardrobe hold to unequip",
                 "hold to unequip",
                 ConfigManager.keybindsWardrobeHoldToUnequip,
-                ConfigManager.keybindsWardrobeHoldToUnequip,
                 ModuleCategory.QOL,
-                ButtonValue.ButtonValueType.CYCLE,
+                ButtonValue.ButtonValueType.KEYBIND,
                 false
             ));
 
@@ -400,9 +391,8 @@ public class ModuleManager {
                 "equipment hold to unequip",
                 "hold to unequip",
                 ConfigManager.keybindsEquipmentHoldToUnequip,
-                ConfigManager.keybindsEquipmentHoldToUnequip,
                 ModuleCategory.QOL,
-                ButtonValue.ButtonValueType.CYCLE,
+                ButtonValue.ButtonValueType.KEYBIND,
                 false
             ));
 
@@ -469,7 +459,7 @@ public class ModuleManager {
                 new ModuleRegistry.ValueConfigInfo(
                     "wardrobe hold to unequip",
                     () -> ConfigManager.keybindsWardrobeHoldToUnequip,
-                    val -> ConfigManager.keybindsWardrobeHoldToUnequip = (String) val
+                    val -> ConfigManager.keybindsWardrobeHoldToUnequip = ((Number) val).intValue()
                 ),
                 new ModuleRegistry.ValueConfigInfo(
                     "equipment keybind",
@@ -494,7 +484,7 @@ public class ModuleManager {
                 new ModuleRegistry.ValueConfigInfo(
                     "equipment hold to unequip",
                     () -> ConfigManager.keybindsEquipmentHoldToUnequip,
-                    val -> ConfigManager.keybindsEquipmentHoldToUnequip = (String) val
+                    val -> ConfigManager.keybindsEquipmentHoldToUnequip = ((Number) val).intValue()
                 ),
                 new ModuleRegistry.ValueConfigInfo(
                     "loadout keybind",
