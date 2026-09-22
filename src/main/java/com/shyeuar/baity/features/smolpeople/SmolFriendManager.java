@@ -7,6 +7,7 @@ import com.mojang.authlib.properties.Property;
 import com.shyeuar.baity.config.BaityConfigDir;
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.sync.BaityPresenceSync;
+import com.shyeuar.baity.utils.AntiBotUtils;
 import com.shyeuar.baity.utils.LocateUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -79,6 +80,10 @@ public final class SmolFriendManager {
         }
 
         if (isMirrorOfAnySmolSource(targetPlayer)) {
+            return true;
+        }
+
+        if (ConfigManager.smolAllPlayers && !AntiBotUtils.isBot(targetPlayer)) {
             return true;
         }
 
@@ -170,6 +175,9 @@ public final class SmolFriendManager {
     private static boolean shouldSmolifySourcePlayer(Minecraft mc, UUID uuid, String name) {
         if (mc.player != null && uuid.equals(mc.player.getUUID())) {
             return true;
+        }
+        if (ConfigManager.smolAllPlayers) {
+            return !AntiBotUtils.isBot(mc.level != null ? mc.level.getPlayerByUUID(uuid) : null);
         }
         Boolean remotePreference = BaityPresenceSync.getRemoteSmolPreference(uuid);
         if (remotePreference != null) {

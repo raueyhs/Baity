@@ -28,6 +28,7 @@ public class ConfigManager {
     public static double smolLimbSwingSpeed = 2.5;
     public static String smolFriendList = "";
     public static boolean smolFriendsEnabled = true;
+    public static boolean smolAllPlayers = false;
     public static boolean blockAnimationMode = false;
     public static boolean blockAnimationInteractAnimations = true;
     public static boolean blockAnimationNoReequipWhenUsing = true;
@@ -316,6 +317,9 @@ public class ConfigManager {
         registerField("SmolFriendsEnabled", Boolean.class,
             c -> ConfigManager.smolFriendsEnabled,
             (c, v) -> ConfigManager.smolFriendsEnabled = (Boolean) v);
+        registerField("SmolAllPlayers", Boolean.class,
+            c -> ConfigManager.smolAllPlayers,
+            (c, v) -> ConfigManager.smolAllPlayers = (Boolean) v);
         registerField("BlockAnimation", Boolean.class,
             c -> ConfigManager.blockAnimationMode,
             (c, v) -> ConfigManager.blockAnimationMode = (Boolean) v);

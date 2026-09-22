@@ -194,6 +194,9 @@ public class ModuleManager {
             () -> ConfigManager.smolpeopleMode,
             val -> ConfigManager.smolpeopleMode = val,
             new com.shyeuar.baity.gui.value.Value[]{
+                new Option(
+                        "toggle all players into smol", "toggle all players into smol",
+                        ConfigManager.smolAllPlayers, ModuleCategory.MISC),
                 new com.shyeuar.baity.gui.value.SliderValue(
                         "limb swing speed", "Limb Swing Speed",
                         2.5, 0.5, 5.0, 0.1, ModuleCategory.MISC),
@@ -205,6 +208,11 @@ public class ModuleManager {
                         false))
             },
             new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "toggle all players into smol",
+                    () -> ConfigManager.smolAllPlayers,
+                    val -> ConfigManager.smolAllPlayers = (Boolean) val
+                ),
                 new ModuleRegistry.ValueConfigInfo(
                     "limb swing speed",
                     () -> ConfigManager.smolLimbSwingSpeed,
