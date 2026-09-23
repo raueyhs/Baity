@@ -15,7 +15,7 @@ public final class FishHookTimerTemplateManager {
     public static final String MOD_ID = "fishtimer";
     public static final String TEMPLATE_DIR_NAME = "baity-custom-fishing-timer";
     public static final String DOCS_URL =
-            "https://github.com/raueyhs/Baity/blob/baity-1.21.11/docs/custom-fishing-timer-template.md";
+            "https://github.com/raueyhs/Baity/blob/HEAD/docs/custom-fishing-timer-template.md";
 
     private static final String EMBED_PREFIX = "assets/baity/embed/fishing-timer/";
     private static final String PURPLE = "#FF55FF";
