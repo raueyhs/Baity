@@ -84,6 +84,7 @@
     "RemoveRecipeBookMixin$AbstractRecipeBookScreenMixin",
     "RemoveRecipeBookMixin$RecipeBookComponentMixin",
     "CameraRenderStateMixin",
+    "CameraNoClipMixin",
     "AvatarRenderStateMixin",
     "GameRendererMixin",
     "MotionBlurMixin$LevelRendererMixin",

@@ -133,6 +133,8 @@ public class ConfigManager {
     
     public static boolean noHurtCamEnabled = false;
 
+    public static boolean cameraNoClipEnabled = false;
+
     public static boolean softFullscreenEnabled = false;
     public static boolean sidePanelEnabled = false;
     public static boolean sidePanelPetEnabled = true;
@@ -613,6 +615,9 @@ public class ConfigManager {
         registerField("NoHurtCam", Boolean.class,
             c -> ConfigManager.noHurtCamEnabled,
             (c, v) -> ConfigManager.noHurtCamEnabled = (Boolean) v);
+        registerField("CameraNoClip", Boolean.class,
+            c -> ConfigManager.cameraNoClipEnabled,
+            (c, v) -> ConfigManager.cameraNoClipEnabled = (Boolean) v);
         registerField("SoftFullscreen", Boolean.class,
             c -> ConfigManager.softFullscreenEnabled,
             (c, v) -> ConfigManager.softFullscreenEnabled = (Boolean) v);

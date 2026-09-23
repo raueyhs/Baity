@@ -886,6 +886,12 @@ public class ModuleManager {
             val -> ConfigManager.softFullscreenEnabled = val
         );
 
+        ModuleRegistry.registerSimpleModule(
+            "CameraNoClip", "CameraNoClip", ModuleCategory.QOL,
+            () -> ConfigManager.cameraNoClipEnabled,
+            val -> ConfigManager.cameraNoClipEnabled = val
+        );
+
         ModuleRegistry.registerModuleWithValues(
             "AutoSprint", "AutoSprint", ModuleCategory.QOL,
             () -> ConfigManager.autoSprintEnabled,
