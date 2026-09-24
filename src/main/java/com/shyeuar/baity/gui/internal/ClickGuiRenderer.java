@@ -381,7 +381,10 @@ public class ClickGuiRenderer {
         }
         
         float lineY = searchY + searchHeight - 1;
-        int lineColor = new java.awt.Color(150, 150, 150, 200).getRGB();
+        boolean searchHovered = ClickGuiLayout.isSearchBarHovered(mouseX, mouseY);
+        int lineColor = (searchHovered || focused)
+                ? new java.awt.Color(255, 255, 0, 255).getRGB()
+                : new java.awt.Color(150, 150, 150, 200).getRGB();
         guiGraphics.fill((int)searchX, (int)lineY, (int)(searchX + searchWidth), (int)(lineY + 1), lineColor);
     }
     
@@ -637,6 +640,9 @@ public class ClickGuiRenderer {
                     currentHeight = dims.subOptionHeight * 6;
                 } else if (value.getStyle() == com.shyeuar.baity.gui.value.ValueStyle.CROSSHAIR_PAINTER) {
                     currentHeight = dims.subOptionHeight * 8;
+                } else if (value.getStyle() == com.shyeuar.baity.gui.value.ValueStyle.TEXT_LIST
+                        && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue) {
+                    currentHeight = com.shyeuar.baity.gui.render.ValueStyleRenderer.getTextListHeight(listValue, dims.subOptionHeight);
                 }
 
                 float groupFactor = ClickGuiMotion.getEntryGroupFactor(state, module, entry);

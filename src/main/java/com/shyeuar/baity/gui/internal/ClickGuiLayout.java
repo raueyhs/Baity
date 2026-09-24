@@ -58,6 +58,9 @@ public class ClickGuiLayout {
                 extraHeight += 100;
             } else if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) {
                 extraHeight += 140;
+            } else if (value.getStyle() == ValueStyle.TEXT_LIST
+                    && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue) {
+                extraHeight += (int) (com.shyeuar.baity.gui.render.ValueStyleRenderer.getTextListHeight(listValue, 20) - 20);
             }
             if (value.needsSeparatorBefore(previousValue)) {
                 extraHeight += 12;

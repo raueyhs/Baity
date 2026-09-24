@@ -149,6 +149,9 @@ public class ClickGuiInputHandler {
                                     || v.getStyle() == ValueStyle.ENCHANT_LORE_COLOR_EDITOR
                                     || v.getStyle() == ValueStyle.CHROMA_FISHING_LINE_COLOR_EDITOR) {
                                 currentHeight = dims.subOptionHeight * 6;
+                            } else if (v.getStyle() == ValueStyle.TEXT_LIST
+                                    && v instanceof com.shyeuar.baity.gui.value.TextListValue listValue) {
+                                currentHeight = com.shyeuar.baity.gui.render.ValueStyleRenderer.getTextListHeight(listValue, dims.subOptionHeight);
                             }
                             subModY += currentHeight;
                             previousValue = v;
@@ -422,6 +425,80 @@ public class ClickGuiInputHandler {
         state.setEditingGradient(null);
     }
 
+    private boolean handleTextListClick(Module module, com.shyeuar.baity.gui.value.TextListValue value,
+                                        float x1, float x2, float y, float subOptionHeight,
+                                        ClickGuiLayout.ScaledCoordinates coords) {
+        com.shyeuar.baity.gui.value.TextListValue.Layout layout =
+                com.shyeuar.baity.gui.value.TextListValue.layout(value, x1, y, x2, subOptionHeight);
+        float iconSize = com.shyeuar.baity.gui.value.TextListValue.ICON_SIZE;
+        int lastRow = value.getRowCount() - 1;
+        for (int row = 0; row < value.getRowCount(); row++) {
+            if (row == lastRow) {
+                if (GuiRenderUtil.isHovered(layout.addButtonX1(), layout.addButtonY(row),
+                        layout.addButtonX2(), layout.addButtonY2(row), coords.mouseX, coords.mouseY)) {
+                    value.addInputRow();
+                    state.setEditingTextInput(null);
+                    persistTextList(module, value);
+                    SoundUtils.playBubble();
+                    com.shyeuar.baity.gui.value.TextListValue.Layout newLayout =
+                            com.shyeuar.baity.gui.value.TextListValue.layout(value, x1, y, x2, subOptionHeight);
+                    beginTextListEdit(module, value, value.getInputRowIndex() - 1, newLayout, coords);
+                    return true;
+                }
+                continue;
+            }
+            float iconX1 = layout.iconX1();
+            float iconY1 = layout.iconY(row);
+            if (GuiRenderUtil.isHovered(iconX1, iconY1, iconX1 + iconSize, iconY1 + iconSize,
+                    coords.mouseX, coords.mouseY)) {
+                if (value.getEntry(row).isEmpty() || value.isArmed(row)) {
+                    value.removeRow(row);
+                    state.setEditingTextInput(null);
+                    persistTextList(module, value);
+                    SoundUtils.playWoodenButton();
+                    return true;
+                }
+                value.arm(row);
+                SoundUtils.playWoodenButton();
+                return true;
+            }
+            float lineY = layout.lineY(row);
+            if (GuiRenderUtil.isHovered(layout.textX1(), lineY - 10f, layout.textX2(), lineY + 5f,
+                    coords.mouseX, coords.mouseY)) {
+                beginTextListEdit(module, value, row, layout, coords);
+                return true;
+            }
+        }
+        value.disarm();
+        return false;
+    }
+
+    private void beginTextListEdit(Module module, com.shyeuar.baity.gui.value.TextListValue value, int row,
+                                   com.shyeuar.baity.gui.value.TextListValue.Layout layout,
+                                   ClickGuiLayout.ScaledCoordinates coords) {
+        ClickGuiState.TextInputInfo editInfo = state.getEditingTextInput();
+        boolean sameRow = editInfo != null
+                && module.getName().equals(editInfo.moduleName)
+                && value.getName().equals(editInfo.valueName)
+                && editInfo.isRow(row);
+        value.disarm();
+        if (sameRow) {
+            Minecraft client = Minecraft.getInstance();
+            int maxTextWidth = Math.max(0, Math.round(layout.textX2() - layout.textX1()));
+            state.getTextLineInput().onMousePressed(client.font, coords.mouseX - layout.textX1(), maxTextWidth);
+            return;
+        }
+        state.setEditingTextInput(new ClickGuiState.TextInputInfo(module.getName(), value.getName(), row));
+        String current = value.getEntry(row);
+        state.getTextLineInput().setTextAndCaretAtEnd(current == null ? "" : current);
+    }
+
+    private void persistTextList(Module module, com.shyeuar.baity.gui.value.TextListValue value) {
+        if (ConfigSynchronizer.hasValueConfig(module.getName(), value.getName())) {
+            ConfigSynchronizer.handleValueUpdate(module.getName(), value.getName(), value.getValue());
+        }
+    }
+
     private void commitTextLineInput() {
         ClickGuiState.TextInputInfo info = state.getEditingTextInput();
         if (info != null) {
@@ -432,6 +509,10 @@ public class ClickGuiInputHandler {
                     found.setValue(state.getTextLineInput().getText());
                     if (ConfigSynchronizer.hasValueConfig(module.getName(), found.getName())) {
                         ConfigSynchronizer.handleValueUpdate(module.getName(), found.getName(), found.getValue());
+                    }
+                } else if (found instanceof com.shyeuar.baity.gui.value.TextListValue listValue && info.rowIndex >= 0) {
+                    if (listValue.commitRow(info.rowIndex, state.getTextLineInput().getText())) {
+                        persistTextList(module, listValue);
                     }
                 }
             }
@@ -590,6 +671,8 @@ public class ClickGuiInputHandler {
                         || v.getStyle() == ValueStyle.ENCHANT_LORE_COLOR_EDITOR
                                     || v.getStyle() == ValueStyle.CHROMA_FISHING_LINE_COLOR_EDITOR) currentHeight = dims.subOptionHeight * 6;
                 else if (v.getStyle() == ValueStyle.CROSSHAIR_PAINTER) currentHeight = dims.subOptionHeight * 8;
+                else if (v.getStyle() == ValueStyle.TEXT_LIST
+                        && v instanceof com.shyeuar.baity.gui.value.TextListValue listValue) currentHeight = com.shyeuar.baity.gui.render.ValueStyleRenderer.getTextListHeight(listValue, dims.subOptionHeight);
                 if (v == found) {
                     int subX1 = (int)(containerX1 + 4 + depth * 12);
                     int subX2 = (int)(containerX2 - 4 - depth * 8);
@@ -1524,6 +1607,11 @@ public class ClickGuiInputHandler {
                     timer.reset();
                     return true;
                 }
+            } else if (button == 0 && style == ValueStyle.TEXT_LIST && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue) {
+                if (handleTextListClick(module, listValue, subX1, subX2, subModY, dims.subOptionHeight, coords)) {
+                    timer.reset();
+                    return true;
+                }
             } else if (button == 0) {
                 if (GuiRenderUtil.isHovered(subX1, (int)subModY, 
                                            subX2, (int)(subModY + dims.subOptionHeight), 
@@ -1549,6 +1637,9 @@ public class ClickGuiInputHandler {
                 currentHeight = dims.subOptionHeight * 6;
             } else if (style == ValueStyle.CROSSHAIR_PAINTER) {
                 currentHeight = dims.subOptionHeight * 8;
+            } else if (style == ValueStyle.TEXT_LIST
+                    && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue) {
+                currentHeight = com.shyeuar.baity.gui.render.ValueStyleRenderer.getTextListHeight(listValue, dims.subOptionHeight);
             }
             subModY += currentHeight;
             previousValue = value;
@@ -1619,6 +1710,8 @@ public class ClickGuiInputHandler {
                         || value.getStyle() == ValueStyle.ENCHANT_LORE_COLOR_EDITOR
                         || value.getStyle() == ValueStyle.CHROMA_FISHING_LINE_COLOR_EDITOR) currentHeight = dims.subOptionHeight * 6;
                 else if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) currentHeight = dims.subOptionHeight * 8;
+                else if (value.getStyle() == ValueStyle.TEXT_LIST
+                        && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue) currentHeight = com.shyeuar.baity.gui.render.ValueStyleRenderer.getTextListHeight(listValue, dims.subOptionHeight);
                 subModY += currentHeight;
                 previousValue = value;
             }
@@ -1658,6 +1751,18 @@ public class ClickGuiInputHandler {
                 int subX1 = (int) (containerX1 + 4 + depth * 12);
                 int subX2 = (int) (containerX2 - 4 - depth * 8);
 
+                if (value.getStyle() == ValueStyle.TEXT_LIST
+                        && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue
+                        && module.getName().equals(editInfo.moduleName)
+                        && value.getName().equals(editInfo.valueName)
+                        && editInfo.rowIndex >= 0 && editInfo.rowIndex < listValue.getRowCount()) {
+                    com.shyeuar.baity.gui.value.TextListValue.Layout layout =
+                            com.shyeuar.baity.gui.value.TextListValue.layout(listValue, subX1, subModY, subX2, dims.subOptionHeight);
+                    float lineY = layout.lineY(editInfo.rowIndex);
+                    return GuiRenderUtil.isHovered(layout.textX1(), lineY - 10f, layout.textX2(), lineY + 5f,
+                            coords.mouseX, coords.mouseY);
+                }
+
                 if (value.getStyle() == ValueStyle.TEXT_LINE_INPUT &&
                     module.getName().equals(editInfo.moduleName) &&
                     value.getName().equals(editInfo.valueName)) {
@@ -1677,6 +1782,8 @@ public class ClickGuiInputHandler {
                         || value.getStyle() == ValueStyle.ENCHANT_LORE_COLOR_EDITOR
                         || value.getStyle() == ValueStyle.CHROMA_FISHING_LINE_COLOR_EDITOR) currentHeight = dims.subOptionHeight * 6;
                 else if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) currentHeight = dims.subOptionHeight * 8;
+                else if (value.getStyle() == ValueStyle.TEXT_LIST
+                        && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue) currentHeight = com.shyeuar.baity.gui.render.ValueStyleRenderer.getTextListHeight(listValue, dims.subOptionHeight);
                 subModY += currentHeight;
                 previousValue = value;
             }
@@ -1741,6 +1848,9 @@ public class ClickGuiInputHandler {
                 currentHeight = dims.subOptionHeight * 6;
             } else if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) {
                 currentHeight = dims.subOptionHeight * 8;
+            } else if (value.getStyle() == ValueStyle.TEXT_LIST
+                    && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue) {
+                currentHeight = com.shyeuar.baity.gui.render.ValueStyleRenderer.getTextListHeight(listValue, dims.subOptionHeight);
             }
             subModY += currentHeight;
             previousValue = value;

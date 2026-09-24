@@ -163,6 +163,10 @@ final class ClickGuiMotion {
         if (value.getStyle() == ValueStyle.CROSSHAIR_PAINTER) {
             return baseHeight * 8.0f;
         }
+        if (value.getStyle() == ValueStyle.TEXT_LIST
+                && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue) {
+            return com.shyeuar.baity.gui.render.ValueStyleRenderer.getTextListHeight(listValue, baseHeight);
+        }
         return baseHeight;
     }
 }

@@ -427,6 +427,9 @@ public class ValueStyleRenderer {
               x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, editingTextInput, textInputValue,
               editingTextCaretCp,
               getTooltipText, getTooltipTextWithColors, hoveredTooltipInfo);
+      } else if (style == ValueStyle.TEXT_LIST && value instanceof com.shyeuar.baity.gui.value.TextListValue listValue) {
+          renderTextListValue(context, client, listValue, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha,
+                  editingTextInput, textInputValue, editingTextCaretCp, hoveredTooltipInfo);
       } else {
            renderDefaultValue(context, client, module, value, theme,
                           x1, y, x2, subOptionHeight,
@@ -986,6 +989,124 @@ public class ValueStyleRenderer {
        int tx = (int) (boxX + (boxSize - w) * 0.5f);
        int ty = (int) (boxY + (boxSize - h) * 0.5f);
        context.text(client.font, plus, tx, ty, 0xFFFFFFFF | (localAlpha << 24), false);
+   }
+
+   private static final net.minecraft.world.item.ItemStack TEXT_LIST_MARKER_ICON =
+           new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COMPASS);
+   private static final net.minecraft.world.item.ItemStack TEXT_LIST_ACTIVE_ICON =
+           new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.CLOCK);
+   private static final net.minecraft.world.item.ItemStack TEXT_LIST_REMOVE_ICON =
+           new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STRUCTURE_VOID);
+   private static final net.minecraft.world.item.ItemStack TEXT_LIST_REMOVE_ICON_HOVER =
+           glintIcon(net.minecraft.world.item.Items.STRUCTURE_VOID);
+   private static final net.minecraft.world.item.ItemStack TEXT_LIST_CONFIRM_ICON =
+           glintIcon(net.minecraft.world.item.Items.BARRIER);
+   private static final String ADD_BUTTON_TEXT = "Add";
+
+   private static net.minecraft.world.item.ItemStack glintIcon(net.minecraft.world.item.Item item) {
+       net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(item);
+       stack.set(net.minecraft.core.component.DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+       return stack;
+   }
+
+   public static float getTextListHeight(com.shyeuar.baity.gui.value.TextListValue value, float subOptionHeight) {
+       return com.shyeuar.baity.gui.value.TextListValue.getHeight(value, subOptionHeight);
+   }
+
+   public static void renderTextListValue(GuiGraphicsExtractor context, Minecraft client,
+                                          com.shyeuar.baity.gui.value.TextListValue value, Theme theme,
+                                          float x1, float y, float x2, float subOptionHeight,
+                                          float mouseX, float mouseY, int localAlpha,
+                                          com.shyeuar.baity.gui.internal.ClickGuiState.TextInputInfo editingTextInput,
+                                          String textInputValue, Integer editingTextCaretCp,
+                                          ModuleStyleRenderer.TooltipInfo hoveredTooltipInfo) {
+       com.shyeuar.baity.gui.value.TextListValue.Layout layout =
+               com.shyeuar.baity.gui.value.TextListValue.layout(value, x1, y, x2, subOptionHeight);
+       int frameColor = ((new java.awt.Color(40, 40, 40, 50).getRGB()) & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.draw3DRect(context, x1, y, x2, y + layout.getHeight(), frameColor, 6f);
+
+       int textColor = (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       int hoverColor = 0xFFFFFF00 | (localAlpha << 24);
+       int armedColor = (com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR & 0x00FFFFFF) | (localAlpha << 24);
+
+       if (layout.isBlocked()) {
+           GuiRenderUtil.drawRoundedRectOutline(context, x1, y, x2, y + layout.getHeight(), 6f, armedColor);
+           String status = "Active in current area!";
+           context.text(client.font, status, (int) (layout.textX2() - client.font.width(status)),
+                   (int) layout.getStatusY(), armedColor, false);
+       }
+
+       float iconSize = com.shyeuar.baity.gui.value.TextListValue.ICON_SIZE;
+       int lastRow = layout.getRowCount() - 1;
+       boolean rowEditing = editingTextInput != null && editingTextInput.rowIndex >= 0
+               && editingTextInput.valueName.equals(value.getName());
+       int lineIdleColor = (new java.awt.Color(120, 120, 120, 255).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       for (int row = 0; row < layout.getRowCount(); row++) {
+           float iconX1 = layout.iconX1();
+           float iconY1 = layout.iconY(row);
+           boolean iconHovered = GuiRenderUtil.isHovered(iconX1, iconY1, iconX1 + iconSize, iconY1 + iconSize, mouseX, mouseY);
+
+           if (row == lastRow) {
+               boolean addHovered = GuiRenderUtil.isHovered(layout.addButtonX1(), layout.addButtonY(row),
+                       layout.addButtonX2(), layout.addButtonY2(row), mouseX, mouseY);
+               drawTextListAddButton(context, client, layout.addButtonX1(), layout.addButtonY(row),
+                       layout.addButtonX2(), layout.addButtonY2(row), addHovered, theme, localAlpha);
+               continue;
+           }
+
+           boolean armed = value.isArmed(row);
+           drawTextListRemoveIcon(context, layout.iconX1(), layout.textY(row), iconSize, iconHovered, armed);
+           if (armed && iconHovered && hoveredTooltipInfo != null) {
+               hoveredTooltipInfo.tooltip = "reclick to confirm";
+               hoveredTooltipInfo.tooltipText = net.minecraft.network.chat.Component.literal(hoveredTooltipInfo.tooltip)
+                       .withStyle(net.minecraft.network.chat.Style.EMPTY
+                               .withColor(com.shyeuar.baity.config.DevConfig.DEV_PREFIX_COLOR));
+               hoveredTooltipInfo.x = (int) (mouseX + 5);
+               hoveredTooltipInfo.y = (int) (mouseY + 5);
+           }
+
+           float markerCenterX = layout.markerX1() + iconSize * 0.5f;
+           float markerCenterY = layout.iconY(row) + iconSize * 0.5f;
+           com.shyeuar.baity.gui.radial.RadialWheelRenderer.drawItemStackIcon(
+                   context, value.matchesCurrentArea(row) ? TEXT_LIST_ACTIVE_ICON : TEXT_LIST_MARKER_ICON,
+                   markerCenterX, markerCenterY, (int) iconSize);
+
+           float lineY = layout.lineY(row);
+           boolean editingRow = rowEditing && editingTextInput.isRow(row);
+           boolean lineHovered = GuiRenderUtil.isHovered(layout.textX1(), lineY - 10f, layout.textX2(), lineY + 5f, mouseX, mouseY);
+           int lineColor = (lineHovered || editingRow) ? hoverColor : lineIdleColor;
+           int rowTextColor = (lineHovered || editingRow) ? hoverColor : textColor;
+           String text = editingRow ? (textInputValue == null ? "" : textInputValue) : value.getEntry(row);
+           int maxTextWidth = Math.max(0, Math.round(layout.textX2() - layout.textX1()));
+           com.shyeuar.baity.gui.input.LineTextInput.drawTextWithBlinkCursor(
+                   context, client.font, text, editingRow ? editingTextCaretCp : null,
+                   (int) layout.textX1(), (int) layout.textY(row), rowTextColor,
+                   editingRow, com.shyeuar.baity.gui.input.LineTextInput.shouldBlinkCursor(), maxTextWidth);
+           GuiRenderUtil.divider(context, layout.textX1(), lineY, layout.textX2(), lineY + 1f, lineColor);
+       }
+   }
+
+   private static void drawTextListRemoveIcon(GuiGraphicsExtractor context, float x1, float textY, float iconSize,
+                                              boolean hovered, boolean armed) {
+       net.minecraft.world.item.ItemStack icon = armed
+               ? TEXT_LIST_CONFIRM_ICON
+               : hovered ? TEXT_LIST_REMOVE_ICON_HOVER : TEXT_LIST_REMOVE_ICON;
+       float centerX = x1 + iconSize * 0.5f;
+       float centerY = textY + com.shyeuar.baity.gui.value.TextListValue.FONT_LINE_HEIGHT * 0.5f;
+       com.shyeuar.baity.gui.radial.RadialWheelRenderer.drawItemStackIcon(context, icon, centerX, centerY, (int) iconSize);
+   }
+
+   private static void drawTextListAddButton(GuiGraphicsExtractor context, Minecraft client, float x1, float y1,
+                                             float x2, float y2, boolean hovered, Theme theme, int localAlpha) {
+       int bg = hovered
+               ? (new java.awt.Color(70, 70, 70, 200).getRGB() & 0x00FFFFFF) | (localAlpha << 24)
+               : (new java.awt.Color(40, 40, 40, 200).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       int border = (new java.awt.Color(80, 80, 80, 255).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.drawRoundedRect(context, x1, y1, x2, y2, 3, bg);
+       GuiRenderUtil.drawRoundedRectOutline(context, x1, y1, x2, y2, 3, border);
+       int textColor = (theme.FONT_C.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       int textX = Math.round(x1 + ((x2 - x1) - client.font.width(ADD_BUTTON_TEXT)) * 0.5f);
+       context.text(client.font, ADD_BUTTON_TEXT, textX, Math.round(y1 + 2f), textColor, false);
    }
 
    public static float getFancyDmgPresetHeight(float subOptionHeight) {

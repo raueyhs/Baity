@@ -277,10 +277,30 @@ public class ModuleManager {
             }
         );
         
-        ModuleRegistry.registerSimpleModule(
+        ModuleRegistry.registerModuleWithValues(
             "NoSwimPose", "NoSwimPose", ModuleCategory.QOL,
             () -> ConfigManager.noSwimPoseEnabled,
-            val -> ConfigManager.noSwimPoseEnabled = val
+            val -> ConfigManager.noSwimPoseEnabled = val,
+            new com.shyeuar.baity.gui.value.Value[]{
+                new GroupValue("area blacklist", "area blacklist", ModuleCategory.QOL)
+                    .setExpanded(ConfigManager.noSwimPoseAreaRestrictionGroupExpanded)
+                    .addChild(new com.shyeuar.baity.gui.value.TextListValue(
+                        "area blacklist entries", "area blacklist entries", ModuleCategory.QOL,
+                        com.shyeuar.baity.utils.NoSwimPoseUtils::isAreaBlocked,
+                        com.shyeuar.baity.utils.NoSwimPoseUtils::matchesCurrentArea))
+            },
+            new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "area blacklist",
+                    () -> ConfigManager.noSwimPoseAreaRestrictionGroupExpanded,
+                    val -> ConfigManager.noSwimPoseAreaRestrictionGroupExpanded = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "area blacklist entries",
+                    () -> ConfigManager.noSwimPoseAreaBlacklist,
+                    val -> ConfigManager.noSwimPoseAreaBlacklist = val == null ? "" : String.valueOf(val)
+                )
+            }
         );
         
         ModuleRegistry.registerModuleWithValues(
@@ -1538,6 +1558,7 @@ public class ModuleManager {
         );
         TooltipManager.registerTooltip("FancyCreeperVeil", "Replace the wither cloak ability creeper model to a fancy one.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoSwimPose", "Only disables the swimming pose and eye height change on your client.", 0xFFFFFF);
+        TooltipManager.registerTooltip("area blacklist", "disable effect when in.", 0xFFFFFF);
         TooltipManager.registerTooltip("SoftFullscreen", "Borderless Fullscreen.", 0xFFFFFF);
         TooltipManager.registerTooltip(
             "SidePanel",

@@ -317,9 +317,17 @@ public class ClickGuiState {
     public static class TextInputInfo {
         public final String moduleName;
         public final String valueName;
+        public final int rowIndex;
         public TextInputInfo(String moduleName, String valueName) {
+            this(moduleName, valueName, -1);
+        }
+        public TextInputInfo(String moduleName, String valueName, int rowIndex) {
             this.moduleName = moduleName;
             this.valueName = valueName;
+            this.rowIndex = rowIndex;
+        }
+        public boolean isRow(int row) {
+            return rowIndex == row;
         }
     }
 

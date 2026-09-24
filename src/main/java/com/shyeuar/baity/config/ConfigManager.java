@@ -118,6 +118,8 @@ public class ConfigManager {
     public static String fancyDmgSplashStyle = "default";
     
     public static boolean noSwimPoseEnabled = false;
+    public static boolean noSwimPoseAreaRestrictionGroupExpanded = false;
+    public static String noSwimPoseAreaBlacklist = "safari";
     
     public static boolean autoSprintEnabled = false;
     public static int autoSprintKeybind = 0;
@@ -585,6 +587,12 @@ public class ConfigManager {
         registerField("NoSwimPose", Boolean.class,
             c -> ConfigManager.noSwimPoseEnabled,
             (c, v) -> ConfigManager.noSwimPoseEnabled = (Boolean) v);
+        registerField("NoSwimPoseAreaRestrictionGroupExpanded", Boolean.class,
+            c -> ConfigManager.noSwimPoseAreaRestrictionGroupExpanded,
+            (c, v) -> ConfigManager.noSwimPoseAreaRestrictionGroupExpanded = (Boolean) v);
+        registerField("NoSwimPoseAreaBlacklist", String.class,
+            c -> ConfigManager.noSwimPoseAreaBlacklist,
+            (c, v) -> ConfigManager.noSwimPoseAreaBlacklist = (String) v);
         registerField("AutoSprint", Boolean.class,
             c -> ConfigManager.autoSprintEnabled,
             (c, v) -> ConfigManager.autoSprintEnabled = (Boolean) v);

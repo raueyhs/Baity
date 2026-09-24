@@ -14,6 +14,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.entity.player.Player;
 
+import java.util.List;
+
 public final class NoSwimPoseUtils {
 
     public static final float STANDING_EYE_HEIGHT = 1.62F;
@@ -27,13 +29,122 @@ public final class NoSwimPoseUtils {
     private static float groundedSwimSneakEyeProgress = 0.0F;
     private static boolean poolBottomStandUpLerpActive = false;
 
+    private static final int AREA_CHECK_INTERVAL_TICKS = 10;
+    private static final int AREA_CACHE_MISS_GRACE = 3;
+    private static boolean areaCacheValid = false;
+    private static long areaCacheGameTime = Long.MIN_VALUE;
+    private static boolean areaCacheBlocked = false;
+    private static int areaCacheIslandMiss = 0;
+    private static int areaCacheSubAreaMiss = 0;
+    private static String areaCacheIsland = "";
+    private static String areaCacheSubArea = "";
+    private static String areaBlacklistSource = null;
+    private static List<String> areaBlacklistEntries = List.of();
+
     private static final float POOL_BOTTOM_CAMERA_CONVERGE_EPSILON = 0.01F;
 
     private NoSwimPoseUtils() {}
 
     public static boolean isFeatureActive() {
         Module m = ModuleManager.getModuleByName("NoSwimPose");
-        return m != null && m.isEnabled();
+        return m != null && m.isEnabled() && !isAreaBlocked();
+    }
+
+    public static boolean isAreaBlocked() {
+        refreshAreaCache();
+        return areaCacheBlocked;
+    }
+
+    public static boolean matchesCurrentArea(String entry) {
+        if (entry == null || entry.isEmpty()) {
+            return false;
+        }
+        refreshAreaCache();
+        return entry.equalsIgnoreCase(areaCacheIsland) || entry.equalsIgnoreCase(areaCacheSubArea);
+    }
+
+    private static void refreshAreaCache() {
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || mc.level == null) {
+            areaCacheValid = false;
+            areaCacheBlocked = false;
+            areaCacheIsland = "";
+            areaCacheSubArea = "";
+            return;
+        }
+        long gameTime = mc.level.getGameTime();
+        if (areaCacheValid && Math.abs(gameTime - areaCacheGameTime) < AREA_CHECK_INTERVAL_TICKS) {
+            return;
+        }
+        areaCacheValid = true;
+        areaCacheGameTime = gameTime;
+        if (!hasBlacklistEntries()) {
+            areaCacheIsland = "";
+            areaCacheSubArea = "";
+            areaCacheIslandMiss = 0;
+            areaCacheSubAreaMiss = 0;
+            areaCacheBlocked = false;
+            return;
+        }
+        String island = areaName(LocateUtils.areaIslandName(mc));
+        String subArea = areaName(LocateUtils.scoreboardSubAreaName(mc));
+        if (island.isEmpty()) {
+            if (areaCacheIslandMiss >= AREA_CACHE_MISS_GRACE) {
+                areaCacheIsland = "";
+            }
+            areaCacheIslandMiss++;
+        } else {
+            areaCacheIsland = island;
+            areaCacheIslandMiss = 0;
+        }
+        if (subArea.isEmpty()) {
+            if (areaCacheSubAreaMiss >= AREA_CACHE_MISS_GRACE) {
+                areaCacheSubArea = "";
+            }
+            areaCacheSubAreaMiss++;
+        } else {
+            areaCacheSubArea = subArea;
+            areaCacheSubAreaMiss = 0;
+        }
+        areaCacheBlocked = matchesBlacklistedArea();
+    }
+
+    private static boolean hasBlacklistEntries() {
+        String raw = ConfigManager.noSwimPoseAreaBlacklist;
+        if (raw == null || raw.isEmpty()) {
+            areaBlacklistSource = raw;
+            areaBlacklistEntries = List.of();
+            return false;
+        }
+        if (!raw.equals(areaBlacklistSource)) {
+            areaBlacklistSource = raw;
+            areaBlacklistEntries = TextListCodec.decode(raw);
+        }
+        for (String entry : areaBlacklistEntries) {
+            if (!entry.isEmpty()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean matchesBlacklistedArea() {
+        if (areaCacheIsland.isEmpty() && areaCacheSubArea.isEmpty()) {
+            return false;
+        }
+        for (String entry : areaBlacklistEntries) {
+            if (entry.isEmpty()) {
+                continue;
+            }
+            if (entry.equalsIgnoreCase(areaCacheIsland) || entry.equalsIgnoreCase(areaCacheSubArea)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String areaName(String name) {
+        return name == null ? "" : name.trim();
     }
 
     public static boolean shouldDeferCameraEyeHeightToVanilla(Player player) {
