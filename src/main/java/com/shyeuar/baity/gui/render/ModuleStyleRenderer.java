@@ -102,6 +102,14 @@ public class ModuleStyleRenderer {
    public static void renderKeybindBoxContent(GuiGraphicsExtractor context, Minecraft client, Theme theme,
                                               float containerX2, float containerY, float containerHeight,
                                               float mouseX, float mouseY, boolean isListening, String displayText) {
+       renderKeybindBoxContent(context, client, theme, containerX2, containerY, containerHeight, mouseX, mouseY,
+               isListening, displayText, 0);
+   }
+
+   public static void renderKeybindBoxContent(GuiGraphicsExtractor context, Minecraft client, Theme theme,
+                                              float containerX2, float containerY, float containerHeight,
+                                              float mouseX, float mouseY, boolean isListening, String displayText,
+                                              int textColorOverride) {
        if (displayText == null || displayText.isEmpty()) {
            displayText = "☄ NOTSET";
        }
@@ -122,6 +130,7 @@ public class ModuleStyleRenderer {
 
        int baseX = boxX1 + 8;
        int baseY = (int)(boxCenterY - 4);
+       int valueTextColor = textColorOverride != 0 ? textColorOverride : theme.FONT.getRGB();
 
        if (isListening) {
            String hintText = "Press Backspace to reset";
@@ -138,7 +147,7 @@ public class ModuleStyleRenderer {
                String prefix = "✎";
                String keyName = displayPlainText.substring(1);
                int prefixRGB = com.shyeuar.baity.utils.KeyMappingUtils.getModuleEnabledPurpleRGB();
-               int keyNameRGB = theme.FONT.getRGB();
+               int keyNameRGB = valueTextColor;
 
                net.minecraft.network.chat.Component prefixText = net.minecraft.network.chat.Component.literal(prefix);
                context.text(client.font, prefixText, baseX, baseY, prefixRGB, false);
@@ -162,7 +171,7 @@ public class ModuleStyleRenderer {
                context.text(client.font, notsetTextObj, baseX + prefixWidth, baseY, notsetRGB, false);
            } else {
                net.minecraft.network.chat.Component textObj = net.minecraft.network.chat.Component.literal(displayText);
-               context.text(client.font, textObj, baseX, baseY, theme.FONT.getRGB(), false);
+               context.text(client.font, textObj, baseX, baseY, valueTextColor, false);
            }
        }
    }

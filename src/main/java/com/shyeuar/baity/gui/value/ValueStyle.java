@@ -17,6 +17,7 @@ public enum ValueStyle {
     CHROMA_FISHING_LINE_COLOR_EDITOR,
     TEXT_LINE_INPUT,
     TEXT_LIST,
+    TOGGLE_ROW,
     CROSSHAIR_PAINTER
 }
 

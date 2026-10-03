@@ -394,6 +394,26 @@ public class ValueStyleRenderer {
 
       ValueStyle style = value.getStyle();
        
+      if (style == ValueStyle.TOGGLE_ROW && value instanceof com.shyeuar.baity.gui.value.ToggleRowValue toggleRow) {
+          Value toggleRowInner = toggleRow.getRow();
+          if (toggleRowInner != null && !(toggleRowInner instanceof com.shyeuar.baity.gui.value.ToggleRowValue)) {
+              renderValue(context, client, module, toggleRowInner, theme, x1, y,
+                      com.shyeuar.baity.gui.value.ToggleRowValue.rowX2(x2), subOptionHeight,
+                      mouseX, mouseY, localAlpha, getTooltipText, getTooltipTextWithColors, getDisplayTextFormatter,
+                      listeningButtonValueName, hoveredTooltipInfo, editingSlider, sliderInputText, editingGradient,
+                      gradientInputText, gradientInputCaretCp, sliderInputCaretCp, editingTextInput, textInputValue,
+                      editingTextCaretCp);
+          }
+          drawEnchantToggle(context, client,
+                  com.shyeuar.baity.gui.value.ToggleRowValue.toggleX1(x2),
+                  com.shyeuar.baity.gui.value.ToggleRowValue.toggleY1(y, subOptionHeight),
+                  com.shyeuar.baity.gui.value.ToggleRowValue.toggleX2(x2),
+                  com.shyeuar.baity.gui.value.ToggleRowValue.toggleY2(y, subOptionHeight),
+                  toggleRow.isChecked(), mouseX, mouseY, localAlpha,
+                  theme.BG_3.getRGB(), (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24));
+          return;
+      }
+       
       if (style == ValueStyle.BUTTON_LIKE && value instanceof ButtonValue) {
            renderButtonLikeValue(context, client, module, (ButtonValue) value, theme,
                               x1, y, x2, subOptionHeight,
@@ -527,7 +547,10 @@ public class ValueStyleRenderer {
           }
       }
 
-      int textColor = (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+      int groupTint = com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.tintFor(groupValue.getName());
+      int textColor = groupTint != 0
+              ? (groupTint & 0x00FFFFFF) | (localAlpha << 24)
+              : (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
       context.text(client.font, groupValue.getDisplayName(), (int)(x1 + 8), (int)(y + 6), textColor, false);
 
       String arrow = groupValue.isExpanded() ? "▼" : "▶";
@@ -618,7 +641,10 @@ public class ValueStyleRenderer {
            GuiRenderUtil.draw3DRect(context, x1, y, x2, y + subOptionHeight, valueColor, 6f);
        }
        
-       int textColor = (theme.FONT_C.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       int buttonTint = com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.tintFor(buttonValue.getName());
+       int textColor = buttonTint != 0
+               ? (buttonTint & 0x00FFFFFF) | (localAlpha << 24)
+               : (theme.FONT_C.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
        context.text(client.font, buttonValue.getDisplayName(), (int)(x1 + 8), (int)(y + 6), textColor, false);
        
        boolean isListeningThis = listeningButtonValueName != null && listeningButtonValueName.equals(buttonValue.getName());
@@ -629,7 +655,8 @@ public class ValueStyleRenderer {
            boxText = buttonValue.getDisplayText(getDisplayTextFormatter);
        }
        
-       ModuleStyleRenderer.renderKeybindBoxContent(context, client, theme, x2, y, subOptionHeight, mouseX, mouseY, isListeningThis, boxText);
+       ModuleStyleRenderer.renderKeybindBoxContent(context, client, theme, x2, y, subOptionHeight, mouseX, mouseY, isListeningThis, boxText,
+               buttonTint != 0 ? textColor : 0);
    }
 
    

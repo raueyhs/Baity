@@ -1,7 +1,11 @@
 package com.shyeuar.baity.utils;
 
+import com.shyeuar.baity.compatibility.HypixelModApiLocation;
 import com.shyeuar.baity.features.sidepanel.SidePanel;
 import com.shyeuar.baity.mixin.PlayerListHudMixin;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -103,7 +107,21 @@ public final class LocateUtils {
     private static boolean cachedInSafari;
     private static boolean cachedOnGalatea;
     private static boolean cachedOnTorrhus;
+    private static boolean cachedInCrystalHollows;
+    private static String crystalHollowsLocateKey = "";
     private static String shulkerIslandLocateKey = "";
+
+    private static final String CRYSTAL_HOLLOWS_MODE = "crystal_hollows";
+    private static final long LOCRAW_MIN_INTERVAL_MS = 3000L;
+    private static final long LOCRAW_PENDING_TIMEOUT_MS = 5000L;
+    private static final long LOCRAW_STALE_MS = 10000L;
+
+    private static String locrawServer = "";
+    private static String locrawGametype = "";
+    private static String locrawMode = "";
+    private static long lastLocrawRequestMs;
+    private static long lastLocrawReplyMs;
+    private static boolean locrawPending;
 
     private LocateUtils() {
     }
@@ -111,12 +129,87 @@ public final class LocateUtils {
     public static void registerClientEvents() {
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> resetShulkerIslandLocateCache());
         ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> resetShulkerIslandLocateCache());
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> handleLocrawReply(message.getString()));
+        HypixelModApiLocation.init();
+    }
+
+    public static boolean isCrystalHollowsMode() {
+        String mode = effectiveIslandMode();
+        return !mode.isEmpty() && CRYSTAL_HOLLOWS_MODE.equalsIgnoreCase(mode);
+    }
+
+    public static String effectiveIslandMode() {
+        String pushed = HypixelModApiLocation.mode();
+        return pushed.isEmpty() ? locrawMode : pushed;
+    }
+
+    public static String locrawMode() {
+        return locrawMode;
+    }
+
+    private static void handleLocrawReply(String raw) {
+        if (raw == null) {
+            return;
+        }
+        String text = removeColorCodes(raw).trim();
+        int start = text.indexOf('{');
+        int end = text.lastIndexOf('}');
+        if (start < 0 || end <= start) {
+            return;
+        }
+        try {
+            JsonObject object = JsonParser.parseString(text.substring(start, end + 1)).getAsJsonObject();
+            locrawServer = optString(object, "server");
+            locrawGametype = optString(object, "gametype");
+            locrawMode = optString(object, "mode");
+            lastLocrawReplyMs = System.currentTimeMillis();
+            locrawPending = false;
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static String optString(JsonObject object, String key) {
+        if (!object.has(key) || !object.get(key).isJsonPrimitive()) {
+            return "";
+        }
+        return object.get(key).getAsString();
+    }
+
+    private static void maybeRequestLocraw(Minecraft mc, boolean islandKeyChanged) {
+        if (!cachedOnHypixel || !cachedScoreboardSkyblock || mc.player == null || mc.player.connection == null) {
+            return;
+        }
+        if (HypixelModApiLocation.hasData()) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        boolean stale = locrawMode.isEmpty() && now - lastLocrawReplyMs > LOCRAW_STALE_MS;
+        if (!islandKeyChanged && !stale) {
+            return;
+        }
+        if (now - lastLocrawRequestMs < LOCRAW_MIN_INTERVAL_MS) {
+            return;
+        }
+        if (locrawPending && now - lastLocrawRequestMs < LOCRAW_PENDING_TIMEOUT_MS) {
+            return;
+        }
+        lastLocrawRequestMs = now;
+        locrawPending = true;
+        mc.player.connection.sendCommand("locraw");
     }
 
     private static void resetShulkerIslandLocateCache() {
         shulkerIslandLocateKey = "";
+        crystalHollowsLocateKey = "";
         cachedOnGalatea = false;
         cachedOnTorrhus = false;
+        cachedInCrystalHollows = false;
+        locrawServer = "";
+        locrawGametype = "";
+        locrawMode = "";
+        lastLocrawRequestMs = 0L;
+        lastLocrawReplyMs = 0L;
+        locrawPending = false;
     }
 
     public static boolean onHypixel(Minecraft mc) {
@@ -151,6 +244,74 @@ public final class LocateUtils {
     public static boolean isTorrhusCanyon(Minecraft mc) {
         refresh(mc);
         return cachedOnTorrhus;
+    }
+
+    public static boolean isInCrystalHollows(Minecraft mc) {
+        refresh(mc);
+        if (isCrystalHollowsMode()) {
+            return true;
+        }
+        return cachedInCrystalHollows;
+    }
+
+    private static void updateCrystalHollowsFlag(Minecraft mc) {
+        if (!cachedScoreboardSkyblock || !cachedOnHypixel) {
+            crystalHollowsLocateKey = "";
+            cachedInCrystalHollows = false;
+            return;
+        }
+        String key = buildShulkerIslandLocateKey();
+        if (key.equals(crystalHollowsLocateKey)) {
+            return;
+        }
+        crystalHollowsLocateKey = key;
+        cachedInCrystalHollows = false;
+        maybeRequestLocraw(mc, true);
+
+        if (isCrystalHollowsLocationName(cachedAreaIslandName)
+                || isCrystalHollowsLocationName(cachedTabIslandName)
+                || isCrystalHollowsLocationName(cachedScoreboardSubAreaName)) {
+            cachedInCrystalHollows = true;
+            return;
+        }
+
+        for (String line : readTabHudScanPlainLines(mc)) {
+            Matcher tabLine = TAB_AREA_LINE.matcher(line);
+            if (tabLine.matches()) {
+                String label = line.toLowerCase(Locale.ROOT);
+                if (label.startsWith("island:") || label.startsWith("area:")
+                        || label.startsWith("dungeon:")) {
+                    if (isCrystalHollowsLocationName(tabLine.group(1))) {
+                        cachedInCrystalHollows = true;
+                        return;
+                    }
+                }
+            } else if (isCrystalHollowsLocationName(line)) {
+                cachedInCrystalHollows = true;
+                return;
+            }
+        }
+
+        for (String line : readSidebarPlainLines(mc, true)) {
+            if (isCrystalHollowsLocationName(line)) {
+                cachedInCrystalHollows = true;
+                return;
+            }
+            Matcher subArea = SB_SUBAREA_AFTER_LOC.matcher(line);
+            if (subArea.find() && isCrystalHollowsLocationName(subArea.group("area"))) {
+                cachedInCrystalHollows = true;
+                return;
+            }
+        }
+    }
+
+    private static boolean isCrystalHollowsLocationName(String raw) {
+        String n = normalizeAreaName(raw);
+        if (n.isEmpty()) {
+            return false;
+        }
+        String lower = n.toLowerCase(Locale.ROOT);
+        return lower.contains("crystal hollows") || lower.contains("crystal nucleus");
     }
 
     private static boolean isGalateaLocationName(String raw) {
@@ -342,6 +503,7 @@ public final class LocateUtils {
         scanTabList(mc);
         cachedScoreboardSubAreaName = parseScoreboardSubArea(mc);
         updatePanelIslandFlags(mc);
+        updateCrystalHollowsFlag(mc);
         updateShulkerIslandFlags(mc);
     }
 

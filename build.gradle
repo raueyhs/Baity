@@ -23,6 +23,13 @@ repositories {
         name = 'JitPack'
         url = 'https://jitpack.io'
     }
+    maven {
+        name = 'Hypixel'
+        url = 'https://repo.hypixel.net/repository/Hypixel'
+        content {
+            includeGroupAndSubgroups 'net.hypixel'
+        }
+    }
 }
 
 loom {
@@ -43,6 +50,8 @@ dependencies {
     localRuntime("com.terraformersmc:modmenu:20.0.1") {
         exclude(group: "net.fabricmc.fabric-api")
     }
+
+    compileOnly "net.hypixel:mod-api:${project.hypixel_mod_api_version}"
 
     testImplementation platform("org.junit:junit-bom:5.11.4")
     testImplementation "org.junit.jupiter:junit-jupiter"

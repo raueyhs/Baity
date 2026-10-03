@@ -1252,6 +1252,26 @@ public class ClickGuiInputHandler {
             ValueStyle style = value.getStyle();
             int subX1 = (int)(containerX1 + 4 + depth * 12);
             int subX2 = (int)(containerX2 - 4 - depth * 8);
+            if (value instanceof com.shyeuar.baity.gui.value.ToggleRowValue toggleRow) {
+                if (GuiRenderUtil.isHovered(
+                        com.shyeuar.baity.gui.value.ToggleRowValue.toggleX1(subX2),
+                        com.shyeuar.baity.gui.value.ToggleRowValue.toggleY1(subModY, dims.subOptionHeight),
+                        com.shyeuar.baity.gui.value.ToggleRowValue.toggleX2(subX2),
+                        com.shyeuar.baity.gui.value.ToggleRowValue.toggleY2(subModY, dims.subOptionHeight),
+                        coords.mouseX, coords.mouseY)) {
+                    if (button == 0 || button == 1) {
+                        toggleRow.setValue(!toggleRow.isChecked());
+                        ConfigSynchronizer.handleValueUpdate(module.getName(), toggleRow.getName(), toggleRow.getValue());
+                        SoundUtils.playBubble();
+                        timer.reset();
+                        return true;
+                    }
+                } else if (toggleRow.getRow() != null) {
+                    value = toggleRow.getRow();
+                    style = value.getStyle();
+                    subX2 = (int) com.shyeuar.baity.gui.value.ToggleRowValue.rowX2(subX2);
+                }
+            }
             if (style == ValueStyle.GROUP && value instanceof GroupValue) {
                 if ((button == 0 || button == 1) &&
                     GuiRenderUtil.isHovered(subX1, (int) subModY, subX2, (int)(subModY + dims.subOptionHeight), coords.mouseX, coords.mouseY)) {

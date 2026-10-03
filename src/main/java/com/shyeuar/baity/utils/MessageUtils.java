@@ -11,6 +11,8 @@ import net.minecraft.network.chat.Style;
 @Environment(EnvType.CLIENT)
 public class MessageUtils {
     
+    private static final float PASTEL_SATURATION = 0.45f;
+    
     public static MutableComponent createColoredText(String text, int color) {
         return Component.literal(text).withStyle(style -> style.withColor(color));
     }
@@ -54,6 +56,18 @@ public class MessageUtils {
         return prefix.append(message);
     }
     
+    public static int animatedPastelRgbAt(float x, long nowMs) {
+        int cycleMs = 4000;
+        float time = 1.0f - (nowMs % cycleMs) / (float) cycleMs;
+        float hue = (float) positiveModulo(time + (x % 100.0f) / 100.0f, 1.0);
+        return net.minecraft.util.Mth.hsvToRgb(hue, PASTEL_SATURATION, 1.0f);
+    }
+    
+    private static double positiveModulo(double value, double mod) {
+        double result = value % mod;
+        return result < 0 ? result + mod : result;
+    }
+    
     public static void sendBaityMessage(String message) {
         if (Minecraft.getInstance().player != null) {
             MutableComponent prefix = createBaityPrefix();
@@ -70,7 +84,7 @@ public class MessageUtils {
     }
 
     public static void sendSyncStartForCommand() {
-        sendCustomMessage(createMessageWithPrefix(createColoredText("Syncing remote data...", 0xFFFFFF)));
+        sendCustomMessage(createMessageWithPrefix(createColoredText("Syncing remote data...", 0xAAAAAA)));
     }
 
     public static void sendSyncResult(boolean success, boolean isNotification) {

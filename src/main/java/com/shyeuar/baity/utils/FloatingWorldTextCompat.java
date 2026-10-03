@@ -39,12 +39,26 @@ public final class FloatingWorldTextCompat {
             SubmitNodeCollector submits,
             int packedLight
     ) {
+        drawInBatch(font, text, x, y, color, poseStack, submits, packedLight, false);
+    }
+
+    public static void drawInBatch(
+            Font font,
+            String text,
+            float x,
+            float y,
+            int color,
+            PoseStack poseStack,
+            SubmitNodeCollector submits,
+            int packedLight,
+            boolean dropShadow
+    ) {
         submits.submitText(
                 poseStack,
                 x,
                 y,
                 Component.literal(text).getVisualOrderText(),
-                false,
+                dropShadow,
                 Font.DisplayMode.SEE_THROUGH,
                 packedLight,
                 color,

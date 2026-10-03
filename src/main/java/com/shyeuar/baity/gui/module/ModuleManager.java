@@ -303,6 +303,71 @@ public class ModuleManager {
             }
         );
         
+        java.util.ArrayList<ModuleRegistry.ValueConfigInfo> nucleusScannerValueConfigs = new java.util.ArrayList<>();
+        GroupValue nucleusSelectAreas = new GroupValue("select areas", "select areas", ModuleCategory.QOL)
+            .setExpanded(com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isSelectAreasExpanded());
+        nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+            "select areas",
+            com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings::isSelectAreasExpanded,
+            val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setSelectAreasExpanded((Boolean) val)
+        ));
+        for (com.shyeuar.baity.features.nucleusscanner.NucleusFamily family : com.shyeuar.baity.features.nucleusscanner.NucleusFamily.values()) {
+            com.shyeuar.baity.features.nucleusscanner.NucleusFamily scannerFamily = family;
+            String familyKey = family.key();
+            String enabledName = familyKey + " enabled";
+
+            ButtonValue areaColorRow = new ButtonValue(
+                familyKey, family.displayName(),
+                com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.color(scannerFamily),
+                com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.color(scannerFamily), ModuleCategory.QOL,
+                ButtonValue.ButtonValueType.CYCLE, false);
+            nucleusSelectAreas.addChild(new com.shyeuar.baity.gui.value.ToggleRowValue(
+                enabledName, family.displayName(), ModuleCategory.QOL, areaColorRow,
+                com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isEnabled(scannerFamily)));
+
+            nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+                enabledName,
+                () -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isEnabled(scannerFamily),
+                val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setEnabled(scannerFamily, (Boolean) val)
+            ));
+            nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+                familyKey,
+                () -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.color(scannerFamily),
+                val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setColor(scannerFamily, String.valueOf(val))
+            ));
+        }
+        nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+            "display name",
+            com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings::isDisplayName,
+            val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setDisplayName((Boolean) val)
+        ));
+        nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+            "show distance",
+            com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings::isShowDistance,
+            val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setShowDistance((Boolean) val)
+        ));
+        nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+            "worm fishing",
+            com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings::isWormFishing,
+            val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setWormFishing((Boolean) val)
+        ));
+
+        ModuleRegistry.registerModuleWithValues(
+            "NucleusScanner", "NucleusScanner", ModuleCategory.QOL,
+            () -> ConfigManager.nucleusScannerEnabled,
+            val -> ConfigManager.nucleusScannerEnabled = val,
+            new com.shyeuar.baity.gui.value.Value[]{
+                new Option("display name", "display name",
+                    com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isDisplayName(), ModuleCategory.QOL),
+                new Option("show distance", "show distance",
+                    com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isShowDistance(), ModuleCategory.QOL),
+                new Option("worm fishing", "worm fishing",
+                    com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isWormFishing(), ModuleCategory.QOL),
+                nucleusSelectAreas
+            },
+            nucleusScannerValueConfigs.toArray(ModuleRegistry.ValueConfigInfo[]::new)
+        );
+        
         ModuleRegistry.registerModuleWithValues(
             "Sounds", "Sounds", ModuleCategory.QOL,
             () -> ConfigManager.soundsEnabled,

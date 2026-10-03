@@ -371,6 +371,9 @@ public class ClickGui extends Screen {
             next = ValueCycleUtils.cycle(current, new String[]{"Toggle", "Hold"}, forward);
         } else if ("EnchantLore".equals(module.getName()) && "layout mode".equals(buttonValue.getName())) {
             next = ValueCycleUtils.cycle(current, new String[]{"default", "compress"}, forward);
+        } else if ("NucleusScanner".equals(module.getName())
+                && com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isFamilyName(buttonValue.getName())) {
+            next = com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.cycleColor(current, forward);
         } else if ("FancyDmgSplash".equals(module.getName()) && "style".equals(buttonValue.getName())) {
             next = FancyDmgSplashSettings.cycleStyle(current, forward);
         } else if ("FancyDmgSplash".equals(module.getName()) && "separator".equals(buttonValue.getName())) {
