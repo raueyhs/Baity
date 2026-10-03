@@ -1,13 +1,4 @@
 {
-  "java.jdt.ls.java.home": "D:/Yominoki/develop/zulu25.36.205-ca-jdk25.0.4.1-win_x64/zulu25.36.205-ca-jdk25.0.4.1-win_x64",
-  "java.import.gradle.java.home": "D:/Yominoki/develop/zulu25.36.205-ca-jdk25.0.4.1-win_x64/zulu25.36.205-ca-jdk25.0.4.1-win_x64",
-  "java.configuration.runtimes": [
-    {
-      "name": "JavaSE-25",
-      "path": "D:/Yominoki/develop/zulu25.36.205-ca-jdk25.0.4.1-win_x64/zulu25.36.205-ca-jdk25.0.4.1-win_x64",
-      "default": true
-    }
-  ],
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.import.gradle.enabled": true,
   "java.import.gradle.wrapper.enabled": true,
