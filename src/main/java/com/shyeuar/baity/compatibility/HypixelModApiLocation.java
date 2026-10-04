@@ -56,7 +56,7 @@ public final class HypixelModApiLocation {
         }
         try {
             HypixelModAPI.getInstance().subscribeToEventPacket(ClientboundLocationPacket.class);
-            HypixelModAPI.getInstance().registerHandler(ClientboundLocationPacket.class, HypixelModApiLocation::apply);
+            HypixelModAPI.getInstance().createHandler(ClientboundLocationPacket.class, HypixelModApiLocation::apply);
         } catch (Throwable ignored) {
         }
     }
