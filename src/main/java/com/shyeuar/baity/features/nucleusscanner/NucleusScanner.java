@@ -106,6 +106,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
             inCrystalHollows = hollows;
             entered = hollows;
             invalidateScans();
+            PENDING_MESSAGES.clear();
             if (!hollows) {
                 clearFound();
             }
@@ -259,8 +260,12 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         BlockPos.MutableBlockPos worldPos = new BlockPos.MutableBlockPos();
         Set<NucleusStructure> unresolved = new HashSet<>(pending);
         List<BlockPos> grottoBlocks = new ArrayList<>();
+        long generation = job.generation();
 
         for (int x = 0; x < CHUNK_SIZE; x++) {
+            if (generation != SCAN_GENERATION.get()) {
+                return;
+            }
             for (int z = 0; z < CHUNK_SIZE; z++) {
                 int worldX = job.chunkX() * CHUNK_SIZE + x;
                 int worldZ = job.chunkZ() * CHUNK_SIZE + z;
@@ -277,7 +282,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
                             continue;
                         }
                         unresolved.remove(structure);
-                        recordStructure(structure, worldX, y, worldZ);
+                        recordStructure(structure, worldX, y, worldZ, generation);
                     }
                     if (scanGrotto && isGrottoBlock(chunk, cursor, x, y, z)
                             && !CrystalHollowsQuarter.NUCLEUS.test(worldPos)) {
@@ -288,15 +293,19 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         }
 
         if (!grottoBlocks.isEmpty()) {
-            mergeGrottoChunk(job.chunkX(), job.chunkZ(), grottoBlocks);
+            mergeGrottoChunk(job.chunkX(), job.chunkZ(), grottoBlocks, generation);
         }
 
         if (scanWormFishing) {
-            scanWormFishing(chunk, job.chunkX(), job.chunkZ(), cursor);
+            scanWormFishing(chunk, job.chunkX(), job.chunkZ(), cursor, generation);
         }
     }
 
-    private static void scanWormFishing(LevelChunk chunk, int chunkX, int chunkZ, BlockPos.MutableBlockPos cursor) {
+    private static void scanWormFishing(LevelChunk chunk, int chunkX, int chunkZ, BlockPos.MutableBlockPos cursor,
+                                        long generation) {
+        if (generation != SCAN_GENERATION.get()) {
+            return;
+        }
         for (int x = 0; x < CHUNK_SIZE; x++) {
             for (int z = 0; z < CHUNK_SIZE; z++) {
                 int worldX = chunkX * CHUNK_SIZE + x;
@@ -334,8 +343,13 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
                 || structure.quarter().test(new BlockPos(maxX, MAX_SCAN_Y, maxZ));
     }
 
-    private static void recordStructure(NucleusStructure structure, int worldX, int y, int worldZ) {
-        FOUND_TYPES.add(structure);
+    private static void recordStructure(NucleusStructure structure, int worldX, int y, int worldZ, long generation) {
+        if (generation != SCAN_GENERATION.get()) {
+            return;
+        }
+        if (!FOUND_TYPES.add(structure)) {
+            return;
+        }
         int foundX = worldX + structure.offsetX();
         int foundY = y + structure.offsetY();
         int foundZ = worldZ + structure.offsetZ();
@@ -364,7 +378,10 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
                 .append(share);
     }
 
-    private static synchronized void mergeGrottoChunk(int chunkX, int chunkZ, List<BlockPos> blocks) {
+    private static synchronized void mergeGrottoChunk(int chunkX, int chunkZ, List<BlockPos> blocks, long generation) {
+        if (generation != SCAN_GENERATION.get()) {
+            return;
+        }
         int count = blocks.size();
         int sumX = 0;
         int sumY = 0;
