@@ -52,7 +52,9 @@ public class ConfigManager {
     public static boolean nametagFocusPlayerGroupExpanded = false;
     public static boolean nametagTransparentizeOtherTags = false;
     public static boolean nametagOptionsGroupExpanded = false;
-    public static boolean pepCatEnabled = false;
+    public static boolean pepCatEnabled = true;
+    public static boolean pepCatMessageEnabled = true;
+    public static boolean pepCatAnimationEnabled = false;
     public static boolean reminderEnabled = false;
     public static boolean reminderCookieBuffEnabled = true;
     public static boolean reminderGodPotionEnabled = true;
@@ -401,6 +403,12 @@ public class ConfigManager {
         registerField("PepCat", Boolean.class,
             c -> ConfigManager.pepCatEnabled,
             (c, v) -> ConfigManager.pepCatEnabled = (Boolean) v);
+        registerField("PepCatMessageEnabled", Boolean.class,
+            c -> ConfigManager.pepCatMessageEnabled,
+            (c, v) -> ConfigManager.pepCatMessageEnabled = (Boolean) v);
+        registerField("PepCatAnimationEnabled", Boolean.class,
+            c -> ConfigManager.pepCatAnimationEnabled,
+            (c, v) -> ConfigManager.pepCatAnimationEnabled = (Boolean) v);
         registerField("Reminder", Boolean.class,
             c -> ConfigManager.reminderEnabled,
             (c, v) -> ConfigManager.reminderEnabled = (Boolean) v);

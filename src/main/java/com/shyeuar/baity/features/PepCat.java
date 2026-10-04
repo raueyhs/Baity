@@ -108,8 +108,12 @@ public class PepCat {
     }
     
     private static void onPlayerDeath(LocalPlayer player) {
-        playTotemAnimation(player);
-        sendEncouragementMessage(player);
+        if (ConfigManager.pepCatAnimationEnabled) {
+            playTotemAnimation(player);
+        }
+        if (ConfigManager.pepCatMessageEnabled) {
+            sendEncouragementMessage(player);
+        }
     }
     
     private static void playTotemAnimation(LocalPlayer player) {
@@ -142,9 +146,9 @@ public class PepCat {
     
     
     private static void sendEncouragementMessage(LocalPlayer player) {
-        int idx = java.util.concurrent.ThreadLocalRandom.current().nextInt(7);
-        if (idx == lastRandomMessageIndex && 7 > 1) {
-            idx = (idx + 1) % 7;
+        int idx = java.util.concurrent.ThreadLocalRandom.current().nextInt(9);
+        if (idx == lastRandomMessageIndex && 9 > 1) {
+            idx = (idx + 1) % 9;
         }
         lastRandomMessageIndex = idx;
 
@@ -160,24 +164,32 @@ public class PepCat {
                 emoji = "(°∀°)ﾉ";
             }
             case 2 -> {
-                text = "身体重新拼凑的感觉并不好受，像是把一堆零件强行塞进太小的盒子里，顺便还弄丢了几枚硬币...";
+                text = "身体重新拼凑的感觉并不好受...";
                 emoji = "(ﾟ∀。)";
             }
             case 3 -> {
-                text = "不是因为怜悯，是因为你老死在这儿...";
-                emoji = "(￣^￣)ゞ";
-            }
-            case 4 -> {
-                text = "用一种比较激烈的方式，测试一下这个世界的硬度。结论：挺硬...";
+                text = "用一种比较激烈的方式，测试一下这个世界的硬度...";
                 emoji = "(´;ω;)";
             }
+            case 4 -> {
+                text = "这个世界对你的欢迎仪式，一向都很热烈...";
+                emoji = "(´∀｀)";
+            }
             case 5 -> {
-                text = "屏幕前的你喝了一口水，屏幕里的你也站了起来。你们都有光明的未来...";
-                emoji = "(・∀・)";
+                text = "你的装备替你承受了它本不该承受的一切...";
+                emoji = "(；´д｀)";
+            }
+            case 6 -> {
+                text = "活着是意外，倒下才是常态...";
+                emoji = "(´_ゝ｀)";
+            }
+            case 7 -> {
+                text = "所谓死去，大概就是暂时不再被需要...";
+                emoji = "(￣ー￣)";
             }
             default -> {
-                text = "我其实想在死亡后自动打开千恋万花的...没有就启动原神... Ciallo~";
-                emoji = "(∠・ω< )⌒☆";
+                text = "存在这件事，本来就允许短暂中断...";
+                emoji = "(￣ω￣)";
             }
         }
 

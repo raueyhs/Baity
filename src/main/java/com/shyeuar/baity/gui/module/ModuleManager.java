@@ -133,10 +133,26 @@ public class ModuleManager {
             val -> ConfigManager.fancyCreeperVeilEnabled = val
         );
         
-        ModuleRegistry.registerSimpleModule(
+        ModuleRegistry.registerModuleWithValues(
             "PepCat", "PepCat", ModuleCategory.MISC,
             () -> ConfigManager.pepCatEnabled,
-            val -> ConfigManager.pepCatEnabled = val
+            val -> ConfigManager.pepCatEnabled = val,
+            new com.shyeuar.baity.gui.value.Value[]{
+                new Option("the pep", "the pep", true, ModuleCategory.MISC),
+                new Option("the cat", "the cat", false, ModuleCategory.MISC)
+            },
+            new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "the pep",
+                    () -> ConfigManager.pepCatMessageEnabled,
+                    val -> ConfigManager.pepCatMessageEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "the cat",
+                    () -> ConfigManager.pepCatAnimationEnabled,
+                    val -> ConfigManager.pepCatAnimationEnabled = (Boolean) val
+                )
+            }
         );
 
         ModuleRegistry.registerModuleWithValues(
@@ -1586,6 +1602,8 @@ public class ModuleManager {
         TooltipManager.registerTooltip("SmolPeople", "Make your character smaller and cuter.", 0xFFFFFF);
         TooltipManager.registerTooltip("BlockAnimation", "Restore the blocking animation of version 1.7.", 0xFFFFFF);
         TooltipManager.registerTooltip("PepCat", "Play an animation and give pep talk when you died. It's a skill issue!", 0xFFFFFF);
+        TooltipManager.registerTooltip("the pep", "give tips when u die.", 0xFFFFFF);
+        TooltipManager.registerTooltip("the cat", "throw a cat animation when u die.", 0xFFFFFF);
         TooltipManager.registerTooltip("RadialMenu", "A roulette tool that invokes a shortcut command.", 0xFFFFFF);
         TooltipManager.registerTooltip(
             "Keybinds",
