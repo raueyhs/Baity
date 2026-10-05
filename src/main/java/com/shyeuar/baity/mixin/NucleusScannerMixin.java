@@ -24,7 +24,7 @@ public class NucleusScannerMixin {
             if (minecraft.player == null || !command.startsWith(NucleusScanner.SHARE_MARKER)) {
                 return;
             }
-            minecraft.player.connection.sendChat(command.substring(NucleusScanner.SHARE_MARKER.length()));
+            com.shyeuar.baity.utils.MessageUtils.sendUserText(command.substring(NucleusScanner.SHARE_MARKER.length()));
             ci.cancel();
         }
     }

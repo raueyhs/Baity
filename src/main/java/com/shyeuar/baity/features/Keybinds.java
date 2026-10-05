@@ -29,6 +29,10 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
@@ -42,6 +46,286 @@ public final class Keybinds {
     private static long pendingAutoCloseExpiresAt;
 
     private Keybinds() {
+    }
+
+    private static final long COMMAND_PRESS_COOLDOWN_MS = 200L;
+    private static final int LEGACY_BINDING_COUNT = 4;
+    private static final String FIELD_SEPARATOR = "\t";
+    private static final String KEY_SEPARATOR = ",";
+
+    private static final Set<Integer> pressedCommandKeys = new HashSet<>();
+    private static final List<Integer> commandPressOrder = new ArrayList<>();
+    private static final Set<Integer> triggeredCommandBindings = new HashSet<>();
+    private static List<CommandBinding> commandBindings = List.of();
+    private static String loadedBindingsSource = null;
+    private static long lastCommandPressAt;
+
+    public static final int CONTEXT_GLOBAL = 0;
+    public static final int CONTEXT_GUI = 1;
+    public static final int CONTEXT_IN_GAME = 2;
+
+    public record CommandBinding(List<Integer> keys, boolean enabled, String text,
+                                 boolean orderSensitive, boolean allowExtraKeys, int priority, int context) {
+
+        public CommandBinding withKeys(List<Integer> newKeys) {
+            return new CommandBinding(newKeys, enabled, text, orderSensitive, allowExtraKeys, priority, context);
+        }
+
+        public CommandBinding withEnabled(boolean value) {
+            return new CommandBinding(keys, value, text, orderSensitive, allowExtraKeys, priority, context);
+        }
+
+        public CommandBinding withText(String value) {
+            return new CommandBinding(keys, enabled, value, orderSensitive, allowExtraKeys, priority, context);
+        }
+    }
+
+    public static boolean isMouseKey(int keyCode) {
+        return keyCode < 0;
+    }
+
+    public static int mouseButtonOf(int keyCode) {
+        return -keyCode - 1;
+    }
+
+    public static int mouseKey(int button) {
+        return -(button + 1);
+    }
+
+    public static String keyDisplay(int keyCode) {
+        if (isMouseKey(keyCode)) {
+            return "Mouse" + (mouseButtonOf(keyCode) + 1);
+        }
+        String name = KeyMappingUtils.getKeyDisplayText(keyCode);
+        if (name == null || name.isEmpty()) {
+            return "Unknown";
+        }
+        if (name.startsWith("Left ")) {
+            return "L" + name.substring(5);
+        }
+        if (name.startsWith("Right ")) {
+            return "R" + name.substring(6);
+        }
+        return name;
+    }
+
+    private static boolean isBindingKeyPressed(long windowHandle, int keyCode) {
+        if (isMouseKey(keyCode)) {
+            return org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle, mouseButtonOf(keyCode))
+                    == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        }
+        return KeyMappingUtils.isKeyPressed(windowHandle, keyCode);
+    }
+
+    private static int parseIntOrDefault(String value, int fallback) {
+        try {
+            return Integer.parseInt(value.trim());
+        } catch (Exception ignored) {
+            return fallback;
+        }
+    }
+
+    public static void handleCommandKeybinds(Minecraft client, long windowHandle) {
+        if (client.gui.screen() != null || client.player == null || client.player.connection == null) {
+            return;
+        }
+        List<CommandBinding> bindings = commandBindings();
+        if (bindings.isEmpty()) {
+            return;
+        }
+
+        Set<Integer> relevant = new HashSet<>();
+        for (CommandBinding binding : bindings) {
+            relevant.addAll(binding.keys());
+        }
+        for (int keyCode : relevant) {
+            boolean pressed = isBindingKeyPressed(windowHandle, keyCode);
+            if (pressed && pressedCommandKeys.add(keyCode)) {
+                commandPressOrder.add(keyCode);
+            } else if (!pressed && pressedCommandKeys.remove(keyCode)) {
+                commandPressOrder.remove((Integer) keyCode);
+            }
+        }
+
+        long now = System.currentTimeMillis();
+        int bestIndex = -1;
+        int bestPriority = Integer.MIN_VALUE;
+        for (int i = 0; i < bindings.size(); i++) {
+            CommandBinding binding = bindings.get(i);
+            if (!binding.enabled() || binding.keys().isEmpty() || !matchesCommandBinding(binding)) {
+                triggeredCommandBindings.remove(i);
+                continue;
+            }
+            if (binding.priority() > bestPriority) {
+                bestPriority = binding.priority();
+                bestIndex = i;
+            }
+        }
+
+        if (bestIndex < 0) {
+            return;
+        }
+        if (!triggeredCommandBindings.add(bestIndex)) {
+            return;
+        }
+        if (now - lastCommandPressAt > COMMAND_PRESS_COOLDOWN_MS) {
+            lastCommandPressAt = now;
+            runCommandBinding(bindings.get(bestIndex).text());
+        }
+    }
+
+    private static boolean matchesCommandBinding(CommandBinding binding) {
+        List<Integer> keys = binding.keys();
+        if (binding.orderSensitive()) {
+            int size = commandPressOrder.size();
+            if (size < keys.size() || (!binding.allowExtraKeys() && size != keys.size())) {
+                return false;
+            }
+            return commandPressOrder.subList(size - keys.size(), size).equals(keys);
+        }
+        if (!pressedCommandKeys.containsAll(keys)) {
+            return false;
+        }
+        return binding.allowExtraKeys() || pressedCommandKeys.size() == keys.size();
+    }
+
+    public static List<CommandBinding> commandBindings() {
+        String raw = ConfigManager.keybindsCommandBindings == null ? "" : ConfigManager.keybindsCommandBindings;
+        if (!raw.equals(loadedBindingsSource)) {
+            loadedBindingsSource = raw;
+            commandBindings = parseCommandBindings(raw);
+        }
+        return commandBindings;
+    }
+
+    public static void addCommandBinding() {
+        List<CommandBinding> updated = new ArrayList<>(commandBindings());
+        updated.add(new CommandBinding(List.of(), true, "", false, true, 0, CONTEXT_GLOBAL));
+        saveCommandBindings(updated);
+    }
+
+    public static void removeCommandBinding(int index) {
+        List<CommandBinding> current = commandBindings();
+        if (index < 0 || index >= current.size()) {
+            return;
+        }
+        List<CommandBinding> updated = new ArrayList<>(current);
+        updated.remove(index);
+        saveCommandBindings(updated);
+    }
+
+    public static void updateCommandBinding(int index, List<Integer> keys, boolean enabled, String text) {
+        List<CommandBinding> current = commandBindings();
+        if (index < 0 || index >= current.size()) {
+            return;
+        }
+        List<CommandBinding> updated = new ArrayList<>(current);
+        CommandBinding previous = current.get(index);
+        updated.set(index, new CommandBinding(keys == null ? List.of() : List.copyOf(keys), enabled,
+                text == null ? "" : text, previous.orderSensitive(), previous.allowExtraKeys(),
+                previous.priority(), previous.context()));
+        saveCommandBindings(updated);
+    }
+
+    public static void saveCommandBindings(List<CommandBinding> bindings) {
+        StringBuilder builder = new StringBuilder();
+        for (CommandBinding binding : bindings) {
+            if (builder.length() > 0) {
+                builder.append('\n');
+            }
+            StringBuilder keys = new StringBuilder();
+            for (int keyCode : binding.keys()) {
+                if (keys.length() > 0) {
+                    keys.append(KEY_SEPARATOR);
+                }
+                keys.append(keyCode);
+            }
+            builder.append(keys).append(FIELD_SEPARATOR).append(binding.enabled())
+                    .append(FIELD_SEPARATOR).append(binding.text())
+                    .append(FIELD_SEPARATOR).append(binding.orderSensitive())
+                    .append(FIELD_SEPARATOR).append(binding.allowExtraKeys())
+                    .append(FIELD_SEPARATOR).append(binding.priority())
+                    .append(FIELD_SEPARATOR).append(binding.context());
+        }
+        loadedBindingsSource = builder.toString();
+        commandBindings = List.copyOf(bindings);
+        ConfigManager.keybindsCommandBindings = loadedBindingsSource;
+        ConfigManager.requestSave();
+    }
+
+    private static List<CommandBinding> parseCommandBindings(String raw) {
+        List<CommandBinding> parsed = new ArrayList<>();
+        for (String line : raw.split("\n")) {
+            if (line.isBlank()) {
+                continue;
+            }
+            String[] parts = line.split(FIELD_SEPARATOR, -1);
+            if (parts.length < 3) {
+                continue;
+            }
+            List<Integer> keys = new ArrayList<>();
+            for (String token : parts[0].split(KEY_SEPARATOR)) {
+                if (token.isBlank()) {
+                    continue;
+                }
+                try {
+                    keys.add(Integer.parseInt(token.trim()));
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            boolean orderSensitive = parts.length > 3 && Boolean.parseBoolean(parts[3]);
+            boolean allowExtraKeys = parts.length <= 4 || Boolean.parseBoolean(parts[4]);
+            int priority = parts.length > 5 ? parseIntOrDefault(parts[5], 0) : 0;
+            int context = parts.length > 6 ? parseIntOrDefault(parts[6], CONTEXT_GLOBAL) : CONTEXT_GLOBAL;
+            parsed.add(new CommandBinding(keys, Boolean.parseBoolean(parts[1]), parts[2],
+                    orderSensitive, allowExtraKeys, priority, context));
+        }
+        return parsed.isEmpty() ? legacyCommandBindings() : parsed;
+    }
+
+    private static List<CommandBinding> legacyCommandBindings() {
+        List<CommandBinding> legacy = new ArrayList<>();
+        for (int i = 0; i < LEGACY_BINDING_COUNT; i++) {
+            int keyCode = legacyBindingKey(i);
+            String text = legacyBindingText(i);
+            if (keyCode == 0 && text.isEmpty()) {
+                continue;
+            }
+            legacy.add(new CommandBinding(keyCode == 0 ? List.of() : List.of(keyCode),
+                    legacyBindingEnabled(i), text, false, true, 0, CONTEXT_GLOBAL));
+        }
+        return legacy;
+    }
+
+    private static int legacyBindingKey(int index) {
+        return switch (index) {
+            case 0 -> ConfigManager.keybindsCommand1Key;
+            case 1 -> ConfigManager.keybindsCommand2Key;
+            case 2 -> ConfigManager.keybindsCommand3Key;
+            default -> ConfigManager.keybindsCommand4Key;
+        };
+    }
+
+    private static String legacyBindingText(int index) {
+        return switch (index) {
+            case 0 -> ConfigManager.keybindsCommand1Text;
+            case 1 -> ConfigManager.keybindsCommand2Text;
+            case 2 -> ConfigManager.keybindsCommand3Text;
+            default -> ConfigManager.keybindsCommand4Text;
+        };
+    }
+
+    private static boolean legacyBindingEnabled(int index) {
+        return switch (index) {
+            case 0 -> ConfigManager.keybindsCommand1Enabled;
+            case 1 -> ConfigManager.keybindsCommand2Enabled;
+            case 2 -> ConfigManager.keybindsCommand3Enabled;
+            default -> ConfigManager.keybindsCommand4Enabled;
+        };
+    }
+
+    public static void runCommandBinding(String binding) {
+        com.shyeuar.baity.utils.MessageUtils.sendUserText(binding);
     }
 
     public enum MenuType {

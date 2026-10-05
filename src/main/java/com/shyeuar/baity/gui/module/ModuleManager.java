@@ -527,11 +527,21 @@ public class ModuleManager {
                 false
             ));
 
+        ButtonValue keybindsCommandKeybindsButton = new ButtonValue(
+            "commands keybind",
+            "commands keybind",
+            "manage",
+            ModuleCategory.QOL,
+            ButtonValue.ButtonValueType.TRIGGER,
+            false
+        );
+
         ModuleRegistry.registerModuleWithValues(
             "Keybinds", "Keybinds", ModuleCategory.QOL,
             () -> ConfigManager.keybindsEnabled,
             val -> ConfigManager.keybindsEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
+                keybindsCommandKeybindsButton,
                 keybindsWardrobeGroup,
                 keybindsEquipmentGroup,
                 keybindsLoadoutGroup

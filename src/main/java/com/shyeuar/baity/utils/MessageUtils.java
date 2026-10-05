@@ -92,6 +92,22 @@ public class MessageUtils {
         }
     }
 
+    public static void sendUserText(String raw) {
+        String text = raw == null ? "" : raw.trim();
+        if (text.isEmpty()) {
+            return;
+        }
+        net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || player.connection == null) {
+            return;
+        }
+        if (text.charAt(0) == '/') {
+            player.connection.sendCommand(text.substring(1));
+        } else {
+            player.connection.sendChat(text);
+        }
+    }
+
     public static void sendSyncStartForCommand() {
         sendCustomMessage(createMessageWithPrefix(createColoredText("Syncing remote data...", 0xAAAAAA)));
     }

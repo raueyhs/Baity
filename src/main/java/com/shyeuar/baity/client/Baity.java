@@ -110,6 +110,7 @@ public class Baity implements ClientModInitializer {
             }
             
             KeybindManager.handleModuleKeybinds(client, windowHandle);
+            com.shyeuar.baity.features.Keybinds.handleCommandKeybinds(client, windowHandle);
 
             SoftFullscreen.tick(client);
             

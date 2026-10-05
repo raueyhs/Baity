@@ -102,6 +102,19 @@ public class ConfigManager {
     public static int keybindsLoadoutSlot10Key = 48;
     public static int keybindsLoadoutSlot11Key = 45;
     public static int keybindsLoadoutSlot12Key = 61;
+    public static String keybindsCommandBindings = "";
+    public static boolean keybindsCommand1Enabled = true;
+    public static boolean keybindsCommand2Enabled = true;
+    public static boolean keybindsCommand3Enabled = true;
+    public static boolean keybindsCommand4Enabled = true;
+    public static int keybindsCommand1Key = 0;
+    public static String keybindsCommand1Text = "";
+    public static int keybindsCommand2Key = 0;
+    public static String keybindsCommand2Text = "";
+    public static int keybindsCommand3Key = 0;
+    public static String keybindsCommand3Text = "";
+    public static int keybindsCommand4Key = 0;
+    public static String keybindsCommand4Text = "";
     
     public static boolean fancyDmgSplashEnabled = false;
     public static boolean fancyDmgSplashGenshinReaction = false;
@@ -541,6 +554,45 @@ public class ConfigManager {
         registerField("KeybindsLoadoutSlot12Key", Integer.class,
             c -> ConfigManager.keybindsLoadoutSlot12Key,
             (c, v) -> ConfigManager.keybindsLoadoutSlot12Key = (Integer) v);
+        registerField("KeybindsCommandBindings", String.class,
+            c -> ConfigManager.keybindsCommandBindings,
+            (c, v) -> ConfigManager.keybindsCommandBindings = (String) v);
+        registerField("KeybindsCommand1Enabled", Boolean.class,
+            c -> ConfigManager.keybindsCommand1Enabled,
+            (c, v) -> ConfigManager.keybindsCommand1Enabled = (Boolean) v);
+        registerField("KeybindsCommand2Enabled", Boolean.class,
+            c -> ConfigManager.keybindsCommand2Enabled,
+            (c, v) -> ConfigManager.keybindsCommand2Enabled = (Boolean) v);
+        registerField("KeybindsCommand3Enabled", Boolean.class,
+            c -> ConfigManager.keybindsCommand3Enabled,
+            (c, v) -> ConfigManager.keybindsCommand3Enabled = (Boolean) v);
+        registerField("KeybindsCommand4Enabled", Boolean.class,
+            c -> ConfigManager.keybindsCommand4Enabled,
+            (c, v) -> ConfigManager.keybindsCommand4Enabled = (Boolean) v);
+        registerField("KeybindsCommand1Key", Integer.class,
+            c -> ConfigManager.keybindsCommand1Key,
+            (c, v) -> ConfigManager.keybindsCommand1Key = (Integer) v);
+        registerField("KeybindsCommand1Text", String.class,
+            c -> ConfigManager.keybindsCommand1Text,
+            (c, v) -> ConfigManager.keybindsCommand1Text = (String) v);
+        registerField("KeybindsCommand2Key", Integer.class,
+            c -> ConfigManager.keybindsCommand2Key,
+            (c, v) -> ConfigManager.keybindsCommand2Key = (Integer) v);
+        registerField("KeybindsCommand2Text", String.class,
+            c -> ConfigManager.keybindsCommand2Text,
+            (c, v) -> ConfigManager.keybindsCommand2Text = (String) v);
+        registerField("KeybindsCommand3Key", Integer.class,
+            c -> ConfigManager.keybindsCommand3Key,
+            (c, v) -> ConfigManager.keybindsCommand3Key = (Integer) v);
+        registerField("KeybindsCommand3Text", String.class,
+            c -> ConfigManager.keybindsCommand3Text,
+            (c, v) -> ConfigManager.keybindsCommand3Text = (String) v);
+        registerField("KeybindsCommand4Key", Integer.class,
+            c -> ConfigManager.keybindsCommand4Key,
+            (c, v) -> ConfigManager.keybindsCommand4Key = (Integer) v);
+        registerField("KeybindsCommand4Text", String.class,
+            c -> ConfigManager.keybindsCommand4Text,
+            (c, v) -> ConfigManager.keybindsCommand4Text = (String) v);
         registerField("FancyDmgSplash", Boolean.class,
             c -> ConfigManager.fancyDmgSplashEnabled,
             (c, v) -> ConfigManager.fancyDmgSplashEnabled = (Boolean) v);

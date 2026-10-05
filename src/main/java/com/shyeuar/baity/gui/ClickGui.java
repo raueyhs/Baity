@@ -413,6 +413,14 @@ public class ClickGui extends Screen {
             return;
         }
 
+        if ("Keybinds".equals(module.getName()) && "commands keybind".equals(buttonValue.getName())) {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc != null) {
+                mc.gui.setScreen(new com.shyeuar.baity.features.CommandKeybindsScreen(this));
+            }
+            return;
+        }
+
         if ("FishHookTimer".equals(module.getName()) && "custom timer template".equals(buttonValue.getName())) {
             net.minecraft.util.Util.getPlatform().openUri(
                     java.net.URI.create(com.shyeuar.baity.features.fishing.FishHookTimerTemplateManager.DOCS_URL));
