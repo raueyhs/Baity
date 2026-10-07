@@ -37,6 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
+import com.shyeuar.baity.utils.AsyncFileWriter;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -437,16 +438,15 @@ public final class SidePanel {
     }
 
     private static void save(RegistryAccess registries, String profileId, Island island, ItemStack[] stacks) {
+        Tag root;
         try {
-            Files.createDirectories(cacheDir());
-            Tag root = CACHE_CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), stacks)
+            root = CACHE_CODEC.encodeStart(registries.createSerializationContext(NbtOps.INSTANCE), stacks)
                     .getOrThrow();
-            try (DataOutputStream output = new DataOutputStream(Files.newOutputStream(cacheFile(profileId, island)))) {
-                NbtIo.writeUnnamedTagWithFallback(root, output);
-            }
-        } catch (IOException | RuntimeException exception) {
+        } catch (RuntimeException exception) {
             LOGGER.warn("Failed to save SidePanel cache: {}", exception.toString());
+            return;
         }
+        AsyncFileWriter.write("SidePanel cache", cacheDir(), cacheFile(profileId, island), root);
     }
 
     private static Path cacheDir() {
@@ -458,6 +458,7 @@ public final class SidePanel {
     }
 
     public static void onContainerClose(AbstractContainerScreen<?> screen) {
+        syncedOnOpen.remove(screen);
         syncRecognizedContainer(screen, true);
     }
 
@@ -558,15 +559,17 @@ public final class SidePanel {
             return;
         }
         int[] ticks = {0};
+        int[] nextCheckAt = {2};
         ScreenEvents.afterTick(screen).register(_ -> {
             if (Minecraft.getInstance().gui.screen() != screen || syncedOnOpen.contains(screen)) {
                 return;
             }
             ticks[0]++;
-            if (ticks[0] < 2) {
+            if (ticks[0] < nextCheckAt[0]) {
                 return;
             }
             if (!isSidePanelSyncReady(screen) && ticks[0] < 80) {
+                nextCheckAt[0] = ticks[0] + (ticks[0] < 10 ? 1 : 5);
                 return;
             }
             syncedOnOpen.add(screen);

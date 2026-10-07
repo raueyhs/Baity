@@ -228,15 +228,13 @@ public final class SidePanelLoadouts {
             }
         }
         try {
-            Files.createDirectories(cacheDir());
             Tag root = PAGE_CODEC.encodeStart(
                     client.level.registryAccess().createSerializationContext(NbtOps.INSTANCE),
                     flat
             ).getOrThrow();
-            try (DataOutputStream output = new DataOutputStream(Files.newOutputStream(cacheFile(loadedProfileId)))) {
-                NbtIo.writeUnnamedTagWithFallback(root, output);
-            }
-        } catch (IOException | RuntimeException exception) {
+            com.shyeuar.baity.utils.AsyncFileWriter.write("loadout cache", cacheDir(),
+                    cacheFile(loadedProfileId), root);
+        } catch (RuntimeException exception) {
             LOGGER.warn("Failed to save loadout cache: {}", exception.toString());
         }
     }

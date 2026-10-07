@@ -427,12 +427,13 @@ final class SidePanelCache {
         }
     }
 
-    private static void saveSetRowsSection(RegistryAccess registries, CompoundTag root) {
-        if (SET_ROWS_BY_INDEX.isEmpty()) {
+    private static void appendSetRowsSection(RegistryAccess registries, CompoundTag root,
+                                             Map<Integer, ItemStack[]> rows) {
+        if (rows.isEmpty()) {
             return;
         }
         ListTag rowsTag = new ListTag();
-        for (Map.Entry<Integer, ItemStack[]> entry : SET_ROWS_BY_INDEX.entrySet()) {
+        for (Map.Entry<Integer, ItemStack[]> entry : rows.entrySet()) {
             ItemStack[] row = entry.getValue();
             if (row == null) {
                 continue;
@@ -455,28 +456,45 @@ final class SidePanelCache {
     }
 
     private static void saveToDisk(Minecraft client, String profileId) {
-        try {
-            Files.createDirectories(cacheDir());
-            RegistryAccess registries = client.level.registryAccess();
-            CompoundTag root = new CompoundTag();
-            Map<String, ItemStack> items = exportItems();
-            if (!items.isEmpty()) {
-                Tag itemsTag = EQUIPMENT_ITEMS_CODEC.encodeStart(
-                        registries.createSerializationContext(NbtOps.INSTANCE),
-                        items
-                ).getOrThrow();
-                if (itemsTag instanceof CompoundTag compound) {
-                    root.put("equipmentItems", compound);
-                }
+        RegistryAccess registries = client.level.registryAccess();
+        Map<String, ItemStack> items = exportItems();
+        Map<Integer, ItemStack[]> setRows = snapshotSetRows();
+        CompoundTag pets = SidePanelPets.exportLookupSection();
+        com.shyeuar.baity.utils.AsyncFileWriter.writeLater("loadout lookup cache", cacheDir(),
+                cacheFile(profileId), () -> buildCacheRoot(registries, items, setRows, pets));
+    }
+
+    private static Map<Integer, ItemStack[]> snapshotSetRows() {
+        Map<Integer, ItemStack[]> snapshot = new HashMap<>();
+        for (Map.Entry<Integer, ItemStack[]> entry : SET_ROWS_BY_INDEX.entrySet()) {
+            ItemStack[] row = entry.getValue();
+            if (row == null || row.length < 4) {
+                continue;
             }
-            saveSetRowsSection(registries, root);
-            root.put("pets", SidePanelPets.exportLookupSection());
-            try (DataOutputStream output = new DataOutputStream(Files.newOutputStream(cacheFile(profileId)))) {
-                NbtIo.writeUnnamedTagWithFallback(root, output);
+            ItemStack[] copy = new ItemStack[4];
+            for (int i = 0; i < 4; i++) {
+                copy[i] = row[i] == null ? ItemStack.EMPTY : row[i].copy();
             }
-        } catch (IOException | RuntimeException exception) {
-            LOGGER.warn("Failed to save loadout lookup cache: {}", exception.toString());
+            snapshot.put(entry.getKey(), copy);
         }
+        return snapshot;
+    }
+
+    private static Tag buildCacheRoot(RegistryAccess registries, Map<String, ItemStack> items,
+                                      Map<Integer, ItemStack[]> setRows, CompoundTag pets) {
+        CompoundTag root = new CompoundTag();
+        if (!items.isEmpty()) {
+            Tag itemsTag = EQUIPMENT_ITEMS_CODEC.encodeStart(
+                    registries.createSerializationContext(NbtOps.INSTANCE),
+                    items
+            ).getOrThrow();
+            if (itemsTag instanceof CompoundTag compound) {
+                root.put("equipmentItems", compound);
+            }
+        }
+        appendSetRowsSection(registries, root, setRows);
+        root.put("pets", pets);
+        return root;
     }
 
     private static Path cacheDir() {
