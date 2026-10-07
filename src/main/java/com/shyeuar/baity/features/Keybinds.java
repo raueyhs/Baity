@@ -55,6 +55,7 @@ public final class Keybinds {
 
     private static final Set<Integer> pressedCommandKeys = new HashSet<>();
     private static final List<Integer> commandPressOrder = new ArrayList<>();
+    private static Set<Integer> relevantCommandKeys = Set.of();
     private static final Set<Integer> triggeredCommandBindings = new HashSet<>();
     private static List<CommandBinding> commandBindings = List.of();
     private static String loadedBindingsSource = null;
@@ -129,16 +130,15 @@ public final class Keybinds {
         if (client.gui.screen() != null || client.player == null || client.player.connection == null) {
             return;
         }
+        if (!ConfigManager.keybindsEnabled) {
+            return;
+        }
         List<CommandBinding> bindings = commandBindings();
         if (bindings.isEmpty()) {
             return;
         }
 
-        Set<Integer> relevant = new HashSet<>();
-        for (CommandBinding binding : bindings) {
-            relevant.addAll(binding.keys());
-        }
-        for (int keyCode : relevant) {
+        for (int keyCode : relevantCommandKeys) {
             boolean pressed = isBindingKeyPressed(windowHandle, keyCode);
             if (pressed && pressedCommandKeys.add(keyCode)) {
                 commandPressOrder.add(keyCode);
@@ -194,6 +194,11 @@ public final class Keybinds {
         if (!raw.equals(loadedBindingsSource)) {
             loadedBindingsSource = raw;
             commandBindings = parseCommandBindings(raw);
+            Set<Integer> relevant = new HashSet<>();
+            for (CommandBinding binding : commandBindings) {
+                relevant.addAll(binding.keys());
+            }
+            relevantCommandKeys = Set.copyOf(relevant);
         }
         return commandBindings;
     }
