@@ -1,6 +1,6 @@
-package com.shyeuar.baity.features.nucleusscanner;
+package com.shyeuar.baity.features.hollowscanner;
 
-public enum NucleusFamily {
+public enum HollowFamily {
     AMBER_CRYSTAL("amber crystal", "Amber Crystal", "orange"),
     AMETHYST_CRYSTAL("amethyst crystal", "Amethyst Crystal", "purple"),
     JADE_CRYSTAL("jade crystal", "Jade Crystal", "green"),
@@ -18,7 +18,7 @@ public enum NucleusFamily {
     private final String displayName;
     private final String defaultColorName;
 
-    NucleusFamily(String key, String displayName, String defaultColorName) {
+    HollowFamily(String key, String displayName, String defaultColorName) {
         this.key = key;
         this.displayName = displayName;
         this.defaultColorName = defaultColorName;

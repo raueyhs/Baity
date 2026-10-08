@@ -136,8 +136,8 @@ public class ConfigManager {
     public static boolean noSwimPoseAreaRestrictionGroupExpanded = false;
     public static String noSwimPoseAreaBlacklist = "safari";
     
-    public static boolean nucleusScannerEnabled = false;
-    public static String nucleusScannerSettings = "";
+    public static boolean hollowScannerEnabled = false;
+    public static String hollowScannerSettings = "";
     
     public static boolean autoSprintEnabled = false;
     public static int autoSprintKeybind = 0;
@@ -656,12 +656,12 @@ public class ConfigManager {
         registerField("NoSwimPoseAreaBlacklist", String.class,
             c -> ConfigManager.noSwimPoseAreaBlacklist,
             (c, v) -> ConfigManager.noSwimPoseAreaBlacklist = (String) v);
-        registerField("NucleusScanner", Boolean.class,
-            c -> ConfigManager.nucleusScannerEnabled,
-            (c, v) -> ConfigManager.nucleusScannerEnabled = (Boolean) v);
-        registerField("NucleusScannerSettings", String.class,
-            c -> ConfigManager.nucleusScannerSettings,
-            (c, v) -> ConfigManager.nucleusScannerSettings = (String) v);
+        registerField("HollowScanner", Boolean.class,
+            c -> ConfigManager.hollowScannerEnabled,
+            (c, v) -> ConfigManager.hollowScannerEnabled = (Boolean) v);
+        registerField("HollowScannerSettings", String.class,
+            c -> ConfigManager.hollowScannerSettings,
+            (c, v) -> ConfigManager.hollowScannerSettings = (String) v);
         registerField("AutoSprint", Boolean.class,
             c -> ConfigManager.autoSprintEnabled,
             (c, v) -> ConfigManager.autoSprintEnabled = (Boolean) v);

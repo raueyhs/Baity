@@ -547,7 +547,7 @@ public class ValueStyleRenderer {
           }
       }
 
-      int groupTint = com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.tintFor(groupValue.getName());
+      int groupTint = com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.tintFor(groupValue.getName());
       int textColor = groupTint != 0
               ? (groupTint & 0x00FFFFFF) | (localAlpha << 24)
               : (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
@@ -641,7 +641,7 @@ public class ValueStyleRenderer {
            GuiRenderUtil.draw3DRect(context, x1, y, x2, y + subOptionHeight, valueColor, 6f);
        }
        
-       int buttonTint = com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.tintFor(buttonValue.getName());
+       int buttonTint = com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.tintFor(buttonValue.getName());
        int textColor = buttonTint != 0
                ? (buttonTint & 0x00FFFFFF) | (localAlpha << 24)
                : (theme.FONT_C.getRGB() & 0x00FFFFFF) | (localAlpha << 24);

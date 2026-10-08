@@ -120,7 +120,7 @@
     "GuiRendererMixin",
     "ModernTooltipMixin",
     "ModernTooltipScreenMixin",
-    "NucleusScannerMixin$ShareClickMixin"
+    "HollowScannerMixin$ShareClickMixin"
   ],
   "injectors": {
     "defaultRequire": 0

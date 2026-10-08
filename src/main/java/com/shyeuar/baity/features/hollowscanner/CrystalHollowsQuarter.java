@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.nucleusscanner;
+package com.shyeuar.baity.features.hollowscanner;
 
 import net.minecraft.core.BlockPos;
 import java.util.function.Predicate;

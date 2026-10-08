@@ -77,7 +77,7 @@ public class Baity implements ClientModInitializer {
         com.shyeuar.baity.features.Keybinds.init();
         com.shyeuar.baity.features.sidepanel.SidePanel.init();
         ModernTooltip.init();
-        com.shyeuar.baity.features.nucleusscanner.NucleusScanner.init();
+        com.shyeuar.baity.features.hollowscanner.HollowScanner.init();
         com.shyeuar.baity.utils.LocateUtils.registerClientEvents();
         
         registerCustomSounds();

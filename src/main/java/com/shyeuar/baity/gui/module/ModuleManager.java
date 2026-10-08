@@ -319,69 +319,69 @@ public class ModuleManager {
             }
         );
         
-        java.util.ArrayList<ModuleRegistry.ValueConfigInfo> nucleusScannerValueConfigs = new java.util.ArrayList<>();
-        GroupValue nucleusSelectAreas = new GroupValue("select areas", "select areas", ModuleCategory.QOL)
-            .setExpanded(com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isSelectAreasExpanded());
-        nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+        java.util.ArrayList<ModuleRegistry.ValueConfigInfo> hollowScannerValueConfigs = new java.util.ArrayList<>();
+        GroupValue hollowSelectAreas = new GroupValue("select areas", "select areas", ModuleCategory.QOL)
+            .setExpanded(com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.isSelectAreasExpanded());
+        hollowScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
             "select areas",
-            com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings::isSelectAreasExpanded,
-            val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setSelectAreasExpanded((Boolean) val)
+            com.shyeuar.baity.features.hollowscanner.HollowScannerSettings::isSelectAreasExpanded,
+            val -> com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.setSelectAreasExpanded((Boolean) val)
         ));
-        for (com.shyeuar.baity.features.nucleusscanner.NucleusFamily family : com.shyeuar.baity.features.nucleusscanner.NucleusFamily.values()) {
-            com.shyeuar.baity.features.nucleusscanner.NucleusFamily scannerFamily = family;
+        for (com.shyeuar.baity.features.hollowscanner.HollowFamily family : com.shyeuar.baity.features.hollowscanner.HollowFamily.values()) {
+            com.shyeuar.baity.features.hollowscanner.HollowFamily scannerFamily = family;
             String familyKey = family.key();
             String enabledName = familyKey + " enabled";
 
             ButtonValue areaColorRow = new ButtonValue(
                 familyKey, family.displayName(),
-                com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.color(scannerFamily),
-                com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.color(scannerFamily), ModuleCategory.QOL,
+                com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.color(scannerFamily),
+                com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.color(scannerFamily), ModuleCategory.QOL,
                 ButtonValue.ButtonValueType.CYCLE, false);
-            nucleusSelectAreas.addChild(new com.shyeuar.baity.gui.value.ToggleRowValue(
+            hollowSelectAreas.addChild(new com.shyeuar.baity.gui.value.ToggleRowValue(
                 enabledName, family.displayName(), ModuleCategory.QOL, areaColorRow,
-                com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isEnabled(scannerFamily)));
+                com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.isEnabled(scannerFamily)));
 
-            nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+            hollowScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
                 enabledName,
-                () -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isEnabled(scannerFamily),
-                val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setEnabled(scannerFamily, (Boolean) val)
+                () -> com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.isEnabled(scannerFamily),
+                val -> com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.setEnabled(scannerFamily, (Boolean) val)
             ));
-            nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+            hollowScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
                 familyKey,
-                () -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.color(scannerFamily),
-                val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setColor(scannerFamily, String.valueOf(val))
+                () -> com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.color(scannerFamily),
+                val -> com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.setColor(scannerFamily, String.valueOf(val))
             ));
         }
-        nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+        hollowScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
             "display name",
-            com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings::isDisplayName,
-            val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setDisplayName((Boolean) val)
+            com.shyeuar.baity.features.hollowscanner.HollowScannerSettings::isDisplayName,
+            val -> com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.setDisplayName((Boolean) val)
         ));
-        nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+        hollowScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
             "show distance",
-            com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings::isShowDistance,
-            val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setShowDistance((Boolean) val)
+            com.shyeuar.baity.features.hollowscanner.HollowScannerSettings::isShowDistance,
+            val -> com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.setShowDistance((Boolean) val)
         ));
-        nucleusScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
+        hollowScannerValueConfigs.add(new ModuleRegistry.ValueConfigInfo(
             "worm fishing",
-            com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings::isWormFishing,
-            val -> com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.setWormFishing((Boolean) val)
+            com.shyeuar.baity.features.hollowscanner.HollowScannerSettings::isWormFishing,
+            val -> com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.setWormFishing((Boolean) val)
         ));
 
         ModuleRegistry.registerModuleWithValues(
-            "NucleusScanner", "NucleusScanner", ModuleCategory.QOL,
-            () -> ConfigManager.nucleusScannerEnabled,
-            val -> ConfigManager.nucleusScannerEnabled = val,
+            "HollowScanner", "HollowScanner", ModuleCategory.QOL,
+            () -> ConfigManager.hollowScannerEnabled,
+            val -> ConfigManager.hollowScannerEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
                 new Option("display name", "display name",
-                    com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isDisplayName(), ModuleCategory.QOL),
+                    com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.isDisplayName(), ModuleCategory.QOL),
                 new Option("show distance", "show distance",
-                    com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isShowDistance(), ModuleCategory.QOL),
+                    com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.isShowDistance(), ModuleCategory.QOL),
                 new Option("worm fishing", "worm fishing",
-                    com.shyeuar.baity.features.nucleusscanner.NucleusScannerSettings.isWormFishing(), ModuleCategory.QOL),
-                nucleusSelectAreas
+                    com.shyeuar.baity.features.hollowscanner.HollowScannerSettings.isWormFishing(), ModuleCategory.QOL),
+                hollowSelectAreas
             },
-            nucleusScannerValueConfigs.toArray(ModuleRegistry.ValueConfigInfo[]::new)
+            hollowScannerValueConfigs.toArray(ModuleRegistry.ValueConfigInfo[]::new)
         );
         
         ModuleRegistry.registerModuleWithValues(

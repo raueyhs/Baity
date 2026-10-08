@@ -1,9 +1,9 @@
-package com.shyeuar.baity.features.nucleusscanner;
+package com.shyeuar.baity.features.hollowscanner;
 
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.gui.value.ValueCycleUtils;
 
-public final class NucleusScannerSettings {
+public final class HollowScannerSettings {
 
     public static final String[] COLOR_NAMES = {
             "magenta", "cyan", "orange", "purple", "green", "yellow", "lime", "white",
@@ -22,7 +22,7 @@ public final class NucleusScannerSettings {
     private static final String KEY_SHOW_DISTANCE = "show distance";
     private static final String KEY_WORM_FISHING = "worm fishing";
 
-    private static final State[] STATES = new State[NucleusFamily.values().length];
+    private static final State[] STATES = new State[HollowFamily.values().length];
 
     private static String loadedSource = null;
     private static boolean selectAreasExpanded = false;
@@ -31,17 +31,17 @@ public final class NucleusScannerSettings {
     private static boolean wormFishing = false;
 
     static {
-        NucleusFamily[] families = NucleusFamily.values();
+        HollowFamily[] families = HollowFamily.values();
         for (int i = 0; i < families.length; i++) {
             STATES[i] = new State(families[i].defaultColorName());
         }
     }
 
-    private NucleusScannerSettings() {
+    private HollowScannerSettings() {
     }
 
     public static synchronized void ensureLoaded() {
-        String raw = ConfigManager.nucleusScannerSettings;
+        String raw = ConfigManager.hollowScannerSettings;
         if (raw == null) {
             raw = "";
         }
@@ -53,23 +53,23 @@ public final class NucleusScannerSettings {
         applyEncoded(raw);
     }
 
-    public static boolean isEnabled(NucleusFamily family) {
+    public static boolean isEnabled(HollowFamily family) {
         ensureLoaded();
         return state(family).enabled;
     }
 
-    public static void setEnabled(NucleusFamily family, boolean value) {
+    public static void setEnabled(HollowFamily family, boolean value) {
         ensureLoaded();
         state(family).enabled = value;
         persist();
     }
 
-    public static String color(NucleusFamily family) {
+    public static String color(HollowFamily family) {
         ensureLoaded();
         return state(family).color;
     }
 
-    public static void setColor(NucleusFamily family, String value) {
+    public static void setColor(HollowFamily family, String value) {
         ensureLoaded();
         state(family).color = value;
         persist();
@@ -139,25 +139,25 @@ public final class NucleusScannerSettings {
     }
 
     public static int tintFor(String valueName) {
-        NucleusFamily family = familyByKey(valueName);
+        HollowFamily family = familyByKey(valueName);
         if (family == null) {
             return 0;
         }
         return 0xFF000000 | colorRgb(color(family));
     }
 
-    private static State state(NucleusFamily family) {
+    private static State state(HollowFamily family) {
         return STATES[family.ordinal()];
     }
 
     private static synchronized void persist() {
         String encoded = encode();
         loadedSource = encoded;
-        ConfigManager.nucleusScannerSettings = encoded;
+        ConfigManager.hollowScannerSettings = encoded;
     }
 
     private static void resetToDefaults() {
-        NucleusFamily[] families = NucleusFamily.values();
+        HollowFamily[] families = HollowFamily.values();
         for (int i = 0; i < families.length; i++) {
             State state = STATES[i];
             state.enabled = false;
@@ -171,7 +171,7 @@ public final class NucleusScannerSettings {
 
     private static String encode() {
         StringBuilder builder = new StringBuilder();
-        for (NucleusFamily family : NucleusFamily.values()) {
+        for (HollowFamily family : HollowFamily.values()) {
             State state = state(family);
             append(builder, family.key() + "." + KEY_ENABLED, String.valueOf(state.enabled), "false");
             append(builder, family.key() + "." + KEY_COLOR, state.color, family.defaultColorName());
@@ -224,7 +224,7 @@ public final class NucleusScannerSettings {
             if (dot <= 0) {
                 continue;
             }
-            NucleusFamily family = familyByKey(key.substring(0, dot));
+            HollowFamily family = familyByKey(key.substring(0, dot));
             if (family == null) {
                 continue;
             }
@@ -238,11 +238,11 @@ public final class NucleusScannerSettings {
         }
     }
 
-    private static NucleusFamily familyByKey(String key) {
+    private static HollowFamily familyByKey(String key) {
         if (key == null) {
             return null;
         }
-        for (NucleusFamily family : NucleusFamily.values()) {
+        for (HollowFamily family : HollowFamily.values()) {
             if (family.key().equals(key)) {
                 return family;
             }

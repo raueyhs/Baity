@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.nucleusscanner;
+package com.shyeuar.baity.features.hollowscanner;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.shyeuar.baity.gui.module.Module;
@@ -46,11 +46,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicLong;
 
 @Environment(EnvType.CLIENT)
-public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
+public class HollowScanner implements LevelRenderEvents.AfterSolidFeatures {
 
     private static final Minecraft MC = Minecraft.getInstance();
 
-    private static final String MODULE_NAME = "NucleusScanner";
+    private static final String MODULE_NAME = "HollowScanner";
     public static final String SHARE_MARKER = "@baity-share ";
     private static final int CHUNK_SIZE = 16;
     private static final int MAX_SCAN_Y = 169;
@@ -67,13 +67,13 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
     private static final Set<Long> SCANNED_CHUNKS = ConcurrentHashMap.newKeySet();
     private static final Set<BlockPos> WORM_FISHING_BLOCKS = ConcurrentHashMap.newKeySet();
     private static final List<FoundStructure> STRUCTURES = new CopyOnWriteArrayList<>();
-    private static final Set<NucleusStructure> FOUND_TYPES = ConcurrentHashMap.newKeySet();
+    private static final Set<HollowStructure> FOUND_TYPES = ConcurrentHashMap.newKeySet();
     private static final List<Grotto> GROTTOS = new CopyOnWriteArrayList<>();
     private static final Map<Long, Grotto> GROTTO_CHUNKS = new ConcurrentHashMap<>();
     private static final BlockingQueue<ScanJob> PENDING_SCANS = new LinkedBlockingQueue<>();
     private static final Queue<MutableComponent> PENDING_MESSAGES = new ConcurrentLinkedQueue<>();
     private static final AtomicLong SCAN_GENERATION = new AtomicLong();
-    private static final boolean[] ENABLED_FAMILIES = new boolean[NucleusFamily.values().length];
+    private static final boolean[] ENABLED_FAMILIES = new boolean[HollowFamily.values().length];
     private static boolean WORM_FISHING_ENABLED;
 
     private static final List<Thread> SCAN_WORKERS = new CopyOnWriteArrayList<>();
@@ -81,10 +81,10 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
     private static boolean inCrystalHollows;
 
     public static void init() {
-        ClientChunkEvents.CHUNK_LOAD.register(NucleusScanner::onChunkLoad);
+        ClientChunkEvents.CHUNK_LOAD.register(HollowScanner::onChunkLoad);
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> reset());
         ClientTickEvents.END_CLIENT_TICK.register(client -> tick());
-        LevelRenderEvents.AFTER_SOLID_FEATURES.register(new NucleusScanner());
+        LevelRenderEvents.AFTER_SOLID_FEATURES.register(new HollowScanner());
     }
 
     private static void onChunkLoad(ClientLevel level, LevelChunk chunk) {
@@ -113,8 +113,8 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         }
 
         boolean familyEnabled = false;
-        for (NucleusFamily family : NucleusFamily.values()) {
-            boolean enabled = NucleusScannerSettings.isEnabled(family);
+        for (HollowFamily family : HollowFamily.values()) {
+            boolean enabled = HollowScannerSettings.isEnabled(family);
             if (ENABLED_FAMILIES[family.ordinal()] != enabled) {
                 ENABLED_FAMILIES[family.ordinal()] = enabled;
                 if (enabled) {
@@ -124,7 +124,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         }
 
         boolean wormFishingEnabled = false;
-        boolean wormFishing = NucleusScannerSettings.isWormFishing();
+        boolean wormFishing = HollowScannerSettings.isWormFishing();
         if (WORM_FISHING_ENABLED != wormFishing) {
             WORM_FISHING_ENABLED = wormFishing;
             wormFishingEnabled = wormFishing;
@@ -199,11 +199,11 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         if (SCAN_WORKERS.size() >= scanWorkerTarget()) {
             return;
         }
-        synchronized (NucleusScanner.class) {
+        synchronized (HollowScanner.class) {
             while (SCAN_WORKERS.size() < scanWorkerTarget()) {
                 Thread worker = Thread.ofVirtual()
-                        .name("baity-nucleus-scanner-" + SCAN_WORKERS.size())
-                        .start(NucleusScanner::runScanWorker);
+                        .name("baity-hollow-scanner-" + SCAN_WORKERS.size())
+                        .start(HollowScanner::runScanWorker);
                 SCAN_WORKERS.add(worker);
             }
         }
@@ -232,13 +232,13 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
     }
 
     private static void scanChunk(ScanJob job) {
-        NucleusScannerSettings.ensureLoaded();
-        List<NucleusStructure> pending = new ArrayList<>();
-        for (NucleusStructure structure : NucleusStructure.values()) {
-            if (structure == NucleusStructure.FAIRY_GROTTO) {
+        HollowScannerSettings.ensureLoaded();
+        List<HollowStructure> pending = new ArrayList<>();
+        for (HollowStructure structure : HollowStructure.values()) {
+            if (structure == HollowStructure.FAIRY_GROTTO) {
                 continue;
             }
-            if (!NucleusScannerSettings.isEnabled(structure.family())) {
+            if (!HollowScannerSettings.isEnabled(structure.family())) {
                 continue;
             }
             if (FOUND_TYPES.contains(structure)) {
@@ -249,8 +249,8 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
             }
             pending.add(structure);
         }
-        boolean scanGrotto = NucleusScannerSettings.isEnabled(NucleusFamily.FAIRY_GROTTO);
-        boolean scanWormFishing = NucleusScannerSettings.isWormFishing();
+        boolean scanGrotto = HollowScannerSettings.isEnabled(HollowFamily.FAIRY_GROTTO);
+        boolean scanWormFishing = HollowScannerSettings.isWormFishing();
         if (pending.isEmpty() && !scanGrotto && !scanWormFishing) {
             return;
         }
@@ -258,7 +258,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         LevelChunk chunk = job.chunk();
         BlockPos.MutableBlockPos cursor = new BlockPos.MutableBlockPos();
         BlockPos.MutableBlockPos worldPos = new BlockPos.MutableBlockPos();
-        Set<NucleusStructure> unresolved = new HashSet<>(pending);
+        Set<HollowStructure> unresolved = new HashSet<>(pending);
         List<BlockPos> grottoBlocks = new ArrayList<>();
         long generation = job.generation();
 
@@ -271,7 +271,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
                 int worldZ = job.chunkZ() * CHUNK_SIZE + z;
                 for (int y = 0; y <= MAX_SCAN_Y; y++) {
                     worldPos.set(worldX, y, worldZ);
-                    for (NucleusStructure structure : pending) {
+                    for (HollowStructure structure : pending) {
                         if (!unresolved.contains(structure)) {
                             continue;
                         }
@@ -332,7 +332,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         return state.is(Blocks.STAINED_GLASS.magenta()) || state.is(Blocks.STAINED_GLASS_PANE.magenta());
     }
 
-    private static boolean intersectsChunk(NucleusStructure structure, int chunkX, int chunkZ) {
+    private static boolean intersectsChunk(HollowStructure structure, int chunkX, int chunkZ) {
         int minX = chunkX * CHUNK_SIZE;
         int minZ = chunkZ * CHUNK_SIZE;
         int maxX = minX + CHUNK_SIZE - 1;
@@ -343,7 +343,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
                 || structure.quarter().test(new BlockPos(maxX, MAX_SCAN_Y, maxZ));
     }
 
-    private static void recordStructure(NucleusStructure structure, int worldX, int y, int worldZ, long generation) {
+    private static void recordStructure(HollowStructure structure, int worldX, int y, int worldZ, long generation) {
         if (generation != SCAN_GENERATION.get()) {
             return;
         }
@@ -361,10 +361,10 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         }
     }
 
-    private static MutableComponent buildDiscoveryMessage(NucleusStructure structure, int x, int y, int z) {
+    private static MutableComponent buildDiscoveryMessage(HollowStructure structure, int x, int y, int z) {
         String name = structure.displayName();
-        int nameColor = 0xFF000000 | NucleusScannerSettings.colorRgb(
-                NucleusScannerSettings.color(structure.family()));
+        int nameColor = 0xFF000000 | HollowScannerSettings.colorRgb(
+                HollowScannerSettings.color(structure.family()));
         MutableComponent share = Component.literal("[click to send coord]")
                 .withStyle(Style.EMPTY
                         .withColor(CLICK_TEXT_COLOR)
@@ -421,7 +421,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
 
         if (isActive() && before != GROTTOS.size()) {
             PENDING_MESSAGES.offer(buildDiscoveryMessage(
-                    NucleusStructure.FAIRY_GROTTO, mergedCenter.getX(), mergedCenter.getY(), mergedCenter.getZ()));
+                    HollowStructure.FAIRY_GROTTO, mergedCenter.getX(), mergedCenter.getY(), mergedCenter.getZ()));
         }
     }
 
@@ -485,7 +485,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
             return;
         }
 
-        NucleusScannerSettings.ensureLoaded();
+        HollowScannerSettings.ensureLoaded();
         Vec3 cameraPos = context.levelState().cameraRenderState.pos;
         Camera camera = MC.gameRenderer.mainCamera();
         float cameraYaw = camera.yRot();
@@ -502,7 +502,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
             FloatingWorldTextCompat.endFrame();
         }
 
-        if (NucleusScannerSettings.isWormFishing()) {
+        if (HollowScannerSettings.isWormFishing()) {
             for (BlockPos pos : WORM_FISHING_BLOCKS) {
                 WaypointRenderUtils.submitBox(matrices, submits, new AABB(pos), cameraPos, WORM_FISHING_COLOR);
             }
@@ -514,20 +514,20 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         for (FoundStructure found : STRUCTURES) {
             drawStructureWaypoint(matrices, submits, cameraPos, eye, found, cameraYaw, cameraPitch);
         }
-        NucleusFamily grottoFamily = NucleusFamily.FAIRY_GROTTO;
-        if (!NucleusScannerSettings.isEnabled(grottoFamily)) {
+        HollowFamily grottoFamily = HollowFamily.FAIRY_GROTTO;
+        if (!HollowScannerSettings.isEnabled(grottoFamily)) {
             return;
         }
         for (Grotto grotto : GROTTOS) {
             drawWaypoint(matrices, submits, cameraPos, eye, grotto.center(),
-                    NucleusStructure.FAIRY_GROTTO.displayName(), grottoFamily, cameraYaw, cameraPitch);
+                    HollowStructure.FAIRY_GROTTO.displayName(), grottoFamily, cameraYaw, cameraPitch);
         }
     }
 
     private static void drawStructureWaypoint(PoseStack matrices, SubmitNodeCollector submits, Vec3 cameraPos, Vec3 eye,
                                              FoundStructure found, float cameraYaw, float cameraPitch) {
-        NucleusFamily family = found.structure().family();
-        if (!NucleusScannerSettings.isEnabled(family)) {
+        HollowFamily family = found.structure().family();
+        if (!HollowScannerSettings.isEnabled(family)) {
             return;
         }
         drawWaypoint(matrices, submits, cameraPos, eye, found.pos(), found.structure().displayName(), family,
@@ -535,17 +535,17 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
     }
 
     private static void drawWaypoint(PoseStack matrices, SubmitNodeCollector submits, Vec3 cameraPos, Vec3 eye,
-                                     BlockPos pos, String text, NucleusFamily family,
+                                     BlockPos pos, String text, HollowFamily family,
                                      float cameraYaw, float cameraPitch) {
         Vec3 center = blockCenter(pos);
         double distance = eye.distanceTo(center);
         if (distance <= WAYPOINT_HIDE_DISTANCE) {
             return;
         }
-        int rgb = NucleusScannerSettings.colorRgb(NucleusScannerSettings.color(family));
+        int rgb = HollowScannerSettings.colorRgb(HollowScannerSettings.color(family));
         Vec3 labelAnchor = center.add(0.0, LABEL_HEIGHT_OFFSET, 0.0);
-        boolean showName = NucleusScannerSettings.isDisplayName();
-        boolean showDistance = NucleusScannerSettings.isShowDistance();
+        boolean showName = HollowScannerSettings.isDisplayName();
+        boolean showDistance = HollowScannerSettings.isShowDistance();
         if (showName) {
             WaypointRenderUtils.submitLabel(matrices, submits, cameraPos, labelAnchor,
                     List.of(new WaypointRenderUtils.TextSegment(text, 0xFF000000 | rgb)),
@@ -581,7 +581,7 @@ public class NucleusScanner implements LevelRenderEvents.AfterSolidFeatures {
         return ((long) chunkX << 32) | (chunkZ & 0xFFFFFFFFL);
     }
 
-    public record FoundStructure(NucleusStructure structure, BlockPos pos) {
+    public record FoundStructure(HollowStructure structure, BlockPos pos) {
     }
 
     public record Grotto(int chunkX, int chunkZ, BlockPos center, int blockCount) {
