@@ -8,6 +8,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import net.minecraft.client.Minecraft;
 import com.shyeuar.baity.features.smolpeople.SmolFriendCommands;
 
 @Environment(EnvType.CLIENT)
@@ -41,11 +42,8 @@ public final class SyncCommands {
                     .executes(context -> setSyncEnabled(true)))
                 .then(ClientCommands.literal("off")
                     .executes(context -> setSyncEnabled(false)))
-                .then(ClientCommands.literal("help")
-                    .executes(context -> {
-                        com.shyeuar.baity.utils.MessageUtils.sendSyncHelpLinesInChat();
-                        return 1;
-                    }))
+                .then(ClientCommands.literal("error")
+                    .executes(context -> copyErrorReport()))
         );
 
         dispatcher.register(root);
@@ -66,6 +64,12 @@ public final class SyncCommands {
     private static int syncNow() {
         MessageUtils.sendSyncStartForCommand();
         BaityPresenceSync.syncOnce();
+        return 1;
+    }
+
+    private static int copyErrorReport() {
+        Minecraft.getInstance().keyboardHandler.setClipboard(BaityPresenceSync.buildDiagnosticReport());
+        MessageUtils.sendClipboardNotice();
         return 1;
     }
 

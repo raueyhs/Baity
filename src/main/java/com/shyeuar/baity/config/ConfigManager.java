@@ -304,16 +304,12 @@ public class ConfigManager {
     public static boolean enchantLoreDontReplaceRomanInItemName = false;
     public static String enchantLoreLayoutMode = "default";
     public static boolean nametagDefaultNametag = false;
-    public static String baityPresenceSyncUrl = "https://baity-presence-sync.1427637445.workers.dev/users.json";
+    public static final String DEFAULT_BAITY_PRESENCE_SYNC_URL = "https://baity-sync-d7gx0aiqb6c3727d5-1502560706.ap-shanghai.app.tcloudbase.com";
+    public static String baityPresenceSyncUrl = DEFAULT_BAITY_PRESENCE_SYNC_URL;
     public static boolean baityPresenceSyncEnabled = true;
-    public static String baityPresenceReportUrl = "";
     public static String baityPresenceReportToken = "";
     public static boolean baityPresenceSyncNotificationEnabled = true;
-    public static String baityPresenceProxyHost = "";
-    public static int baityPresenceProxyPort = 0;
-    public static String baityPresenceProxyAuth = "";
-    public static boolean baityPresenceProxyFallbackDirect = true;
-    public static String baityPresenceProxySource = "none";
+    public static long baityPresenceTokenExpiresAt = 0L;
     
     
     
@@ -1041,36 +1037,15 @@ public class ConfigManager {
         registerField("BaityPresenceSyncEnabled", Boolean.class,
             c -> ConfigManager.baityPresenceSyncEnabled,
             (c, v) -> ConfigManager.baityPresenceSyncEnabled = (Boolean) v);
-        registerField("BaityPresenceReportUrl", String.class,
-            c -> ConfigManager.baityPresenceReportUrl,
-            (c, v) -> ConfigManager.baityPresenceReportUrl = (String) v);
         registerField("BaityPresenceReportToken", String.class,
             c -> ConfigManager.baityPresenceReportToken,
             (c, v) -> ConfigManager.baityPresenceReportToken = (String) v);
         registerField("BaityPresenceSyncNotificationEnabled", Boolean.class,
             c -> ConfigManager.baityPresenceSyncNotificationEnabled,
             (c, v) -> ConfigManager.baityPresenceSyncNotificationEnabled = (Boolean) v);
-        registerField("BaityPresenceProxyHost", String.class,
-            c -> ConfigManager.baityPresenceProxyHost,
-            (c, v) -> {
-                ConfigManager.baityPresenceProxyHost = (String) v;
-                refreshPresenceProxySourceFromHostPort();
-            });
-        registerField("BaityPresenceProxyPort", Integer.class,
-            c -> ConfigManager.baityPresenceProxyPort,
-            (c, v) -> {
-                ConfigManager.baityPresenceProxyPort = (Integer) v;
-                refreshPresenceProxySourceFromHostPort();
-            });
-        registerField("BaityPresenceProxySource", String.class,
-            c -> ConfigManager.baityPresenceProxySource,
-            (c, v) -> ConfigManager.baityPresenceProxySource = normalizePresenceProxySource((String) v));
-        registerField("BaityPresenceProxyAuth", String.class,
-            c -> ConfigManager.baityPresenceProxyAuth,
-            (c, v) -> ConfigManager.baityPresenceProxyAuth = (String) v);
-        registerField("BaityPresenceProxyFallbackDirect", Boolean.class,
-            c -> ConfigManager.baityPresenceProxyFallbackDirect,
-            (c, v) -> ConfigManager.baityPresenceProxyFallbackDirect = (Boolean) v);
+        registerField("BaityPresenceTokenExpiresAt", Long.class,
+            c -> ConfigManager.baityPresenceTokenExpiresAt,
+            (c, v) -> ConfigManager.baityPresenceTokenExpiresAt = ((Number) v).longValue());
         
     }
     
@@ -1097,28 +1072,6 @@ public class ConfigManager {
             }
         }
         return 341;
-    }
-
-    private static String normalizePresenceProxySource(String raw) {
-        if (raw == null) {
-            return "none";
-        }
-        String lower = raw.trim().toLowerCase(java.util.Locale.ROOT);
-        if ("manual".equals(lower) || "auto".equals(lower)) {
-            return lower;
-        }
-        return "none";
-    }
-
-    private static void refreshPresenceProxySourceFromHostPort() {
-        String host = baityPresenceProxyHost == null ? "" : baityPresenceProxyHost.trim();
-        if (host.isEmpty() || baityPresenceProxyPort <= 0) {
-            baityPresenceProxySource = "none";
-            return;
-        }
-        if (!"auto".equalsIgnoreCase(baityPresenceProxySource)) {
-            baityPresenceProxySource = "manual";
-        }
     }
 
     private static void registerDroppedItemRarityScaleFields() {
@@ -1272,29 +1225,8 @@ public class ConfigManager {
             applyPostLoadLegacyDefaults(seenKeys);
 
             boolean needSave = false;
-            if (!seenKeys.contains("BaityPresenceProxyHost")) {
-                ConfigManager.baityPresenceProxyHost = "";
-                needSave = true;
-            }
-            if (!seenKeys.contains("BaityPresenceProxyPort")) {
-                ConfigManager.baityPresenceProxyPort = 0;
-                needSave = true;
-            }
-            if (!seenKeys.contains("BaityPresenceProxyAuth")) {
-                ConfigManager.baityPresenceProxyAuth = "";
-                needSave = true;
-            }
-            if (!seenKeys.contains("BaityPresenceProxyFallbackDirect")) {
-                ConfigManager.baityPresenceProxyFallbackDirect = true;
-                needSave = true;
-            }
-            if (!seenKeys.contains("BaityPresenceProxySource")) {
-                String host = ConfigManager.baityPresenceProxyHost == null ? "" : ConfigManager.baityPresenceProxyHost.trim();
-                if (!host.isEmpty() && ConfigManager.baityPresenceProxyPort > 0) {
-                    ConfigManager.baityPresenceProxySource = "manual";
-                } else {
-                    ConfigManager.baityPresenceProxySource = "none";
-                }
+            if (!seenKeys.contains("BaityPresenceTokenExpiresAt")) {
+                ConfigManager.baityPresenceTokenExpiresAt = 0L;
                 needSave = true;
             }
             if (needSave) {

@@ -1,3 +1,4 @@
+// ARCHIVED
 function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
@@ -17,6 +18,27 @@ const WRITE_LOG_MAX_ENTRIES = 5000;
 const TOKEN_MIN_LEN = 16;
 const TOKEN_MAX_LEN = 128;
 const DEFAULT_READ_TOKEN = "baity_sync_read_v1_f4c9e7a2d1b84e73";
+
+const SESSION_CHALLENGE_TTL_SECONDS = 10 * 60;
+const NICK_TEXT_MAX_LEN = 32;
+const SESSION_SERVER_URL = "https://sessionserver.mojang.com/session/minecraft/hasJoined";
+
+function sanitizeNickText(value) {
+  if (typeof value !== "string") return "";
+  let cleaned = "";
+  for (const ch of value) {
+    const code = ch.codePointAt(0);
+    const isFormat = code === 0x00a7
+      || (code >= 0x200b && code <= 0x200f)
+      || (code >= 0x202a && code <= 0x202e)
+      || (code >= 0x2066 && code <= 0x2069)
+      || code === 0xfeff;
+    if (code < 32 || code === 127 || isFormat) continue;
+    cleaned += ch;
+  }
+  const trimmed = cleaned.trim();
+  return trimmed.length > NICK_TEXT_MAX_LEN ? trimmed.slice(0, NICK_TEXT_MAX_LEN) : trimmed;
+}
 
 const READ_LOG_DEDUP_SECONDS = 10 * 60;
 const WRITE_LOG_DEDUP_SECONDS = 10 * 60;
@@ -43,7 +65,7 @@ function sanitizeUserPayload(payload) {
   if (!user || typeof user !== "object") return null;
 
   const uuid = String(user.uuid || "").trim();
-  const name = String(user.name || "").trim();
+  const name = sanitizeNickText(user.name);
   if (!/^[0-9a-fA-F-]{36}$/.test(uuid)) return null;
   if (!name || name.length > 32) return null;
 
@@ -54,7 +76,7 @@ function sanitizeUserPayload(payload) {
   const nickEnabled = Boolean(nickTweaksRaw.enabled);
   const chromaEnabled = nickEnabled && Boolean(nickTweaksRaw.chromaEnabled);
   const customNickColorEnabled = nickEnabled && !chromaEnabled && Boolean(nickTweaksRaw.customNickColorEnabled);
-  const nickChanger = nickEnabled ? String(nickTweaksRaw.nickChanger || "").slice(0, 128) : "";
+  const nickChanger = nickEnabled ? sanitizeNickText(nickTweaksRaw.nickChanger) : "";
   const chromaRaw = chromaEnabled ? (nickTweaksRaw.chroma || {}) : {};
   const solidRaw = customNickColorEnabled ? (nickTweaksRaw.solid || {}) : {};
 
@@ -173,6 +195,56 @@ async function writeIndex(env, indexObj) {
   await env.PRESENCE_KV.put("users:index", JSON.stringify(indexObj));
 }
 
+const REPORT_MIN_INTERVAL_SECONDS = 3;
+const INDEX_CLEANUP_MIN_INTERVAL_SECONDS = 10 * 60;
+const MAX_BODY_BYTES = 8 * 1024;
+
+async function readLimitedJson(request, maxBytes) {
+  let raw;
+  try {
+    raw = await request.text();
+  } catch {
+    return { error: "invalid_json", status: 400 };
+  }
+  if (raw.length > maxBytes) {
+    return { error: "payload_too_large", status: 413 };
+  }
+  try {
+    return { body: JSON.parse(raw) };
+  } catch {
+    return { error: "invalid_json", status: 400 };
+  }
+}
+
+function reportThrottleKey(uuid) {
+  return `report:throttle:${uuid}`;
+}
+
+function indexCleanupKey() {
+  return "index:cleanup";
+}
+
+async function updateIndexForUser(env, user) {
+  try {
+    const indexObj = await readIndex(env);
+    indexObj[user.uuid] = { name: user.name, lastSeenAt: user.meta.lastSeenAt };
+    await writeIndex(env, indexObj);
+  } catch {
+  }
+}
+
+async function cleanupIndexIfDue(env, indexObj) {
+  try {
+    const cleanupKey = indexCleanupKey();
+    if (await env.PRESENCE_KV.get(cleanupKey)) {
+      return;
+    }
+    await env.PRESENCE_KV.put(cleanupKey, "1", { expirationTtl: INDEX_CLEANUP_MIN_INTERVAL_SECONDS });
+    await writeIndex(env, indexObj);
+  } catch {
+  }
+}
+
 async function readUserTokenRecord(env, uuid) {
   const raw = await env.PRESENCE_KV.get(userTokenKey(uuid));
   if (!raw) return null;
@@ -276,7 +348,7 @@ async function deleteByPrefix(env, prefix) {
 }
 
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
     const adminToken = env.BAITY_ADMIN_TOKEN || "";
@@ -328,12 +400,11 @@ export default {
       if (!adminToken || providedAdminToken !== adminToken) {
         return json({ ok: false, error: "unauthorized" }, 401);
       }
-      let body;
-      try {
-        body = await request.json();
-      } catch {
-        return json({ ok: false, error: "invalid_json" }, 400);
+      const parsed = await readLimitedJson(request, MAX_BODY_BYTES);
+      if (parsed.error) {
+        return json({ ok: false, error: parsed.error }, parsed.status);
       }
+      const body = parsed.body;
       const uuid = normalizeUuid(body?.uuid);
       const token = normalizeToken(body?.token);
       if (!uuid || !token) {
@@ -348,12 +419,11 @@ export default {
       if (!adminToken || providedAdminToken !== adminToken) {
         return json({ ok: false, error: "unauthorized" }, 401);
       }
-      let body;
-      try {
-        body = await request.json();
-      } catch {
-        return json({ ok: false, error: "invalid_json" }, 400);
+      const parsed = await readLimitedJson(request, MAX_BODY_BYTES);
+      if (parsed.error) {
+        return json({ ok: false, error: parsed.error }, parsed.status);
       }
+      const body = parsed.body;
       const token = normalizeToken(body?.token);
       if (!token) {
         return json({ ok: false, error: "invalid_unbind_payload" }, 400);
@@ -367,15 +437,46 @@ export default {
       if (!readToken || accessToken !== readToken) {
         return json({ ok: false, error: "unauthorized" }, 401);
       }
-      let body;
-      try {
-        body = await request.json();
-      } catch {
-        return json({ ok: false, error: "invalid_json" }, 400);
+      const parsed = await readLimitedJson(request, MAX_BODY_BYTES);
+      if (parsed.error) {
+        return json({ ok: false, error: parsed.error }, parsed.status);
       }
+      const body = parsed.body;
       const uuid = normalizeUuid(body?.uuid);
       if (!uuid) {
         return json({ ok: false, error: "invalid_uuid" }, 400);
+      }
+
+      const name = String(body?.name || "").trim();
+      const serverId = String(body?.serverId || "").trim().toLowerCase();
+      if (!/^[0-9a-f]{32}$/.test(serverId)) {
+        return json({ ok: false, error: "session_challenge_required" }, 401);
+      }
+      if (!name || name.length > 32) {
+        return json({ ok: false, error: "invalid_name" }, 400);
+      }
+
+      const challengeKey = `challenge:${serverId}`;
+      if (await env.PRESENCE_KV.get(challengeKey)) {
+        return json({ ok: false, error: "session_challenge_reused" }, 409);
+      }
+      await env.PRESENCE_KV.put(challengeKey, uuid, { expirationTtl: SESSION_CHALLENGE_TTL_SECONDS });
+
+      let verifiedId = "";
+      try {
+        const verifyUrl = `${SESSION_SERVER_URL}?username=${encodeURIComponent(name)}&serverId=${serverId}`;
+        const verified = await fetch(verifyUrl, { headers: { accept: "application/json" } });
+        if (verified.status === 200) {
+          const profile = await verified.json();
+          if (profile && typeof profile.id === "string") {
+            verifiedId = profile.id.trim().toLowerCase();
+          }
+        }
+      } catch {
+        verifiedId = "";
+      }
+      if (!verifiedId || verifiedId !== uuid.replace(/-/g, "")) {
+        return json({ ok: false, error: "session_verification_failed" }, 401);
       }
 
       const ipRaw =
@@ -441,12 +542,11 @@ export default {
     if (request.method === "POST" && path === "/report") {
       const writeToken = request.headers.get("x-baity-token") || "";
 
-      let body;
-      try {
-        body = await request.json();
-      } catch {
-        return json({ ok: false, error: "invalid_json" }, 400);
+      const parsed = await readLimitedJson(request, MAX_BODY_BYTES);
+      if (parsed.error) {
+        return json({ ok: false, error: parsed.error }, parsed.status);
       }
+      const body = parsed.body;
 
       const sanitized = sanitizeUserPayload(body);
       if (!sanitized) return json({ ok: false, error: "invalid_payload" }, 400);
@@ -456,12 +556,16 @@ export default {
         return json({ ok: false, error: "unauthorized" }, 401);
       }
 
+      const throttleKey = reportThrottleKey(sanitized.uuid);
+      if (await env.PRESENCE_KV.get(throttleKey)) {
+        return json({ ok: false, error: "rate_limited" }, 429);
+      }
+      await env.PRESENCE_KV.put(throttleKey, "1", { expirationTtl: REPORT_MIN_INTERVAL_SECONDS });
+
       const key = `user:${sanitized.uuid}`;
       await env.PRESENCE_KV.put(key, JSON.stringify(sanitized), { expirationTtl: USER_RECORD_TTL_SECONDS });
 
-      const indexObj = await readIndex(env);
-      indexObj[sanitized.uuid] = { name: sanitized.name, lastSeenAt: sanitized.meta.lastSeenAt };
-      await writeIndex(env, indexObj);
+      ctx.waitUntil(updateIndexForUser(env, sanitized));
 
       try {
         const doLog = await shouldLog(env, writeThrottleKey(sanitized.uuid), WRITE_LOG_DEDUP_SECONDS);
@@ -496,11 +600,13 @@ export default {
       const uuids = Object.keys(indexObj);
       const users = {};
       const now = Date.now();
+      let removed = 0;
 
       for (const uuid of uuids) {
         const raw = await env.PRESENCE_KV.get(`user:${uuid}`);
         if (!raw) {
           delete indexObj[uuid];
+          removed++;
           continue;
         }
         try {
@@ -508,11 +614,13 @@ export default {
           const lastSeen = Date.parse(entry?.meta?.lastSeenAt || "");
           if (!Number.isFinite(lastSeen)) {
             delete indexObj[uuid];
+            removed++;
             continue;
           }
           const elapsedMs = now - lastSeen;
           if (elapsedMs > USER_HARD_EXPIRE_MS) {
             delete indexObj[uuid];
+            removed++;
             continue;
           }
           const stale = elapsedMs > USER_SOFT_STALE_MS;
@@ -524,10 +632,13 @@ export default {
           users[uuid] = entry;
         } catch {
           delete indexObj[uuid];
+          removed++;
         }
       }
 
-      await writeIndex(env, indexObj);
+      if (removed > 0) {
+        ctx.waitUntil(cleanupIndexIfDue(env, indexObj));
+      }
 
       let reads = undefined;
       let writes = undefined;

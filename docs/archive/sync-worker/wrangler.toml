@@ -1,3 +1,4 @@
+# ARCHIVED
 name = "baity-presence-sync"
 main = "worker.js"
 compatibility_date = "2024-11-29"

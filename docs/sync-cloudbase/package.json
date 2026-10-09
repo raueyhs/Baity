@@ -1,0 +1,12 @@
+{
+  "name": "baity-sync-cloudbase",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cos-nodejs-sdk-v5": "^2.14.0"
+  }
+}

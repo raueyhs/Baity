@@ -19,61 +19,50 @@ import net.minecraft.util.Mth;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
-import java.net.SocketTimeoutException;
-import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
-import java.util.function.BiConsumer;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BiConsumer;
 
 @Environment(EnvType.CLIENT)
 public final class BaityPresenceSync {
     private static final Logger LOGGER = LoggerFactory.getLogger("Baity/PresenceSync");
-    private static final long REMOTE_READ_COOLDOWN_MS = 20_000L;
-    private static volatile long nextRemoteReadAllowedAt = 0L;
-    private static final long REPORT_CHANGE_DEBOUNCE_MS = 3_000L;
+    private static final long TOKEN_EXPIRY_MARGIN_MS = 60_000L;
     private static final long SYNC_MESSAGE_DELAY_MS = 3_000L;
-    private static final int CONNECT_TIMEOUT_MS = 10_000;
-    private static final int READ_TIMEOUT_MS = 10_000;
-    private static final int FETCH_READ_TIMEOUT_MS = 120_000;
-    private static final int NETWORK_RETRY_COUNT = 0;
-    private static final long NETWORK_RETRY_BACKOFF_MS = 350L;
+    private static final long REPORT_CHANGE_DEBOUNCE_MS = 30_000L;
     private static final long NETWORK_WARN_THROTTLE_MS = 60_000L;
-    private static final String DEFAULT_SYNC_URL = "https://baity-presence-sync.1427637445.workers.dev/users.json";
-    private static final String DEFAULT_SYNC_ACCESS_TOKEN = "baity_sync_read_v1_f4c9e7a2d1b84e73";
-    private static final long SOFT_STALE_AFTER_MS = 3L * 24L * 60L * 60L * 1000L;
-    private static final long HARD_EXPIRE_AFTER_MS = 3L * 24L * 60L * 60L * 1000L;
+    private static final String LEGACY_SYNC_URL_MARKER = "workers.dev";
+    private static final long CACHE_EXPIRE_AFTER_MS = 14L * 24L * 60L * 60L * 1000L;
+    private static final long HARD_EXPIRE_AFTER_MS = 14L * 24L * 60L * 60L * 1000L;
     private static final Path CACHE_FILE_PATH = BaityConfigDir.getBaityConfigDir().resolve("remote-users-cache.json");
     private static final Gson CACHE_GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    private static final AtomicBoolean FETCHING = new AtomicBoolean(false);
+    private static final AtomicBoolean SYNCING = new AtomicBoolean(false);
     private static final AtomicBoolean REPORTING = new AtomicBoolean(false);
-
-    private static volatile long nextReportAllowedAt = 0L;
-    private static volatile String lastReportedSignature = "";
-    private static volatile UUID lastSeenLocalPlayerUuid = null;
-    private static volatile long nextTokenProvisionAllowedAt = 0L;
-    private static final AtomicBoolean TOKEN_PROVISIONING = new AtomicBoolean(false);
-    private static final AtomicLong LAST_FETCH_EXCEPTION_WARN_AT = new AtomicLong(0L);
-    private static final AtomicLong LAST_REPORT_EXCEPTION_WARN_AT = new AtomicLong(0L);
     private static final AtomicLong LAST_REGISTER_EXCEPTION_WARN_AT = new AtomicLong(0L);
+    private static final Object CACHE_LOCK = new Object();
 
-    private static final AtomicBoolean MANUAL_SYNC_PENDING = new AtomicBoolean(false);
-    private static final AtomicBoolean MANUAL_RESULT_SENT = new AtomicBoolean(false);
+    private static volatile String lastFailureStage = "";
+    private static volatile long lastFailureAt = 0L;
+    private static volatile long nextReportAllowedAt = 0L;
+    private static volatile long autoStartupResultInWorldAt = 0L;
+    private static volatile boolean startupInWorldSyncTriggered = false;
+
+    private static volatile String lastReportedSignature = "";
+    private static volatile String pendingReportSignature = "";
+    private static volatile UUID lastSeenLocalPlayerUuid = null;
+
     private static volatile int autoStartupSyncResult = 0;
     private static volatile long autoStartupResultSetAt = 0L;
     private static volatile boolean autoStartupResultShownInWorld = false;
-    private static volatile boolean autoSyncTriggeredInWorld = false;
 
     private static volatile boolean remoteSmolUserPresent = false;
     private static final Map<UUID, RemoteUserState> USERS_BY_UUID = new ConcurrentHashMap<>();
@@ -85,132 +74,519 @@ public final class BaityPresenceSync {
 
     public static void init() {
         System.setProperty("java.net.preferIPv4Stack", "true");
-        nextReportAllowedAt = 0L;
         lastReportedSignature = "";
         lastSeenLocalPlayerUuid = null;
-        nextTokenProvisionAllowedAt = 0L;
         autoStartupSyncResult = 0;
         autoStartupResultSetAt = 0L;
         autoStartupResultShownInWorld = false;
-        autoSyncTriggeredInWorld = false;
+        autoStartupResultInWorldAt = 0L;
+        startupInWorldSyncTriggered = false;
+        nextReportAllowedAt = 0L;
+        pendingReportSignature = "";
         loadCacheFromDisk();
+        cleanupExpiredCache();
         if (ConfigManager.baityPresenceSyncEnabled) {
-            CompletableFuture.runAsync(BaityPresenceSync::runPresenceConnectivityProbe);
+            CompletableFuture.runAsync(BaityPresenceSync::startupRefresh);
         }
-    }
-
-    public static void runPresenceConnectivityProbe() {
-        String fetchUrl = resolveFetchUrl();
-        if (fetchUrl == null || fetchUrl.isBlank()) {
-            return;
-        }
-        PresenceProxyResolver.establishSession(toHealthUrl(fetchUrl.trim()));
     }
 
     public static void tick() {
-        handleImmediateSyncTriggers();
+        handleAccountSwitch();
+        handleInWorldStartupSync();
+        handlePendingReport();
+        handleStartupResultNotice();
     }
 
     public static void syncOnce() {
-        long now = System.currentTimeMillis();
-        nextReportAllowedAt = 0L;
-        nextTokenProvisionAllowedAt = 0L;
-        MANUAL_SYNC_PENDING.set(true);
-        MANUAL_RESULT_SENT.set(false);
-        startReadThenWrite(now, true, true);
+        if (!SYNCING.compareAndSet(false, true)) {
+            MessageUtils.sendBaityMessage("正在同步中，请稍候。");
+            return;
+        }
+        CompletableFuture.runAsync(() -> {
+            try {
+                runManualSync();
+            } finally {
+                SYNCING.set(false);
+            }
+        });
     }
 
-    static String syncReadToken() {
-        return DEFAULT_SYNC_ACCESS_TOKEN;
+    private static void startupRefresh() {
+        String baseUrl = resolveBaseUrl();
+        if (baseUrl.isEmpty()) {
+            setAutoStartupResultIfUnset(-1);
+            return;
+        }
+        String usersUrl = SyncClient.health(baseUrl);
+        if (usersUrl == null || usersUrl.isBlank()) {
+            LOGGER.warn("[PresenceSync] startup refresh failed: no users url");
+            setAutoStartupResultIfUnset(-1);
+            return;
+        }
+        boolean ok = mergeUsersPayload(SyncClient.fetch(usersUrl));
+        setAutoStartupResultIfUnset(ok ? 1 : -1);
+        LOGGER.info("[PresenceSync] startup refresh ok={}", ok);
+    }
+
+    private static boolean mergeUsersPayload(String raw) {
+        JsonObject root = raw == null ? null : parseJsonObject(raw);
+        JsonObject users = root == null ? null : root.getAsJsonObject("users");
+        if (users == null || users.isEmpty()) {
+            return false;
+        }
+        JsonObject payload = new JsonObject();
+        payload.add("users", users);
+        mergeIntoCache(payload.toString());
+        LOGGER.info("[PresenceSync] fetched remote users={}", users.size());
+        return true;
+    }
+
+    private static void handleAccountSwitch() {
+        Minecraft client = Minecraft.getInstance();
+        LocalPlayer player = client.player;
+        if (client.level == null || player == null) {
+            return;
+        }
+        UUID currentUuid = player.getUUID();
+        boolean switchedAccount = lastSeenLocalPlayerUuid != null && !lastSeenLocalPlayerUuid.equals(currentUuid);
+        if (switchedAccount) {
+            lastReportedSignature = "";
+            invalidateToken();
+        }
+        lastSeenLocalPlayerUuid = currentUuid;
+    }
+
+    private static void handleStartupResultNotice() {
+        Minecraft client = Minecraft.getInstance();
+        LocalPlayer player = client.player;
+        if (client.level == null || player == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (autoStartupResultInWorldAt <= 0L) {
+            autoStartupResultInWorldAt = now;
+        }
+        if (autoStartupResultShownInWorld || autoStartupSyncResult == 0) {
+            return;
+        }
+        if (now < Math.max(autoStartupResultInWorldAt, autoStartupResultSetAt) + SYNC_MESSAGE_DELAY_MS) {
+            return;
+        }
+        autoStartupResultShownInWorld = true;
+        if (!ConfigManager.baityPresenceSyncNotificationEnabled) {
+            return;
+        }
+        MessageUtils.sendSyncResult(autoStartupSyncResult > 0, true);
+    }
+
+    private static void runManualSync() {
+        String baseUrl = resolveBaseUrl();
+        if (baseUrl.isEmpty()) {
+            recordFailure("config/base_url_missing");
+            completeSync(false);
+            return;
+        }
+
+        LocalUserState local = snapshotLocalState();
+        if (local == null) {
+            recordFailure("local_state_unavailable");
+            completeSync(false);
+            return;
+        }
+
+        SyncClient.SyncResult result = pushLocalState(baseUrl, local);
+        if (result == null) {
+            completeSync(false);
+            return;
+        }
+
+        String usersUrl = result.usersUrl() == null ? "" : result.usersUrl().trim();
+        if (usersUrl.isEmpty()) {
+            usersUrl = SyncClient.health(baseUrl);
+        }
+        boolean ok = !usersUrl.isEmpty() && mergeUsersPayload(SyncClient.fetch(usersUrl));
+        completeSync(ok);
+    }
+
+    private static SyncClient.SyncResult pushLocalState(String baseUrl, LocalUserState local) {
+        String token = ensureToken(baseUrl, local.uuid(), local.name());
+        if (token == null || token.isBlank()) {
+            return null;
+        }
+
+        long startedAt = System.currentTimeMillis();
+        SyncClient.SyncResult result = SyncClient.sync(baseUrl, token, local.name(), buildAppearanceJson(local));
+        long elapsed = System.currentTimeMillis() - startedAt;
+
+        if (result == null) {
+            invalidateToken();
+            LOGGER.warn("[PresenceSync] push failed elapsed={}ms", elapsed);
+            recordFailure("sync");
+            return null;
+        }
+
+        lastReportedSignature = local.signature();
+        pendingReportSignature = "";
+        LOGGER.info("[PresenceSync] push ok changed={} version={} elapsed={}ms",
+                result.changed(), result.version(), elapsed);
+        return result;
     }
 
     public static void onClickGuiClosed() {
-        attemptReport(System.currentTimeMillis(), false, false);
+        markReportPending();
     }
 
-    private static void attemptReport(long now, boolean forceUpload, boolean forceRemoteSync) {
-        if (!forceRemoteSync && !ConfigManager.baityPresenceSyncEnabled) return;
-        String reportUrl = resolveReportUrl();
-        if (reportUrl == null || reportUrl.isBlank()) {
+    private static void markReportPending() {
+        if (!ConfigManager.baityPresenceSyncEnabled) return;
+        LocalUserState local = snapshotLocalState();
+        if (local == null) return;
+
+        String signature = local.signature();
+        if (signature.equals(lastReportedSignature)) {
+            pendingReportSignature = "";
+            nextReportAllowedAt = 0L;
             return;
         }
-        if (!REPORTING.compareAndSet(false, true)) {
+        if (signature.equals(pendingReportSignature)) {
             return;
         }
 
-        LocalUserState state = snapshotLocalState();
-        if (state == null) {
+        pendingReportSignature = signature;
+        nextReportAllowedAt = System.currentTimeMillis() + REPORT_CHANGE_DEBOUNCE_MS;
+        LOGGER.info("[PresenceSync] report scheduled in {}ms", REPORT_CHANGE_DEBOUNCE_MS);
+    }
+
+    private static void handlePendingReport() {
+        long deadline = nextReportAllowedAt;
+        if (deadline <= 0L) return;
+        if (System.currentTimeMillis() < deadline) return;
+
+        if (!ConfigManager.baityPresenceSyncEnabled) {
+            nextReportAllowedAt = 0L;
+            pendingReportSignature = "";
+            return;
+        }
+        if (!REPORTING.compareAndSet(false, true)) return;
+
+        LocalUserState local = snapshotLocalState();
+        String baseUrl = resolveBaseUrl();
+        if (local == null || baseUrl.isEmpty() || local.signature().equals(lastReportedSignature)) {
+            nextReportAllowedAt = 0L;
+            pendingReportSignature = "";
             REPORTING.set(false);
             return;
         }
 
-        maybeProvisionWriteToken(reportUrl.trim(), state, forceRemoteSync);
-        if (ConfigManager.baityPresenceReportToken == null || ConfigManager.baityPresenceReportToken.isBlank()) {
-            REPORTING.set(false);
-            return;
-        }
-
-        String signature = state.signature();
-        boolean changed = !signature.equals(lastReportedSignature);
-        boolean allowedByDebounce = now >= nextReportAllowedAt;
-        boolean shouldUpload = forceUpload ? allowedByDebounce : (changed && allowedByDebounce);
-        if (!shouldUpload) {
-            REPORTING.set(false);
-            return;
-        }
-
-        nextReportAllowedAt = now + REPORT_CHANGE_DEBOUNCE_MS;
+        nextReportAllowedAt = 0L;
         CompletableFuture.runAsync(() -> {
             try {
-                boolean success = reportLocalState(reportUrl.trim(), state, forceRemoteSync);
-                if (success) {
-                    lastReportedSignature = signature;
-                    updateCacheForSelfFromLocalState(state);
-                } else {
-                    setAutoStartupResultIfUnset(-1);
-                }
+                pushLocalState(baseUrl, local);
             } finally {
                 REPORTING.set(false);
             }
         });
     }
 
-    private static void updateCacheForSelfFromLocalState(LocalUserState local) {
-        try {
-            String nowIso = java.time.Instant.now().toString();
-            Map<UUID, RemoteUserState> snapshot = new HashMap<>(USERS_BY_UUID);
-            snapshot.put(local.uuid(), new RemoteUserState(
-                    local.uuid(),
-                    local.name(),
-                    local.isBaityUser(),
-                    local.smolEnabled(),
-                    local.nickTweaksEnabled(),
-                    local.chromaEnabled(),
-                    local.chromaPalette(),
-                    local.chromaSpeed(),
-                    local.chromaSize(),
-                    local.chromaAmount(),
-                    local.chromaLightness(),
-                    local.gradientStart(),
-                    local.gradientEnd(),
-                    local.boldSelf(),
-                    local.customNickColorEnabled(),
-                    local.nickChanger(),
-                    nowIsoToEpochMs(nowIso),
-                    false
-            ));
+    private static void handleInWorldStartupSync() {
+        Minecraft client = Minecraft.getInstance();
+        LocalPlayer player = client.player;
+        if (client.level == null || player == null) return;
+        if (startupInWorldSyncTriggered) return;
+        startupInWorldSyncTriggered = true;
+        if (!ConfigManager.baityPresenceSyncEnabled) return;
+        CompletableFuture.runAsync(BaityPresenceSync::runInWorldStartupSync);
+    }
 
-            JsonObject root = new JsonObject();
-            JsonObject usersObj = new JsonObject();
-
-            for (RemoteUserState rs : snapshot.values()) {
-                usersObj.add(rs.uuid().toString(), buildUserJsonFromRemote(rs, nowIso));
-            }
-
-            root.add("users", usersObj);
-            saveCacheToDisk(root.toString());
-        } catch (Exception ignored) {
+    private static void runInWorldStartupSync() {
+        String baseUrl = resolveBaseUrl();
+        if (baseUrl.isEmpty()) {
+            return;
         }
+        LocalUserState local = snapshotLocalState();
+        if (local == null) {
+            return;
+        }
+
+        SyncClient.SyncResult result = pushLocalState(baseUrl, local);
+        if (result == null) {
+            setInWorldSyncResult(false);
+            return;
+        }
+
+        String usersUrl = result.usersUrl() == null ? "" : result.usersUrl().trim();
+        if (usersUrl.isEmpty()) {
+            usersUrl = SyncClient.health(baseUrl);
+        }
+        boolean ok = !usersUrl.isEmpty() && mergeUsersPayload(SyncClient.fetch(usersUrl));
+        LOGGER.info("[PresenceSync] in-world startup sync ok={}", ok);
+        setInWorldSyncResult(ok);
+    }
+
+    private static void setInWorldSyncResult(boolean success) {
+        autoStartupSyncResult = success ? 1 : -1;
+        autoStartupResultSetAt = System.currentTimeMillis();
+    }
+
+    private static void completeSync(boolean success) {
+        MessageUtils.sendSyncResult(success, false);
+    }
+
+    private static void setAutoStartupResultIfUnset(int result) {
+        if (autoStartupSyncResult != 0) return;
+        autoStartupSyncResult = result > 0 ? 1 : -1;
+        autoStartupResultSetAt = System.currentTimeMillis();
+    }
+
+    private static String ensureToken(String baseUrl, UUID uuid, String name) {
+        String existing = ConfigManager.baityPresenceReportToken;
+        long now = System.currentTimeMillis();
+        if (existing != null && !existing.isBlank()
+                && ConfigManager.baityPresenceTokenExpiresAt > now + TOKEN_EXPIRY_MARGIN_MS) {
+            return existing.trim();
+        }
+
+        String serverId = beginSessionChallenge(uuid);
+        if (serverId == null) {
+            recordFailure("auth/session_challenge");
+            return null;
+        }
+        SyncClient.AuthResult result = SyncClient.authenticate(baseUrl, uuid.toString(), name, serverId);
+        if (result == null || result.token() == null || result.token().isBlank()) {
+            LOGGER.warn("[PresenceSync] auth request failed");
+            recordFailure("auth/request");
+            return null;
+        }
+        ConfigManager.baityPresenceReportToken = result.token().trim();
+        ConfigManager.baityPresenceTokenExpiresAt = result.expiresAt();
+        ConfigManager.requestSave();
+        return ConfigManager.baityPresenceReportToken;
+    }
+
+    private static void invalidateToken() {
+        ConfigManager.baityPresenceReportToken = "";
+        ConfigManager.baityPresenceTokenExpiresAt = 0L;
+        ConfigManager.requestSave();
+    }
+
+    private static String beginSessionChallenge(UUID uuid) {
+        Minecraft client = Minecraft.getInstance();
+        if (client == null || client.getUser() == null) {
+            return null;
+        }
+        String serverId = UUID.randomUUID().toString().replace("-", "");
+        try {
+            client.services().sessionService()
+                    .joinServer(client.getUser().getProfileId(), client.getUser().getAccessToken(), serverId);
+            return serverId;
+        } catch (Exception e) {
+            logThrottledWarn(LAST_REGISTER_EXCEPTION_WARN_AT,
+                    "[PresenceSync] session challenge failed, uuid={}, err={}", uuid, e.toString());
+            return null;
+        }
+    }
+
+    private static void logThrottledWarn(AtomicLong gate, String pattern, Object... args) {
+        long now = System.currentTimeMillis();
+        long last = gate.get();
+        if (now - last < NETWORK_WARN_THROTTLE_MS) return;
+        if (gate.compareAndSet(last, now)) {
+            LOGGER.warn(pattern, args);
+        }
+    }
+
+    private static String resolveBaseUrl() {
+        String url = ConfigManager.baityPresenceSyncUrl;
+        String trimmed = url == null ? "" : url.trim();
+        if (trimmed.contains(LEGACY_SYNC_URL_MARKER)) {
+            return ConfigManager.DEFAULT_BAITY_PRESENCE_SYNC_URL;
+        }
+        return trimmed;
+    }
+
+    private static void recordFailure(String stage) {
+        lastFailureStage = stage;
+        lastFailureAt = System.currentTimeMillis();
+    }
+
+    public static String buildDiagnosticReport() {
+        String detail = SyncClient.lastFailure();
+        StringBuilder report = new StringBuilder();
+        report.append("baity presence sync diagnostic").append('\n');
+        report.append("time: ").append(lastFailureAt > 0L
+                ? java.time.Instant.ofEpochMilli(lastFailureAt).toString()
+                : "no failure recorded").append('\n');
+        report.append("stage: ").append(lastFailureStage.isEmpty() ? "none" : lastFailureStage).append('\n');
+        report.append("endpoint: ").append(resolveBaseUrl()).append('\n');
+        report.append("detail: ").append(detail == null || detail.isEmpty()
+                ? "no transport error recorded" : detail).append('\n');
+        return report.toString();
+    }
+
+    private static String buildAppearanceJson(LocalUserState local) {
+        String nowIso = java.time.Instant.now().toString();
+        RemoteUserState self = new RemoteUserState(
+                local.uuid(),
+                local.name(),
+                local.isBaityUser(),
+                local.smolEnabled(),
+                local.nickTweaksEnabled(),
+                local.chromaEnabled(),
+                local.chromaPalette(),
+                local.chromaSpeed(),
+                local.chromaSize(),
+                local.chromaAmount(),
+                local.chromaLightness(),
+                local.gradientStart(),
+                local.gradientEnd(),
+                local.boldSelf(),
+                local.customNickColorEnabled(),
+                local.nickChanger(),
+                nowIsoToEpochMs(nowIso)
+        );
+        JsonObject user = buildUserJsonFromRemote(self, nowIso);
+        user.remove("name");
+        return user.toString();
+    }
+
+    private static void mergeIntoCache(String usersJson) {
+        synchronized (CACHE_LOCK) {
+            mergeIntoCacheLocked(usersJson);
+        }
+    }
+
+    private static void mergeIntoCacheLocked(String usersJson) {
+        JsonObject merged = new JsonObject();
+        JsonObject mergedUsers = new JsonObject();
+
+        JsonObject cached = readCacheRoot();
+        JsonObject cachedUsers = cached == null ? null : cached.getAsJsonObject("users");
+        if (cachedUsers != null) {
+            for (Map.Entry<String, JsonElement> entry : cachedUsers.entrySet()) {
+                mergedUsers.add(entry.getKey(), entry.getValue());
+            }
+        }
+
+        JsonObject payload = parseJsonObject(usersJson);
+        JsonObject payloadUsers = payload == null ? null : payload.getAsJsonObject("users");
+        if (payloadUsers != null) {
+            for (Map.Entry<String, JsonElement> entry : payloadUsers.entrySet()) {
+                JsonObject normalized = normalizeRemoteUser(entry.getValue());
+                if (normalized != null) {
+                    mergedUsers.add(entry.getKey(), normalized);
+                }
+            }
+        }
+
+        merged.add("users", mergedUsers);
+        String json = merged.toString();
+        applyPayload(json);
+        saveCacheToDisk(json);
+    }
+
+    private static JsonObject normalizeRemoteUser(JsonElement element) {
+        if (element == null || !element.isJsonObject()) {
+            return null;
+        }
+        JsonObject user = element.getAsJsonObject();
+        JsonObject appearance = user.has("appearance") && user.get("appearance").isJsonObject()
+                ? user.getAsJsonObject("appearance")
+                : user;
+        JsonObject normalized = new JsonObject();
+        for (Map.Entry<String, JsonElement> entry : appearance.entrySet()) {
+            if ("name".equals(entry.getKey())) continue;
+            normalized.add(entry.getKey(), entry.getValue());
+        }
+        String name = getAsString(user, "name", "");
+        if (!name.isBlank()) {
+            normalized.addProperty("name", name);
+        }
+        JsonElement updatedAt = user.get("updatedAt");
+        if (updatedAt != null) {
+            normalized.add("updatedAt", updatedAt);
+        }
+        return normalized;
+    }
+
+    private static JsonObject readCacheRoot() {
+        try {
+            if (!Files.exists(CACHE_FILE_PATH)) return null;
+            String json = Files.readString(CACHE_FILE_PATH, StandardCharsets.UTF_8);
+            return parseJsonObject(json);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static JsonObject parseJsonObject(String json) {
+        if (json == null || json.isBlank()) return null;
+        try {
+            JsonElement rootElement = JsonParser.parseString(json);
+            return rootElement.isJsonObject() ? rootElement.getAsJsonObject() : null;
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static void cleanupExpiredCache() {
+        JsonObject root = readCacheRoot();
+        JsonObject users = root == null ? null : root.getAsJsonObject("users");
+        if (users == null) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        int removed = 0;
+        for (String key : new ArrayList<>(users.keySet())) {
+            long updatedAt = cacheUpdatedAtMs(users.get(key));
+            if (updatedAt > 0L && now - updatedAt > CACHE_EXPIRE_AFTER_MS) {
+                users.remove(key);
+                removed++;
+            }
+        }
+        if (removed > 0) {
+            saveCacheToDisk(root.toString());
+        }
+    }
+
+    private static long cacheUpdatedAtMs(JsonElement element) {
+        if (element == null || !element.isJsonObject()) return -1L;
+        JsonObject user = element.getAsJsonObject();
+        if (user.has("updatedAt")) {
+            try {
+                return user.get("updatedAt").getAsLong();
+            } catch (Exception ignored) {
+            }
+        }
+        return parseIsoEpochMs(getAsString(user.getAsJsonObject("meta"), "lastSeenAt", ""));
+    }
+
+    public static boolean isSmolEnabledFor(UUID uuid) {
+        if (uuid == null) return false;
+        RemoteUserState state = USERS_BY_UUID.get(uuid);
+        return state != null && state.smolPeopleEnabled();
+    }
+
+    public static Boolean getRemoteSmolPreference(UUID uuid) {
+        if (uuid == null) return null;
+        RemoteUserState state = USERS_BY_UUID.get(uuid);
+        if (state == null) return null;
+        return state.smolPeopleEnabled();
+    }
+
+    public static boolean hasRemoteSmolUser() {
+        return remoteSmolUserPresent;
+    }
+
+    public static ChromaProfile getChromaProfileByName(String name) {
+        if (name == null || name.isBlank()) return null;
+        return CHROMA_BY_NAME.get(name.toLowerCase(Locale.ROOT));
+    }
+
+    public static void forEachChromaProfileByCachedName(BiConsumer<String, ChromaProfile> consumer) {
+        CHROMA_BY_NAME.forEach((lower, profile) -> {
+            if (profile == null || lower == null || lower.isBlank()) return;
+            String display = CHROMA_DISPLAY_NAME_BY_LOWER.getOrDefault(lower, lower);
+            consumer.accept(display, profile);
+        });
     }
 
     private static long nowIsoToEpochMs(String iso) {
@@ -275,270 +651,6 @@ public final class BaityPresenceSync {
         return userObj;
     }
 
-    private static void handleImmediateSyncTriggers() {
-        Minecraft client = Minecraft.getInstance();
-        LocalPlayer player = client.player;
-        boolean inWorld = client.level != null && player != null;
-
-        if (inWorld) {
-            UUID currentUuid = player.getUUID();
-            boolean switchedAccount = lastSeenLocalPlayerUuid != null && !lastSeenLocalPlayerUuid.equals(currentUuid);
-            if (switchedAccount || lastSeenLocalPlayerUuid == null) {
-                nextReportAllowedAt = 0L;
-                nextTokenProvisionAllowedAt = 0L;
-                if (switchedAccount) {
-                    lastReportedSignature = "";
-                    ConfigManager.baityPresenceReportToken = "";
-                    ConfigManager.requestSave();
-                }
-            }
-            lastSeenLocalPlayerUuid = currentUuid;
-        }
-
-        if (inWorld && ConfigManager.baityPresenceSyncEnabled && !autoSyncTriggeredInWorld) {
-            autoSyncTriggeredInWorld = true;
-            startReadThenWrite(System.currentTimeMillis(), true);
-        }
-        if (inWorld && !autoStartupResultShownInWorld && autoStartupSyncResult != 0) {
-            long now = System.currentTimeMillis();
-            long earliest = autoStartupResultSetAt <= 0L ? now : (autoStartupResultSetAt + SYNC_MESSAGE_DELAY_MS);
-            if (now >= earliest) {
-                autoStartupResultShownInWorld = true;
-                boolean success = autoStartupSyncResult > 0;
-                boolean notify = ConfigManager.baityPresenceSyncNotificationEnabled;
-                if (notify) {
-                    MessageUtils.sendSyncResult(success, true);
-                } else if (!success) {
-                    MessageUtils.sendSyncResult(false, false);
-                }
-            }
-        }
-    }
-
-    private static void setAutoStartupResultIfUnset(int result) {
-        if (autoStartupSyncResult != 0) return;
-        autoStartupSyncResult = result > 0 ? 1 : -1;
-        autoStartupResultSetAt = System.currentTimeMillis();
-    }
-
-    private static void completeManualSyncIfPending(boolean fetchOk) {
-        if (!MANUAL_SYNC_PENDING.get() || MANUAL_RESULT_SENT.get()) {
-            return;
-        }
-        MANUAL_RESULT_SENT.set(true);
-        MANUAL_SYNC_PENDING.set(false);
-        if (fetchOk) {
-            setAutoStartupResultIfUnset(1);
-        } else {
-            setAutoStartupResultIfUnset(-1);
-        }
-        MessageUtils.sendSyncResult(fetchOk, false);
-    }
-
-    private static void startReadThenWrite(long now, boolean forceUpload) {
-        startReadThenWrite(now, forceUpload, false);
-    }
-
-    private static void startReadThenWrite(long now, boolean forceUpload, boolean forceRemoteSync) {
-        if (!forceRemoteSync && !ConfigManager.baityPresenceSyncEnabled) return;
-
-        if (!forceRemoteSync && now < nextRemoteReadAllowedAt) {
-            CompletableFuture.runAsync(() -> {
-                runPresenceConnectivityProbe();
-                attemptReport(now, forceUpload, forceRemoteSync);
-            });
-            return;
-        }
-
-        nextRemoteReadAllowedAt = forceRemoteSync ? 0L : now + REMOTE_READ_COOLDOWN_MS;
-
-        String fetchUrl = resolveFetchUrl();
-        if (fetchUrl == null || fetchUrl.isBlank()) {
-            CompletableFuture.runAsync(() -> {
-                if (forceRemoteSync) {
-                    completeManualSyncIfPending(false);
-                }
-                runPresenceConnectivityProbe();
-                attemptReport(now, forceUpload, forceRemoteSync);
-            });
-            return;
-        }
-
-        String trimmed = fetchUrl.trim();
-        if (!FETCHING.compareAndSet(false, true)) {
-            CompletableFuture.runAsync(() -> {
-                if (forceRemoteSync) {
-                    completeManualSyncIfPending(false);
-                }
-                runPresenceConnectivityProbe();
-                attemptReport(now, forceUpload, forceRemoteSync);
-            });
-            return;
-        }
-
-        CompletableFuture.runAsync(() -> {
-            boolean fetchOk = false;
-            try {
-                runPresenceConnectivityProbe();
-                fetchOk = fetchAndReplace(trimmed, forceRemoteSync);
-            } finally {
-                FETCHING.set(false);
-                if (forceRemoteSync) {
-                    completeManualSyncIfPending(fetchOk);
-                }
-                attemptReport(System.currentTimeMillis(), forceUpload, forceRemoteSync);
-            }
-        });
-    }
-
-    private static String resolveFetchUrl() {
-        String syncUrl = ConfigManager.baityPresenceSyncUrl;
-        String reportUrl = ConfigManager.baityPresenceReportUrl;
-        if (reportUrl != null && !reportUrl.isBlank()) {
-            String trimmed = reportUrl.trim();
-            if (isLegacyGithubSyncUrl(trimmed)) {
-                return DEFAULT_SYNC_URL;
-            }
-            if (trimmed.endsWith("/report")) {
-                return trimmed.substring(0, trimmed.length() - "/report".length()) + "/users.json";
-            }
-            if (trimmed.endsWith("/")) {
-                return trimmed + "users.json";
-            }
-            if (trimmed.endsWith(".json")) {
-                return trimmed;
-            }
-            return trimmed + "/users.json";
-        }
-        if (syncUrl == null || syncUrl.isBlank()) {
-            return DEFAULT_SYNC_URL;
-        }
-        String trimmed = syncUrl.trim();
-        if (isLegacyGithubSyncUrl(trimmed)) {
-            return DEFAULT_SYNC_URL;
-        }
-        return trimmed;
-    }
-
-    private static String resolveReportUrl() {
-        String reportUrl = ConfigManager.baityPresenceReportUrl;
-        if (reportUrl != null && !reportUrl.isBlank()) {
-            String trimmedReport = reportUrl.trim();
-            if (isLegacyGithubSyncUrl(trimmedReport)) {
-                return DEFAULT_SYNC_URL.substring(0, DEFAULT_SYNC_URL.length() - "/users.json".length()) + "/report";
-            }
-            return trimmedReport;
-        }
-        String syncUrl = ConfigManager.baityPresenceSyncUrl;
-        if (syncUrl == null || syncUrl.isBlank()) {
-            return "";
-        }
-        String trimmed = syncUrl.trim();
-        if (isLegacyGithubSyncUrl(trimmed)) {
-            return DEFAULT_SYNC_URL.substring(0, DEFAULT_SYNC_URL.length() - "/users.json".length()) + "/report";
-        }
-        if (trimmed.endsWith("/users.json")) {
-            return trimmed.substring(0, trimmed.length() - "/users.json".length()) + "/report";
-        }
-        if (trimmed.endsWith(".json")) {
-            int slashIdx = trimmed.lastIndexOf('/');
-            if (slashIdx > 0) {
-                return trimmed.substring(0, slashIdx + 1) + "report";
-            }
-        }
-        if (trimmed.endsWith("/")) {
-            return trimmed + "report";
-        }
-        return trimmed + "/report";
-    }
-
-    private static boolean isLegacyGithubSyncUrl(String url) {
-        if (url == null || url.isBlank()) return false;
-        String lower = url.toLowerCase(Locale.ROOT);
-        return lower.contains("raw.githubusercontent.com")
-            && lower.contains("baity-sync-data")
-            && lower.endsWith("users.json");
-    }
-
-    public static boolean isSmolEnabledFor(UUID uuid) {
-        if (uuid == null) return false;
-        RemoteUserState state = USERS_BY_UUID.get(uuid);
-        return state != null && state.smolPeopleEnabled();
-    }
-
-    public static Boolean getRemoteSmolPreference(UUID uuid) {
-        if (uuid == null) return null;
-        RemoteUserState state = USERS_BY_UUID.get(uuid);
-        if (state == null) return null;
-        return state.smolPeopleEnabled();
-    }
-
-    public static boolean hasRemoteSmolUser() {
-        return remoteSmolUserPresent;
-    }
-
-    public static ChromaProfile getChromaProfileByName(String name) {
-        if (name == null || name.isBlank()) return null;
-        return CHROMA_BY_NAME.get(name.toLowerCase(Locale.ROOT));
-    }
-
-    public static void forEachChromaProfileByCachedName(BiConsumer<String, ChromaProfile> consumer) {
-        CHROMA_BY_NAME.forEach((lower, profile) -> {
-            if (profile == null || lower == null || lower.isBlank()) return;
-            String display = CHROMA_DISPLAY_NAME_BY_LOWER.getOrDefault(lower, lower);
-            consumer.accept(display, profile);
-        });
-    }
-
-    private static boolean fetchAndReplace(String url, boolean forceRemoteSync) {
-        for (int attempt = 0; attempt <= NETWORK_RETRY_COUNT; attempt++) {
-            HttpURLConnection connection = null;
-            try {
-                connection = openHttpConnection(url, attempt);
-                connection.setRequestMethod("GET");
-                connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-                connection.setReadTimeout(FETCH_READ_TIMEOUT_MS);
-                connection.setUseCaches(false);
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("x-baity-token", DEFAULT_SYNC_ACCESS_TOKEN);
-                LocalPlayer player = Minecraft.getInstance().player;
-                if (player != null) {
-                    connection.setRequestProperty("x-baity-uuid", player.getUUID().toString());
-                }
-
-                int code = connection.getResponseCode();
-                if (code >= 200 && code < 300) {
-                    try (InputStream stream = connection.getInputStream()) {
-                        String json = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-                        applyPayload(json, true, forceRemoteSync);
-                        saveCacheToDisk(json);
-                        LOGGER.info("[PresenceSync] fetch ok, code={}, bytes={}, attempt={}", code, json.length(), attempt + 1);
-                        setAutoStartupResultIfUnset(1);
-                        return true;
-                    }
-                }
-                LOGGER.warn("[PresenceSync] fetch failed, code={}, url={}, attempt={}", code, url, attempt + 1);
-                if (attempt < NETWORK_RETRY_COUNT && (code == 429 || code >= 500)) {
-                    sleepRetryBackoff();
-                    continue;
-                }
-                setAutoStartupResultIfUnset(-1);
-                return false;
-            } catch (Exception e) {
-                logThrottledWarn(LAST_FETCH_EXCEPTION_WARN_AT, "[PresenceSync] fetch exception, attempt={}, err={}", attempt + 1, e.toString());
-                if (attempt < NETWORK_RETRY_COUNT && shouldRetryException(e)) {
-                    sleepRetryBackoff();
-                    continue;
-                }
-                setAutoStartupResultIfUnset(-1);
-                return false;
-            } finally {
-                if (connection != null) connection.disconnect();
-            }
-        }
-        return false;
-    }
-
     private static LocalUserState snapshotLocalState() {
         Minecraft client = Minecraft.getInstance();
         LocalPlayer player = client.player;
@@ -583,247 +695,6 @@ public final class BaityPresenceSync {
         return state;
     }
 
-    private static boolean reportLocalState(String url, LocalUserState state, boolean forceRemoteSync) {
-        JsonObject root = new JsonObject();
-        root.addProperty("version", 1);
-
-        JsonObject user = new JsonObject();
-        user.addProperty("uuid", state.uuid().toString());
-        user.addProperty("name", state.name());
-        user.addProperty("isBaityUser", state.isBaityUser());
-
-        JsonObject features = new JsonObject();
-
-        JsonObject nickTweaks = new JsonObject();
-        nickTweaks.addProperty("enabled", state.nickTweaksEnabled());
-        nickTweaks.addProperty("boldEnabled", state.boldSelf());
-        nickTweaks.addProperty("nickChanger", state.nickChanger());
-        if (state.nickTweaksEnabled()) {
-            nickTweaks.addProperty("chromaEnabled", state.chromaEnabled());
-            nickTweaks.addProperty("customNickColorEnabled", state.customNickColorEnabled());
-            if (state.chromaEnabled()) {
-                JsonObject chroma = new JsonObject();
-                chroma.addProperty("enabled", true);
-                chroma.addProperty("speed", state.chromaSpeed());
-                chroma.addProperty("size", state.chromaSize());
-                chroma.addProperty("chroma", state.chromaAmount());
-                chroma.addProperty("lightness", state.chromaLightness());
-                JsonArray palette = new JsonArray();
-                for (int color : state.chromaPalette()) {
-                    palette.add(String.format("#%06X", color & 0xFFFFFF));
-                }
-                chroma.add("palette", palette);
-                nickTweaks.add("chroma", chroma);
-            } else if (state.customNickColorEnabled()) {
-                JsonObject solid = new JsonObject();
-                solid.addProperty("customColorStart", String.format("#%06X", state.gradientStart() & 0xFFFFFF));
-                solid.addProperty("customColorEnd", String.format("#%06X", state.gradientEnd() & 0xFFFFFF));
-                nickTweaks.add("solid", solid);
-            }
-        }
-        features.add("nickTweaks", nickTweaks);
-
-        JsonObject smol = new JsonObject();
-        smol.addProperty("enabled", state.smolEnabled());
-        features.add("smolPeople", smol);
-        user.add("features", features);
-
-        JsonObject meta = new JsonObject();
-        meta.addProperty("protocol", 1);
-        String nowIso = java.time.Instant.now().toString();
-        meta.addProperty("reportedAt", nowIso);
-        meta.addProperty("lastSeenAt", nowIso);
-        user.add("meta", meta);
-        root.add("user", user);
-        byte[] payload = root.toString().getBytes(StandardCharsets.UTF_8);
-
-        for (int attempt = 0; attempt <= NETWORK_RETRY_COUNT; attempt++) {
-            HttpURLConnection connection = null;
-            try {
-                connection = openHttpConnection(url, attempt);
-                connection.setRequestMethod("POST");
-                connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-                connection.setReadTimeout(READ_TIMEOUT_MS);
-                connection.setUseCaches(false);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                connection.setRequestProperty("Accept", "application/json");
-                String token = ConfigManager.baityPresenceReportToken;
-                if (token != null && !token.isBlank()) {
-                    connection.setRequestProperty("x-baity-token", token.trim());
-                }
-
-                connection.getOutputStream().write(payload);
-                connection.getOutputStream().flush();
-
-                int code = connection.getResponseCode();
-                if (code >= 200 && code < 300) {
-                    try (InputStream responseBody = connection.getInputStream()) {
-                        responseBody.transferTo(java.io.OutputStream.nullOutputStream());
-                    }
-                    LOGGER.info("[PresenceSync] report ok, code={}, uuid={}, attempt={}", code, state.uuid(), attempt + 1);
-                    return true;
-                }
-                try (InputStream errorBody = connection.getErrorStream()) {
-                    if (errorBody != null) {
-                        errorBody.transferTo(java.io.OutputStream.nullOutputStream());
-                    }
-                }
-                LOGGER.warn("[PresenceSync] report failed, code={}, uuid={}, attempt={}", code, state.uuid(), attempt + 1);
-                if (code == 401 || code == 403) {
-                    ConfigManager.baityPresenceReportToken = "";
-                    ConfigManager.requestSave();
-                    return false;
-                }
-                if (attempt < NETWORK_RETRY_COUNT && (code == 429 || code >= 500)) {
-                    sleepRetryBackoff();
-                    continue;
-                }
-                return false;
-            } catch (Exception e) {
-                logThrottledWarn(LAST_REPORT_EXCEPTION_WARN_AT, "[PresenceSync] report exception, uuid={}, attempt={}, err={}", state.uuid(), attempt + 1, e.toString());
-                if (attempt < NETWORK_RETRY_COUNT && shouldRetryException(e)) {
-                    sleepRetryBackoff();
-                    continue;
-                }
-                return false;
-            } finally {
-                if (connection != null) connection.disconnect();
-            }
-        }
-        return false;
-    }
-
-    private static void maybeProvisionWriteToken(String reportUrl, LocalUserState state, boolean forceRemoteSync) {
-        String existing = ConfigManager.baityPresenceReportToken;
-        if (existing != null && !existing.isBlank()) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        if (now < nextTokenProvisionAllowedAt) {
-            return;
-        }
-        if (!TOKEN_PROVISIONING.compareAndSet(false, true)) {
-            return;
-        }
-        nextTokenProvisionAllowedAt = now + 10_000L;
-        CompletableFuture.runAsync(() -> {
-            try {
-                provisionWriteToken(reportUrl, state, forceRemoteSync);
-            } finally {
-                TOKEN_PROVISIONING.set(false);
-            }
-        });
-    }
-
-    private static void provisionWriteToken(String reportUrl, LocalUserState state, boolean forceRemoteSync) {
-        JsonObject root = new JsonObject();
-        root.addProperty("uuid", state.uuid().toString());
-        root.addProperty("name", state.name());
-        byte[] payload = root.toString().getBytes(StandardCharsets.UTF_8);
-        String registerUrl = resolveRegisterUrl(reportUrl);
-        for (int attempt = 0; attempt <= NETWORK_RETRY_COUNT; attempt++) {
-            HttpURLConnection connection = null;
-            try {
-                connection = openHttpConnection(registerUrl, attempt);
-                connection.setRequestMethod("POST");
-                connection.setConnectTimeout(CONNECT_TIMEOUT_MS);
-                connection.setReadTimeout(READ_TIMEOUT_MS);
-                connection.setUseCaches(false);
-                connection.setDoOutput(true);
-                connection.setRequestProperty("Content-Type", "application/json; charset=UTF-8");
-                connection.setRequestProperty("Accept", "application/json");
-                connection.setRequestProperty("x-baity-token", DEFAULT_SYNC_ACCESS_TOKEN);
-
-                connection.getOutputStream().write(payload);
-                connection.getOutputStream().flush();
-
-                int code = connection.getResponseCode();
-                if (code >= 200 && code < 300) {
-                    try (InputStream stream = connection.getInputStream()) {
-                        String json = new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-                        JsonElement rootElement = JsonParser.parseString(json);
-                        if (!rootElement.isJsonObject()) return;
-                        JsonObject obj = rootElement.getAsJsonObject();
-                        String token = getAsString(obj, "token", "");
-                        if (token == null || token.isBlank()) return;
-                        ConfigManager.baityPresenceReportToken = token.trim();
-                        ConfigManager.requestSave();
-                        LOGGER.info("[PresenceSync] register ok, uuid={}, attempt={}", state.uuid(), attempt + 1);
-                        nextReportAllowedAt = 0L;
-                        attemptReport(System.currentTimeMillis(), true, forceRemoteSync);
-                        return;
-                    }
-                }
-                LOGGER.warn("[PresenceSync] register failed, code={}, uuid={}, attempt={}", code, state.uuid(), attempt + 1);
-                if (attempt < NETWORK_RETRY_COUNT && (code == 429 || code >= 500)) {
-                    sleepRetryBackoff();
-                    continue;
-                }
-                return;
-            } catch (Exception e) {
-                logThrottledWarn(LAST_REGISTER_EXCEPTION_WARN_AT, "[PresenceSync] register exception, uuid={}, attempt={}, err={}", state.uuid(), attempt + 1, e.toString());
-                if (attempt < NETWORK_RETRY_COUNT && shouldRetryException(e)) {
-                    sleepRetryBackoff();
-                    continue;
-                }
-                return;
-            } finally {
-                if (connection != null) connection.disconnect();
-            }
-        }
-    }
-
-    private static boolean shouldRetryException(Exception e) {
-        Throwable t = e;
-        while (t != null) {
-            if (t instanceof SocketTimeoutException) return true;
-            t = t.getCause();
-        }
-        return false;
-    }
-
-    private static HttpURLConnection openHttpConnection(String url, int attempt) throws Exception {
-        return PresenceProxyResolver.openConnection(url, attempt);
-    }
-
-    private static void sleepRetryBackoff() {
-        try {
-            Thread.sleep(NETWORK_RETRY_BACKOFF_MS);
-        } catch (InterruptedException ignored) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    private static void logThrottledWarn(AtomicLong gate, String pattern, Object... args) {
-        long now = System.currentTimeMillis();
-        long last = gate.get();
-        if (now - last < NETWORK_WARN_THROTTLE_MS) return;
-        if (gate.compareAndSet(last, now)) {
-            LOGGER.warn(pattern, args);
-        }
-    }
-
-    static String toHealthUrl(String anyUrl) {
-        if (anyUrl == null || anyUrl.isBlank()) return "";
-        String u = anyUrl.trim();
-        if (u.endsWith("/users.json")) return u.substring(0, u.length() - "/users.json".length()) + "/health";
-        if (u.endsWith("/report")) return u.substring(0, u.length() - "/report".length()) + "/health";
-        if (u.endsWith("/")) return u + "health";
-        return u + "/health";
-    }
-
-    private static String resolveRegisterUrl(String reportUrl) {
-        String trimmed = reportUrl == null ? "" : reportUrl.trim();
-        if (trimmed.endsWith("/report")) {
-            return trimmed.substring(0, trimmed.length() - "/report".length()) + "/register";
-        }
-        if (trimmed.endsWith("/")) {
-            return trimmed + "register";
-        }
-        return trimmed + "/register";
-    }
-
     private static int[] generatePalette(double chroma, double lightness) {
         int count = 6;
         int[] colors = new int[count];
@@ -835,7 +706,7 @@ public final class BaityPresenceSync {
         return colors;
     }
 
-    private static void applyPayload(String json, boolean overrideOwnState, boolean forceRemoteSync) {
+    private static void applyPayload(String json) {
         JsonElement rootElement = JsonParser.parseString(json);
         if (!rootElement.isJsonObject()) return;
 
@@ -907,12 +778,21 @@ public final class BaityPresenceSync {
                 }
             }
 
-            JsonObject metaObj = userObj.getAsJsonObject("meta");
-            long lastSeenEpochMs = parseIsoEpochMs(getAsString(metaObj, "lastSeenAt", ""));
-            if (lastSeenEpochMs <= 0L) {
-                lastSeenEpochMs = parseIsoEpochMs(getAsString(metaObj, "reportedAt", ""));
+            long lastSeenEpochMs = 0L;
+            JsonElement updatedAtElement = userObj.get("updatedAt");
+            if (updatedAtElement != null && updatedAtElement.isJsonPrimitive()) {
+                try {
+                    lastSeenEpochMs = updatedAtElement.getAsLong();
+                } catch (Exception ignored) {
+                }
             }
-            boolean stale = lastSeenEpochMs > 0L && (now - lastSeenEpochMs) > SOFT_STALE_AFTER_MS;
+            if (lastSeenEpochMs <= 0L) {
+                JsonObject metaObj = userObj.getAsJsonObject("meta");
+                lastSeenEpochMs = parseIsoEpochMs(getAsString(metaObj, "lastSeenAt", ""));
+                if (lastSeenEpochMs <= 0L) {
+                    lastSeenEpochMs = parseIsoEpochMs(getAsString(metaObj, "reportedAt", ""));
+                }
+            }
             if (lastSeenEpochMs > 0L && (now - lastSeenEpochMs) > HARD_EXPIRE_AFTER_MS) {
                 continue;
             }
@@ -934,8 +814,7 @@ public final class BaityPresenceSync {
                 boldSelf,
                 customNickColorEnabled,
                 nickChanger,
-                lastSeenEpochMs,
-                stale
+                lastSeenEpochMs
             );
             newUsers.put(uuid, state);
             if (nickTweaksEnabled) {
@@ -963,50 +842,14 @@ public final class BaityPresenceSync {
             }
         }
         remoteSmolUserPresent = anyRemoteSmol;
-
-        if (overrideOwnState) {
-            tryPushLocalIfRemoteDiffers(forceRemoteSync);
-        }
     }
-
-    private static void applyPayload(String json, boolean overrideOwnState) {
-        applyPayload(json, overrideOwnState, false);
-    }
-
-    private static void tryPushLocalIfRemoteDiffers(boolean forceRemoteSync) {
-        Minecraft client = Minecraft.getInstance();
-        if (client == null) return;
-        LocalPlayer player = client.player;
-        if (player == null) return;
-        RemoteUserState remote = USERS_BY_UUID.get(player.getUUID());
-        LocalUserState local = snapshotLocalState();
-        if (local == null) return;
-        if (remote == null) {
-            attemptReport(System.currentTimeMillis(), false, forceRemoteSync);
-            return;
-        }
-        String remoteSig = buildRemoteLikeSignature(remote);
-        if (!remoteSig.equals(local.signature())) {
-            attemptReport(System.currentTimeMillis(), false, forceRemoteSync);
-        }
-    }
-
-    private static String buildRemoteLikeSignature(RemoteUserState r) {
-        return (r.uuid() + "|" + r.name() + "|" + r.isBaityUser()
-            + "|" + r.nickTweaksEnabled() + "|" + r.chromaEnabled() + "|" + r.smolPeopleEnabled()
-            + "|" + r.chromaSpeed() + "|" + r.chromaSize() + "|" + r.chromaAmount() + "|" + r.chromaLightness()
-            + "|" + (r.gradientStart() & 0xFFFFFF) + "|" + (r.gradientEnd() & 0xFFFFFF)
-            + "|" + r.boldEnabled() + "|" + r.customNickColorEnabled() + "|" + (r.nickChanger() == null ? "" : r.nickChanger())
-            + "|" + java.util.Arrays.toString(r.chromaPalette() == null ? new int[0] : r.chromaPalette()));
-    }
-
 
     private static void loadCacheFromDisk() {
         try {
             if (!Files.exists(CACHE_FILE_PATH)) return;
             String json = Files.readString(CACHE_FILE_PATH, StandardCharsets.UTF_8);
             if (json == null || json.isBlank()) return;
-            applyPayload(json, false);
+            applyPayload(json);
             // TODO(future): Transitional remote-users-cache.json pretty-print migration — can be removed in a future release when ready.
             if (isMinifiedCacheJson(json)) {
                 saveCacheToDisk(json);
@@ -1148,8 +991,7 @@ public final class BaityPresenceSync {
             boolean boldEnabled,
             boolean customNickColorEnabled,
             String nickChanger,
-            long lastSeenEpochMs,
-            boolean stale
+            long lastSeenEpochMs
     ) {
     }
 

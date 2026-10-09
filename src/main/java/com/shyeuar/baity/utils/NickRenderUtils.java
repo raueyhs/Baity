@@ -718,7 +718,34 @@ public final class NickRenderUtils {
                 String raw = ConfigManager.nickTweaksNickChanger;
                 return raw == null || raw.isBlank() ? name : raw;
             }
-            return displayName == null || displayName.isBlank() ? name : displayName;
+            String remote = sanitizeRemoteNick(displayName);
+            return remote.isBlank() ? name : remote;
+        }
+
+        private static String sanitizeRemoteNick(String value) {
+            if (value == null || value.isEmpty()) {
+                return "";
+            }
+            final int maxLength = 32;
+            StringBuilder builder = new StringBuilder();
+            int count = 0;
+            for (int i = 0; i < value.length() && count < maxLength; i++) {
+                int code = value.codePointAt(i);
+                if (Character.charCount(code) == 2) {
+                    i++;
+                }
+                boolean isFormat = code == 0x00a7
+                        || (code >= 0x200b && code <= 0x200f)
+                        || (code >= 0x202a && code <= 0x202e)
+                        || (code >= 0x2066 && code <= 0x2069)
+                        || code == 0xfeff;
+                if (code < 32 || code == 127 || isFormat) {
+                    continue;
+                }
+                builder.appendCodePoint(code);
+                count++;
+            }
+            return builder.toString().trim();
         }
 
         List<ReplacementCodepoint> replacementCodepoints() {

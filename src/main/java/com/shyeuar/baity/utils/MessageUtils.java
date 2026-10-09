@@ -13,15 +13,6 @@ public class MessageUtils {
     
     private static final float PASTEL_SATURATION = 0.45f;
 
-    private static final String[] SYNC_HELP_LINES = {
-        " 1. 代理必须是 HTTP 代理（不支持 SOCKS）",
-        " 2. 代理不在本机：BaityPresenceProxyHost 填内网 IP，Port 填对应端口",
-        " 3. 代理需要账号密码：BaityPresenceProxyAuth 填 user:pass",
-        " 4. 本机 7890 / 7891 / 7892 会自动探测，通常无需手填；这些值也可能被程序自动写回",
-        " 5. 以上都无误仍失败：多为远端服务或网络问题，稍后重试 /baity sync",
-        " 6. 我迟早得给这坨重做了，现在没能力没时间"
-    };
-    
     public static MutableComponent createColoredText(String text, int color) {
         return Component.literal(text).withStyle(style -> style.withColor(color));
     }
@@ -140,24 +131,15 @@ public class MessageUtils {
     }
 
     private static MutableComponent buildHelpClickable() {
-        return Component.literal("[无法同步?]")
+        return Component.literal("[What's wrong?]")
             .withStyle(Style.EMPTY
                 .withColor(0xFF69B4)
                 .withUnderlined(true)
-                .withClickEvent(new ClickEvent.RunCommand("/baity sync help")));
+                .withClickEvent(new ClickEvent.RunCommand("/baity sync error")));
     }
 
-    public static void sendSyncHelpLinesInChat() {
-        if (Minecraft.getInstance().player == null) return;
-        int yellow = 0xFFFF00;
-        MutableComponent line = Component.literal("--------------------------------------------------").withStyle(s -> s.withColor(yellow));
-        Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(line);
-        Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(
-            Component.literal("[baity] 同步失败排查：").withStyle(s -> s.withColor(0x55FFFF)));
-        for (String helpLine : SYNC_HELP_LINES) {
-            Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(
-                Component.literal(helpLine).withStyle(s -> s.withColor(0xFFFFFF)));
-        }
-        Minecraft.getInstance().gui.hud.getChat().addClientSystemMessage(line);
+    public static void sendClipboardNotice() {
+        sendCustomMessage(createMessageWithPrefix(
+            createColoredText("Error information has been copied to the clipboard!", 0xAAAAAA)));
     }
 }
