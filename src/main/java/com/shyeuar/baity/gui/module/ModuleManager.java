@@ -784,7 +784,7 @@ public class ModuleManager {
                 false
         );
 
-        GroupValue enchantLoreRomanNumeralsGroup = new GroupValue("roman numerals", "roman numerals", ModuleCategory.RENDER)
+        GroupValue enchantLoreRomanNumeralsGroup = new GroupValue("roman numerals", "arabic numerals", ModuleCategory.RENDER)
             .setExpanded(ConfigManager.enchantLoreRomanNumeralsGroupExpanded)
             .setSubModuleSwitchChildName("arabic numerals")
             .addChild(new Option("arabic numerals", "arabic numerals", ConfigManager.enchantLoreArabicNumerals, ModuleCategory.RENDER))
@@ -877,15 +877,21 @@ public class ModuleManager {
             val -> ConfigManager.skinLayer3DEnabled = val
         );
         
+        GroupValue cullingRemoveRainSnowGroup = new GroupValue("remove rain&snow", "remove rain&snow", ModuleCategory.RENDER)
+            .setExpanded(ConfigManager.cullingRemoveRainSnowGroupExpanded)
+            .setSubModuleSwitchChildName("enabled")
+            .addChild(new Option("enabled", "enabled", ConfigManager.cullingRemoveRainSnow, ModuleCategory.RENDER))
+            .addChild(new Option("remove the filter", "remove the filter", ConfigManager.cullingRemoveWeatherFilter, ModuleCategory.RENDER));
+
         ModuleRegistry.registerModuleWithValues(
             "Culling", "Culling", ModuleCategory.RENDER,
             () -> ConfigManager.cullingEnabled,
             val -> ConfigManager.cullingEnabled = val,
-            new Option[]{
+            new com.shyeuar.baity.gui.value.Value[]{
                 new Option("hide dying mob", "hide dying mob", false, ModuleCategory.RENDER),
                 new Option("hide non-starred mob nametag", "hide non-starred mob nametag", false, ModuleCategory.RENDER),
                 withSeparator(new Option("remove underwater fog", "remove underwater fog", false, ModuleCategory.RENDER)),
-                new Option("remove rain&snow", "remove rain&snow", true, ModuleCategory.RENDER)
+                cullingRemoveRainSnowGroup
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
@@ -905,8 +911,18 @@ public class ModuleManager {
                 ),
                 new ModuleRegistry.ValueConfigInfo(
                     "remove rain&snow",
+                    () -> ConfigManager.cullingRemoveRainSnowGroupExpanded,
+                    val -> ConfigManager.cullingRemoveRainSnowGroupExpanded = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "enabled",
                     () -> ConfigManager.cullingRemoveRainSnow,
                     val -> ConfigManager.cullingRemoveRainSnow = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "remove the filter",
+                    () -> ConfigManager.cullingRemoveWeatherFilter,
+                    val -> ConfigManager.cullingRemoveWeatherFilter = (Boolean) val
                 )
             }
         );

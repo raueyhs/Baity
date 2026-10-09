@@ -9,6 +9,7 @@ import com.shyeuar.baity.gui.value.Value;
 import com.shyeuar.baity.gui.value.ValueStyle;
 import com.shyeuar.baity.gui.value.ButtonValue;
 import com.shyeuar.baity.gui.value.GroupValue;
+import com.shyeuar.baity.gui.value.Option;
 import com.shyeuar.baity.gui.value.EnchantLoreColorEditorValue;
 import com.shyeuar.baity.gui.value.GradientEditorValue;
 import com.shyeuar.baity.features.enchantlore.EnchantLore;
@@ -1272,10 +1273,22 @@ public class ClickGuiInputHandler {
                     subX2 = (int) com.shyeuar.baity.gui.value.ToggleRowValue.rowX2(subX2);
                 }
             }
-            if (style == ValueStyle.GROUP && value instanceof GroupValue) {
+            if (style == ValueStyle.GROUP && value instanceof GroupValue groupValue) {
                 if ((button == 0 || button == 1) &&
                     GuiRenderUtil.isHovered(subX1, (int) subModY, subX2, (int)(subModY + dims.subOptionHeight), coords.mouseX, coords.mouseY)) {
-                    ((GroupValue) value).toggleExpanded();
+                    if (button == 0) {
+                        Option groupSwitch = groupValue.getSubModuleSwitchChild();
+                        if (groupSwitch != null && groupSwitch.getValue() instanceof Boolean) {
+                            groupSwitch.setValue(!((Boolean) groupSwitch.getValue()));
+                            SoundUtils.playBubble();
+                            if (ConfigSynchronizer.hasValueConfig(module.getName(), groupSwitch.getName())) {
+                                ConfigSynchronizer.handleValueUpdate(module.getName(), groupSwitch.getName(), groupSwitch.getValue());
+                            }
+                            timer.reset();
+                            return true;
+                        }
+                    }
+                    groupValue.toggleExpanded();
                     if (ConfigSynchronizer.hasValueConfig(module.getName(), value.getName())) {
                         ConfigSynchronizer.handleValueUpdate(module.getName(), value.getName(), value.getValue());
                     }

@@ -1,5 +1,6 @@
 package com.shyeuar.baity.utils;
 
+import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.gui.module.Module;
 import com.shyeuar.baity.gui.value.GroupValue;
 import com.shyeuar.baity.gui.value.Option;
@@ -9,7 +10,13 @@ import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
 public class ModuleUtils {
-    
+
+    public static boolean shouldRemoveCullingWeatherFilter() {
+        return ConfigManager.cullingEnabled
+                && ConfigManager.cullingRemoveRainSnow
+                && ConfigManager.cullingRemoveWeatherFilter;
+    }
+
     public static boolean getOptionBoolean(Module module, String name, boolean def) {
         if (module == null) {
             return def;
@@ -130,24 +137,12 @@ public class ModuleUtils {
             if (parent == null) {
                 break;
             }
-            String switchName = parent.getSubModuleSwitchChildName();
-            if (switchName != null && !switchName.isEmpty()) {
-                Value switchChild = findNamedDirectChild(parent, switchName);
-                if (switchChild instanceof Option opt) {
-                    Object sv = opt.getValue();
-                    boolean switchOn = sv instanceof Boolean && (Boolean) sv;
-                    boolean isThisGroupsSwitchOption = false;
-                    if (cursor instanceof Option && switchName.equals(cursor.getName())) {
-                        for (Value c : parent.getChildren()) {
-                            if (c == cursor) {
-                                isThisGroupsSwitchOption = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (!switchOn && !isThisGroupsSwitchOption) {
-                        return false;
-                    }
+            Option groupSwitch = parent.getSubModuleSwitchChild();
+            if (groupSwitch != null) {
+                Object sv = groupSwitch.getValue();
+                boolean switchOn = sv instanceof Boolean && (Boolean) sv;
+                if (!switchOn && cursor != groupSwitch) {
+                    return false;
                 }
             }
             cursor = parent;
@@ -178,18 +173,6 @@ public class ModuleUtils {
                 if (deeper != null) {
                     return deeper;
                 }
-            }
-        }
-        return null;
-    }
-
-    private static Value findNamedDirectChild(GroupValue group, String childName) {
-        if (group == null || childName == null) {
-            return null;
-        }
-        for (Value c : group.getChildren()) {
-            if (c != null && childName.equals(c.getName())) {
-                return c;
             }
         }
         return null;

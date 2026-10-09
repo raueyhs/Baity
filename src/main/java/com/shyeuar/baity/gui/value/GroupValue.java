@@ -15,6 +15,7 @@ public class GroupValue implements Value {
     private boolean expanded;
     private boolean needsSeparator;
     private String subModuleSwitchChildName;
+    private Option subModuleSwitch;
 
     public GroupValue(String name, String displayName, ModuleCategory category) {
         this.name = name;
@@ -28,8 +29,12 @@ public class GroupValue implements Value {
         return this;
     }
 
-    public String getSubModuleSwitchChildName() {
-        return subModuleSwitchChildName;
+    public boolean hasSubModuleSwitch() {
+        return subModuleSwitchChildName != null && !subModuleSwitchChildName.isEmpty();
+    }
+
+    public Option getSubModuleSwitchChild() {
+        return subModuleSwitch;
     }
 
     public GroupValue setNeedsSeparator(boolean needsSeparator) {
@@ -51,6 +56,11 @@ public class GroupValue implements Value {
     }
 
     public GroupValue addChild(Value value) {
+        if (value instanceof Option option && hasSubModuleSwitch()
+                && subModuleSwitchChildName.equals(value.getName())) {
+            this.subModuleSwitch = option;
+            return this;
+        }
         this.children.add(value);
         return this;
     }

@@ -1,11 +1,13 @@
 package com.shyeuar.baity.mixin;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.gui.module.Module;
 import com.shyeuar.baity.gui.module.ModuleManager;
+import com.shyeuar.baity.utils.ModuleUtils;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -99,6 +101,63 @@ public class CullingMixin {
             if (m == null || !m.isEnabled()) return;
             if (!ConfigManager.cullingRemoveRainSnow) return;
             ci.cancel();
+        }
+    }
+
+    @Mixin(net.minecraft.world.attribute.EnvironmentAttributeSystem.class)
+    public static class RemoveWeatherFilterMixin {
+
+        @ModifyExpressionValue(method = "addDefaultLayers", require = 1, at = @At(value = "INVOKE",
+                target = "Lnet/minecraft/world/level/Level;canHaveWeather()Z"))
+        private static boolean baity$skipWeatherLayerForClientOnly(
+                boolean original,
+                @Local(argsOnly = true) net.minecraft.world.level.Level level) {
+            if (!original) return false;
+            if (!(level instanceof net.minecraft.client.multiplayer.ClientLevel)) return original;
+            return !ModuleUtils.shouldRemoveCullingWeatherFilter();
+        }
+    }
+
+    @Mixin(net.minecraft.client.renderer.fog.environment.AtmosphericFogEnvironment.class)
+    public static class RemoveWeatherFogFilterMixin {
+
+        @Shadow
+        private float rainFogMultiplier;
+
+        @Inject(method = "updateRainFogState", at = @At("HEAD"), cancellable = true, require = 1)
+        private void baity$skipRainFog(
+                net.minecraft.client.Camera camera,
+                net.minecraft.client.multiplayer.ClientLevel level,
+                net.minecraft.client.DeltaTracker deltaTracker,
+                CallbackInfo ci) {
+            if (!ModuleUtils.shouldRemoveCullingWeatherFilter()) return;
+            this.rainFogMultiplier = 0.0F;
+            ci.cancel();
+        }
+
+        @Inject(method = "applyWeatherDarken", at = @At("HEAD"), cancellable = true, require = 1)
+        private static void baity$skipWeatherDarken(
+                int color,
+                float rainLevel,
+                float thunderLevel,
+                CallbackInfoReturnable<Integer> cir) {
+            if (!ModuleUtils.shouldRemoveCullingWeatherFilter()) return;
+            cir.setReturnValue(color);
+        }
+    }
+
+    @Mixin(net.minecraft.client.renderer.SkyRenderer.class)
+    public static class RemoveWeatherSkyFilterMixin {
+
+        @Inject(method = "extractRenderState", at = @At("TAIL"), require = 1)
+        private void baity$keepSunAndMoon(
+                net.minecraft.client.multiplayer.ClientLevel level,
+                float partialTicks,
+                net.minecraft.client.Camera camera,
+                net.minecraft.client.renderer.state.level.SkyRenderState state,
+                CallbackInfo ci) {
+            if (!ModuleUtils.shouldRemoveCullingWeatherFilter()) return;
+            state.rainBrightness = 1.0F;
         }
     }
     

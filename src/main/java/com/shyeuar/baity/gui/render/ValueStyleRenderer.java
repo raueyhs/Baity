@@ -420,7 +420,7 @@ public class ValueStyleRenderer {
                               mouseX, mouseY, localAlpha,
                               getDisplayTextFormatter, listeningButtonValueName);
       } else if (style == ValueStyle.GROUP && value instanceof GroupValue) {
-          renderGroupValue(context, client, (GroupValue) value, theme, x1, y, x2, subOptionHeight,
+          renderGroupValue(context, client, module, (GroupValue) value, theme, x1, y, x2, subOptionHeight,
                   mouseX, mouseY, localAlpha, getTooltipText, getTooltipTextWithColors, hoveredTooltipInfo);
        } else if (style == ValueStyle.SLIDER && value instanceof SliderValue) {
            renderSliderValue(context, client, module, (SliderValue) value, theme,
@@ -525,7 +525,7 @@ public class ValueStyleRenderer {
        }
    }
 
-   public static void renderGroupValue(GuiGraphicsExtractor context, Minecraft client, GroupValue groupValue, Theme theme,
+   public static void renderGroupValue(GuiGraphicsExtractor context, Minecraft client, Module module, GroupValue groupValue, Theme theme,
                                        float x1, float y, float x2, float subOptionHeight,
                                        float mouseX, float mouseY, int localAlpha,
                                        java.util.function.Function<String, String> getTooltipText,
@@ -552,6 +552,18 @@ public class ValueStyleRenderer {
               ? (groupTint & 0x00FFFFFF) | (localAlpha << 24)
               : (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
       context.text(client.font, groupValue.getDisplayName(), (int)(x1 + 8), (int)(y + 6), textColor, false);
+
+      com.shyeuar.baity.gui.value.Option groupSwitch = groupValue.getSubModuleSwitchChild();
+      if (groupSwitch != null && groupSwitch.getValue() instanceof Boolean switchOn) {
+          int statusColor = switchOn
+                  ? com.shyeuar.baity.gui.theme.LinearTheme.ACCENT_PRIMARY.getRGB()
+                  : theme.FONT.getRGB();
+          if (!module.isEnabled()) {
+              statusColor = theme.FONT.getRGB();
+          }
+          statusColor = (statusColor & 0x00FFFFFF) | (localAlpha << 24);
+          context.text(client.font, switchOn ? "ON" : "OFF", (int)(x2 - 42), (int)(y + 6), statusColor, false);
+      }
 
       String arrow = groupValue.isExpanded() ? "▼" : "▶";
       int arrowColor = (theme.FONT_C.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
