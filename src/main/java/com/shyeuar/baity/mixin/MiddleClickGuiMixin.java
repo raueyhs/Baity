@@ -5,6 +5,7 @@ import com.shyeuar.baity.features.inventorytweaks.MiddleClickGui;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
+import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -28,7 +29,7 @@ public class MiddleClickGuiMixin {
                 ContainerInput actionType,
                 CallbackInfo ci
         ) {
-            if (actionType != ContainerInput.PICKUP || button != 0) {
+            if (actionType != ContainerInput.PICKUP || button != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
                 return;
             }
             if (MiddleClickGui.convertLeftClickToMiddleClick((AbstractContainerScreen<?>) (Object) this, slot)) {

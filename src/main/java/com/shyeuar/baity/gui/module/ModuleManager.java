@@ -1059,8 +1059,7 @@ public class ModuleManager {
                 ModuleCategory.QOL,
                 ButtonValue.ButtonValueType.KEYBIND,
                 false
-            ))
-            .addChild(new Option("debug", "debug", ConfigManager.middleClickGuiDebug, ModuleCategory.QOL));
+            ));
 
         GroupValue inventorySidePanelGroup = new GroupValue("side panel", "side panel", ModuleCategory.QOL)
             .setExpanded(ConfigManager.inventorySidePanelGroupExpanded)
@@ -1092,11 +1091,6 @@ public class ModuleManager {
                     "hold to cancel",
                     () -> ConfigManager.middleClickGuiHoldToCancel,
                     val -> ConfigManager.middleClickGuiHoldToCancel = ((Number) val).intValue()
-                ),
-                new ModuleRegistry.ValueConfigInfo(
-                    "debug",
-                    () -> ConfigManager.middleClickGuiDebug,
-                    val -> ConfigManager.middleClickGuiDebug = (Boolean) val
                 ),
                 new ModuleRegistry.ValueConfigInfo(
                     "remove recipe book",
@@ -1735,11 +1729,6 @@ public class ModuleManager {
         TooltipManager.registerTooltip(
             "hold to cancel",
             "Hold to temporarily disable middle click.",
-            0xFFFFFF
-        );
-        TooltipManager.registerTooltip(
-            "debug",
-            "Show a chat message whenever a left click is sent as a middle click.",
             0xFFFFFF
         );
         TooltipManager.registerTooltip(

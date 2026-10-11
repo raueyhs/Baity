@@ -3,7 +3,6 @@ package com.shyeuar.baity.features.inventorytweaks;
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.utils.KeyMappingUtils;
 import com.shyeuar.baity.utils.LocateUtils;
-import com.shyeuar.baity.utils.MessageUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
@@ -128,11 +127,6 @@ public final class MiddleClickGui {
 
         client.gameMode.handleContainerInput(screen.getMenu().containerId, slot.index,
                 GLFW.GLFW_MOUSE_BUTTON_MIDDLE, ContainerInput.CLONE, client.player);
-
-        if (ConfigManager.middleClickGuiDebug) {
-            MessageUtils.sendBaityMessage("Sent a middle click for slot " + slot.index
-                    + " in \"" + LocateUtils.toPlainText(plainTitle) + "\".");
-        }
         return true;
     }
 

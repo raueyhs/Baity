@@ -419,7 +419,6 @@ public class CommandKeybindsScreen extends Screen {
             if (rowY2 > LIST_BOTTOM || rowY < ROW_TOP) {
                 break;
             }
-            int rowX1 = ROW_PADDING;
             int rowX2 = PANEL_WIDTH - ROW_PADDING - SCROLLBAR_WIDTH - 4;
             int centerY = (rowY + rowY2) / 2;
 

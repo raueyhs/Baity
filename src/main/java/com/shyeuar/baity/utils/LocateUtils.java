@@ -116,6 +116,7 @@ public final class LocateUtils {
     private static final long LOCRAW_PENDING_TIMEOUT_MS = 5000L;
     private static final long LOCRAW_STALE_MS = 10000L;
 
+    // locraw 的 server / gametype 目前只记录不读取，保留完整响应以便后续按服务器或玩法区分。
     private static String locrawServer = "";
     private static String locrawGametype = "";
     private static String locrawMode = "";

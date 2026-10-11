@@ -162,7 +162,6 @@ public class ConfigManager {
     public static boolean inventoryMiddleClickGroupExpanded = false;
     public static boolean middleClickGuiEnabled = false;
     public static int middleClickGuiHoldToCancel = 341;
-    public static boolean middleClickGuiDebug = false;
     public static boolean inventorySidePanelGroupExpanded = false;
     public static boolean sidePanelEnabled = false;
     public static boolean sidePanelPetEnabled = true;
@@ -720,9 +719,6 @@ public class ConfigManager {
         registerField("InventoryTweaksMiddleClickHoldToCancel", Integer.class,
             c -> ConfigManager.middleClickGuiHoldToCancel,
             (c, v) -> ConfigManager.middleClickGuiHoldToCancel = resolveKeyCode(v));
-        registerField("InventoryTweaksMiddleClickDebug", Boolean.class,
-            c -> ConfigManager.middleClickGuiDebug,
-            (c, v) -> ConfigManager.middleClickGuiDebug = (Boolean) v);
         registerField("InventoryTweaksSidePanelGroupExpanded", Boolean.class,
             c -> ConfigManager.inventorySidePanelGroupExpanded,
             (c, v) -> ConfigManager.inventorySidePanelGroupExpanded = (Boolean) v);
