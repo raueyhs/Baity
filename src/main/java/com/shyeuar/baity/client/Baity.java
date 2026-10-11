@@ -75,7 +75,7 @@ public class Baity implements ClientModInitializer {
         ChatChannelSwitcher.init();
         com.shyeuar.baity.features.enchantlore.EnchantLore.init();
         com.shyeuar.baity.features.Keybinds.init();
-        com.shyeuar.baity.features.sidepanel.SidePanel.init();
+        com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanel.init();
         ModernTooltip.init();
         com.shyeuar.baity.features.hollowscanner.HollowScanner.init();
         com.shyeuar.baity.utils.LocateUtils.registerClientEvents();

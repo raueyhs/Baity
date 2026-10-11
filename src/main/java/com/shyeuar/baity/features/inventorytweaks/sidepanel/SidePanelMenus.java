@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.sidepanel;
+package com.shyeuar.baity.features.inventorytweaks.sidepanel;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

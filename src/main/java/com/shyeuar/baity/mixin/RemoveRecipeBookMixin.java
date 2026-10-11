@@ -2,7 +2,7 @@ package com.shyeuar.baity.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import com.shyeuar.baity.config.ConfigManager;
+import com.shyeuar.baity.utils.ModuleUtils;
 import net.minecraft.client.gui.screens.inventory.AbstractRecipeBookScreen;
 import net.minecraft.client.gui.screens.recipebook.RecipeBookComponent;
 import org.objectweb.asm.Opcodes;
@@ -18,7 +18,7 @@ public class RemoveRecipeBookMixin {
 
         @Inject(method = "initButton", at = @At("HEAD"), cancellable = true)
         private void baity$skipRecipeBookButton(CallbackInfo ci) {
-            if (ConfigManager.removeRecipeBookEnabled) {
+            if (ModuleUtils.shouldRemoveRecipeBook()) {
                 ci.cancel();
             }
         }
@@ -32,7 +32,7 @@ public class RemoveRecipeBookMixin {
             at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD, target = "Lnet/minecraft/client/gui/screens/recipebook/RecipeBookComponent;visible:Z")
         )
         private void baity$neverVisibleOnScreenInit(RecipeBookComponent<?> component, boolean value, Operation<Void> original) {
-            if (ConfigManager.removeRecipeBookEnabled) {
+            if (ModuleUtils.shouldRemoveRecipeBook()) {
                 return;
             }
             original.call(component, value);
@@ -40,14 +40,14 @@ public class RemoveRecipeBookMixin {
 
         @Inject(method = "setVisible", at = @At("HEAD"), cancellable = true)
         private void baity$keepRecipeBookHidden(boolean visible, CallbackInfo ci) {
-            if (ConfigManager.removeRecipeBookEnabled) {
+            if (ModuleUtils.shouldRemoveRecipeBook()) {
                 ci.cancel();
             }
         }
 
         @Inject(method = "toggleVisibility", at = @At("HEAD"), cancellable = true)
         private void baity$blockRecipeBookToggle(CallbackInfo ci) {
-            if (ConfigManager.removeRecipeBookEnabled) {
+            if (ModuleUtils.shouldRemoveRecipeBook()) {
                 ci.cancel();
             }
         }

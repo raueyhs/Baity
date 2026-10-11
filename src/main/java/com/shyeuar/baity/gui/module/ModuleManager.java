@@ -1048,14 +1048,71 @@ public class ModuleManager {
             }
         );
 
+        GroupValue inventoryMiddleClickGroup = new GroupValue("middle click", "middle click", ModuleCategory.QOL)
+            .setExpanded(ConfigManager.inventoryMiddleClickGroupExpanded)
+            .setSubModuleSwitchChildName("middle click enabled")
+            .addChild(new Option("middle click enabled", "enabled", ConfigManager.middleClickGuiEnabled, ModuleCategory.QOL))
+            .addChild(new ButtonValue(
+                "hold to cancel",
+                "hold to cancel",
+                ConfigManager.middleClickGuiHoldToCancel,
+                ModuleCategory.QOL,
+                ButtonValue.ButtonValueType.KEYBIND,
+                false
+            ))
+            .addChild(new Option("debug", "debug", ConfigManager.middleClickGuiDebug, ModuleCategory.QOL));
+
+        GroupValue inventorySidePanelGroup = new GroupValue("side panel", "side panel", ModuleCategory.QOL)
+            .setExpanded(ConfigManager.inventorySidePanelGroupExpanded)
+            .setSubModuleSwitchChildName("side panel enabled")
+            .addChild(new Option("side panel enabled", "enabled", ConfigManager.sidePanelEnabled, ModuleCategory.QOL))
+            .addChild(new Option("pet panel", "pet panel", ConfigManager.sidePanelPetEnabled, ModuleCategory.QOL));
+
         ModuleRegistry.registerModuleWithValues(
-            "SidePanel", "SidePanel", ModuleCategory.QOL,
-            () -> ConfigManager.sidePanelEnabled,
-            val -> ConfigManager.sidePanelEnabled = val,
+            "InventoryTweaks", "InventoryTweaks", ModuleCategory.QOL,
+            () -> ConfigManager.inventoryTweaksEnabled,
+            val -> ConfigManager.inventoryTweaksEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
-                new Option("pet panel", "pet panel", ConfigManager.sidePanelPetEnabled, ModuleCategory.QOL)
+                inventoryMiddleClickGroup,
+                withSeparator(new Option("remove recipe book", "remove recipe book", ConfigManager.removeRecipeBookEnabled, ModuleCategory.QOL)),
+                withSeparator(inventorySidePanelGroup)
             },
             new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "middle click",
+                    () -> ConfigManager.inventoryMiddleClickGroupExpanded,
+                    val -> ConfigManager.inventoryMiddleClickGroupExpanded = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "middle click enabled",
+                    () -> ConfigManager.middleClickGuiEnabled,
+                    val -> ConfigManager.middleClickGuiEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "hold to cancel",
+                    () -> ConfigManager.middleClickGuiHoldToCancel,
+                    val -> ConfigManager.middleClickGuiHoldToCancel = ((Number) val).intValue()
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "debug",
+                    () -> ConfigManager.middleClickGuiDebug,
+                    val -> ConfigManager.middleClickGuiDebug = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "remove recipe book",
+                    () -> ConfigManager.removeRecipeBookEnabled,
+                    val -> ConfigManager.removeRecipeBookEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "side panel",
+                    () -> ConfigManager.inventorySidePanelGroupExpanded,
+                    val -> ConfigManager.inventorySidePanelGroupExpanded = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "side panel enabled",
+                    () -> ConfigManager.sidePanelEnabled,
+                    val -> ConfigManager.sidePanelEnabled = (Boolean) val
+                ),
                 new ModuleRegistry.ValueConfigInfo(
                     "pet panel",
                     () -> ConfigManager.sidePanelPetEnabled,
@@ -1586,12 +1643,6 @@ public class ModuleManager {
             val -> ConfigManager.oldSneakingEnabled = val
         );
 
-        ModuleRegistry.registerSimpleModule(
-            "RemoveRecipeBook", "RemoveRecipeBook", ModuleCategory.QOL,
-            () -> ConfigManager.removeRecipeBookEnabled,
-            val -> ConfigManager.removeRecipeBookEnabled = val
-        );
-
         ModuleRegistry.registerModuleWithValues(
             "FishHookTimer", "FishHookTimer", ModuleCategory.QOL,
             () -> ConfigManager.fishHookTimerEnabled,
@@ -1620,6 +1671,8 @@ public class ModuleManager {
             ((Option) value).setNeedsSeparator(true);
         } else if (value instanceof com.shyeuar.baity.gui.value.SliderValue) {
             ((com.shyeuar.baity.gui.value.SliderValue) value).setNeedsSeparator(true);
+        } else if (value instanceof GroupValue) {
+            ((GroupValue) value).setNeedsSeparator(true);
         }
         return value;
     }
@@ -1670,8 +1723,28 @@ public class ModuleManager {
         TooltipManager.registerTooltip("area blacklist", "disable effect when in.", 0xFFFFFF);
         TooltipManager.registerTooltip("SoftFullscreen", "Borderless Fullscreen.", 0xFFFFFF);
         TooltipManager.registerTooltip(
-            "SidePanel",
-            "Display your equipment and pet on side of inventory.",
+            "InventoryTweaks",
+            "Client-side tweaks for inventories and the vanilla container guis.",
+            0xFFFFFF
+        );
+        TooltipManager.registerTooltip(
+            "middle click",
+            "Replace left clicks in guis with middle clicks.",
+            0xFFFFFF
+        );
+        TooltipManager.registerTooltip(
+            "hold to cancel",
+            "Hold to temporarily disable middle click.",
+            0xFFFFFF
+        );
+        TooltipManager.registerTooltip(
+            "debug",
+            "Show a chat message whenever a left click is sent as a middle click.",
+            0xFFFFFF
+        );
+        TooltipManager.registerTooltip(
+            "side panel",
+            "Display currently equipped eq and pet side panel in inventory.",
             0xFFFFFF
         );
         TooltipManager.registerTooltip(
@@ -1700,7 +1773,7 @@ public class ModuleManager {
         TooltipManager.registerTooltip("OldSneaking",
             MessageUtils.createColoredText("Restore the sneaking animation of version 1.7.", 0xFFFFFF)
                 .append(MessageUtils.createColoredText(" Fake sneaking eye height!", 0xFFFF00)));
-        TooltipManager.registerTooltip("RemoveRecipeBook", "Remove the recipe book button and keep the recipe book hidden.", 0xFFFFFF);
+        TooltipManager.registerTooltip("remove recipe book", "Remove the recipe book button and keep the recipe book hidden.", 0xFFFFFF);
         TooltipManager.registerTooltip("arabic numerals", "Replace roman number with arabic number.", 0xFFFFFF);
         TooltipManager.registerTooltip("transparentize other tags", "Remove the black background of tags.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoTextShadow", "Disable all the text shadow in game.", 0xFFFFFF);

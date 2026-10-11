@@ -558,7 +558,7 @@ public class ValueStyleRenderer {
           int statusColor = switchOn
                   ? com.shyeuar.baity.gui.theme.LinearTheme.ACCENT_PRIMARY.getRGB()
                   : theme.FONT.getRGB();
-          if (!module.isEnabled()) {
+          if (!com.shyeuar.baity.utils.ModuleUtils.shouldExecuteSubModule(module, groupValue)) {
               statusColor = theme.FONT.getRGB();
           }
           statusColor = (statusColor & 0x00FFFFFF) | (localAlpha << 24);
@@ -615,7 +615,7 @@ public class ValueStyleRenderer {
            status = val != null ? val.toString() : "";
            statusColor = theme.FONT.getRGB();
        }
-       if (!module.isEnabled()) {
+       if (!com.shyeuar.baity.utils.ModuleUtils.shouldExecuteSubModule(module, value)) {
            statusColor = theme.FONT.getRGB();
        }
        statusColor = (statusColor & 0x00FFFFFF) | (localAlpha << 24);

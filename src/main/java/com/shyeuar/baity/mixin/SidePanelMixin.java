@@ -1,10 +1,10 @@
 package com.shyeuar.baity.mixin;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.shyeuar.baity.features.sidepanel.SidePanel;
-import com.shyeuar.baity.features.sidepanel.SidePanelEquipment;
-import com.shyeuar.baity.features.sidepanel.SidePanelPets;
-import com.shyeuar.baity.features.sidepanel.SidePanelSlots;
+import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanel;
+import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanelEquipment;
+import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanelPets;
+import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanelSlots;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;

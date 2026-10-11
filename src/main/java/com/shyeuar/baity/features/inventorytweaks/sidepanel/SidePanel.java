@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.sidepanel;
+package com.shyeuar.baity.features.inventorytweaks.sidepanel;
 
 import com.mojang.serialization.Codec;
 import com.shyeuar.baity.config.BaityConfigDir;
@@ -192,7 +192,7 @@ public final class SidePanel {
     }
 
     public static boolean isModuleEnabled() {
-        var module = ModuleManager.getModuleByName("SidePanel");
+        var module = ModuleManager.getModuleByName("InventoryTweaks");
         return module != null && module.isEnabled() && ConfigManager.sidePanelEnabled;
     }
 

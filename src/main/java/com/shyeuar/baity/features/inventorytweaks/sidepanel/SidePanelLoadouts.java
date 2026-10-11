@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.sidepanel;
+package com.shyeuar.baity.features.inventorytweaks.sidepanel;
 
 import com.mojang.serialization.Codec;
 import com.shyeuar.baity.config.BaityConfigDir;

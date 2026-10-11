@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.sidepanel;
+package com.shyeuar.baity.features.inventorytweaks.sidepanel;
 
 import com.shyeuar.baity.mixin.accessor.AbstractContainerScreenInvoker;
 import com.mojang.blaze3d.pipeline.RenderPipeline;

@@ -17,6 +17,10 @@ public class ModuleUtils {
                 && ConfigManager.cullingRemoveWeatherFilter;
     }
 
+    public static boolean shouldRemoveRecipeBook() {
+        return ConfigManager.inventoryTweaksEnabled && ConfigManager.removeRecipeBookEnabled;
+    }
+
     public static boolean getOptionBoolean(Module module, String name, boolean def) {
         if (module == null) {
             return def;

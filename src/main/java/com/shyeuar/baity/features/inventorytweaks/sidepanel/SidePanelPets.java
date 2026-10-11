@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.sidepanel;
+package com.shyeuar.baity.features.inventorytweaks.sidepanel;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;

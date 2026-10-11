@@ -158,6 +158,12 @@ public class ConfigManager {
     public static boolean cameraNoClipEnabled = false;
 
     public static boolean softFullscreenEnabled = false;
+    public static boolean inventoryTweaksEnabled = false;
+    public static boolean inventoryMiddleClickGroupExpanded = false;
+    public static boolean middleClickGuiEnabled = false;
+    public static int middleClickGuiHoldToCancel = 341;
+    public static boolean middleClickGuiDebug = false;
+    public static boolean inventorySidePanelGroupExpanded = false;
     public static boolean sidePanelEnabled = false;
     public static boolean sidePanelPetEnabled = true;
     
@@ -518,7 +524,7 @@ public class ConfigManager {
             (c, v) -> ConfigManager.keybindsWardrobePreventUnequip = (Boolean) v);
         registerField("KeybindsWardrobeHoldToUnequip", Integer.class,
             c -> ConfigManager.keybindsWardrobeHoldToUnequip,
-            (c, v) -> ConfigManager.keybindsWardrobeHoldToUnequip = resolveHoldToUnequipKey(v));
+            (c, v) -> ConfigManager.keybindsWardrobeHoldToUnequip = resolveKeyCode(v));
         registerField("KeybindsEquipmentGroupExpanded", Boolean.class,
             c -> ConfigManager.keybindsEquipmentGroupExpanded,
             (c, v) -> ConfigManager.keybindsEquipmentGroupExpanded = (Boolean) v);
@@ -533,7 +539,7 @@ public class ConfigManager {
             (c, v) -> ConfigManager.keybindsEquipmentPreventUnequip = (Boolean) v);
         registerField("KeybindsEquipmentHoldToUnequip", Integer.class,
             c -> ConfigManager.keybindsEquipmentHoldToUnequip,
-            (c, v) -> ConfigManager.keybindsEquipmentHoldToUnequip = resolveHoldToUnequipKey(v));
+            (c, v) -> ConfigManager.keybindsEquipmentHoldToUnequip = resolveKeyCode(v));
         registerField("KeybindsLoadoutGroupExpanded", Boolean.class,
             c -> ConfigManager.keybindsLoadoutGroupExpanded,
             (c, v) -> ConfigManager.keybindsLoadoutGroupExpanded = (Boolean) v);
@@ -702,6 +708,24 @@ public class ConfigManager {
         registerField("SoftFullscreen", Boolean.class,
             c -> ConfigManager.softFullscreenEnabled,
             (c, v) -> ConfigManager.softFullscreenEnabled = (Boolean) v);
+        registerField("InventoryTweaks", Boolean.class,
+            c -> ConfigManager.inventoryTweaksEnabled,
+            (c, v) -> ConfigManager.inventoryTweaksEnabled = (Boolean) v);
+        registerField("InventoryTweaksMiddleClickGroupExpanded", Boolean.class,
+            c -> ConfigManager.inventoryMiddleClickGroupExpanded,
+            (c, v) -> ConfigManager.inventoryMiddleClickGroupExpanded = (Boolean) v);
+        registerField("InventoryTweaksMiddleClick", Boolean.class,
+            c -> ConfigManager.middleClickGuiEnabled,
+            (c, v) -> ConfigManager.middleClickGuiEnabled = (Boolean) v);
+        registerField("InventoryTweaksMiddleClickHoldToCancel", Integer.class,
+            c -> ConfigManager.middleClickGuiHoldToCancel,
+            (c, v) -> ConfigManager.middleClickGuiHoldToCancel = resolveKeyCode(v));
+        registerField("InventoryTweaksMiddleClickDebug", Boolean.class,
+            c -> ConfigManager.middleClickGuiDebug,
+            (c, v) -> ConfigManager.middleClickGuiDebug = (Boolean) v);
+        registerField("InventoryTweaksSidePanelGroupExpanded", Boolean.class,
+            c -> ConfigManager.inventorySidePanelGroupExpanded,
+            (c, v) -> ConfigManager.inventorySidePanelGroupExpanded = (Boolean) v);
         registerField("SidePanel", Boolean.class,
             c -> ConfigManager.sidePanelEnabled,
             (c, v) -> ConfigManager.sidePanelEnabled = (Boolean) v);
@@ -1063,7 +1087,7 @@ public class ConfigManager {
         CONFIG_FIELDS.put(key, new SettingField(key, getter, setter, type));
     }
 
-    private static int resolveHoldToUnequipKey(Object value) {
+    private static int resolveKeyCode(Object value) {
         if (value instanceof Number number) {
             return number.intValue();
         }

@@ -1,9 +1,9 @@
 package com.shyeuar.baity.features;
 
 import com.shyeuar.baity.config.ConfigManager;
-import com.shyeuar.baity.features.sidepanel.SidePanel;
-import com.shyeuar.baity.features.sidepanel.SidePanelEquipment;
-import com.shyeuar.baity.features.sidepanel.SidePanelMenus;
+import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanel;
+import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanelEquipment;
+import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanelMenus;
 import com.shyeuar.baity.gui.module.ModuleManager;
 import com.shyeuar.baity.utils.KeyMappingUtils;
 import com.shyeuar.baity.utils.LocateUtils;

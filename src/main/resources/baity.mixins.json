@@ -96,6 +96,7 @@
     "PaperDollArmorMixin$CustomHeadLayerMixin",
     "KeybindsMixin$ContainerScreenMixin",
     "KeybindsMixin$GameModeMixin",
+    "MiddleClickGuiMixin$ContainerScreenMixin",
     "accessor.WindowInvoker",
     "accessor.MultiPlayerGameModeAccessor",
     "accessor.AbstractContainerScreenInvoker",

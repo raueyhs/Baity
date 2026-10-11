@@ -1,7 +1,7 @@
 package com.shyeuar.baity.utils;
 
 import com.shyeuar.baity.compatibility.HypixelModApiLocation;
-import com.shyeuar.baity.features.sidepanel.SidePanel;
+import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanel;
 import com.shyeuar.baity.mixin.PlayerListHudMixin;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
