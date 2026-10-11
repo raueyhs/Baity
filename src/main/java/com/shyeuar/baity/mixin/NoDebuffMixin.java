@@ -32,7 +32,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-public class NodebuffMixin {
+public class NoDebuffMixin {
     
     @Mixin(GameRenderer.class)
     public static class GameRendererMixin {
@@ -72,12 +72,12 @@ public class NodebuffMixin {
         }
 
         private static boolean shouldRemoveNausea() {
-            Module module = ModuleManager.getModuleByName("Nodebuff");
+            Module module = ModuleManager.getModuleByName("NoDebuff");
             return module != null && module.isEnabled() && ModuleUtils.getOptionBoolean(module, "remove nausea", true);
         }
 
         private static boolean shouldRemoveBlindness() {
-            Module module = ModuleManager.getModuleByName("Nodebuff");
+            Module module = ModuleManager.getModuleByName("NoDebuff");
             return module != null && module.isEnabled() && ModuleUtils.getOptionBoolean(module, "remove blindness", true);
         }
     }
@@ -105,7 +105,7 @@ public class NodebuffMixin {
         }
 
         private static boolean shouldRemoveDarkness() {
-            Module module = ModuleManager.getModuleByName("Nodebuff");
+            Module module = ModuleManager.getModuleByName("NoDebuff");
             return module != null && module.isEnabled() && ModuleUtils.getOptionBoolean(module, "remove darkness", true);
         }
     }
@@ -122,7 +122,7 @@ public class NodebuffMixin {
         }
 
         private static boolean shouldRemoveDarkness() {
-            Module module = ModuleManager.getModuleByName("Nodebuff");
+            Module module = ModuleManager.getModuleByName("NoDebuff");
             return module != null && module.isEnabled() && ModuleUtils.getOptionBoolean(module, "remove darkness", true);
         }
     }
@@ -139,7 +139,7 @@ public class NodebuffMixin {
         }
 
         private static boolean shouldRemoveDarkness() {
-            Module module = ModuleManager.getModuleByName("Nodebuff");
+            Module module = ModuleManager.getModuleByName("NoDebuff");
             return module != null && module.isEnabled() && ModuleUtils.getOptionBoolean(module, "remove darkness", true);
         }
     }
@@ -155,7 +155,7 @@ public class NodebuffMixin {
         }
 
         private static boolean shouldRemoveDarkness() {
-            Module module = ModuleManager.getModuleByName("Nodebuff");
+            Module module = ModuleManager.getModuleByName("NoDebuff");
             return module != null && module.isEnabled() && ModuleUtils.getOptionBoolean(module, "remove darkness", true);
         }
     }
@@ -171,7 +171,7 @@ public class NodebuffMixin {
         }
 
         private static boolean shouldRemoveNausea() {
-            Module module = ModuleManager.getModuleByName("Nodebuff");
+            Module module = ModuleManager.getModuleByName("NoDebuff");
             return module != null && module.isEnabled() && ModuleUtils.getOptionBoolean(module, "remove nausea", true);
         }
     }

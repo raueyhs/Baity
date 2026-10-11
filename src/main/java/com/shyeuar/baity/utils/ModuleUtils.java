@@ -21,6 +21,14 @@ public class ModuleUtils {
         return ConfigManager.inventoryTweaksEnabled && ConfigManager.removeRecipeBookEnabled;
     }
 
+    public static boolean shouldDisableCameraClip() {
+        return ConfigManager.cameraTweaksEnabled && ConfigManager.cameraNoClipEnabled;
+    }
+
+    public static boolean shouldCancelHurtCam() {
+        return ConfigManager.cameraTweaksEnabled && ConfigManager.noHurtCamEnabled;
+    }
+
     public static boolean getOptionBoolean(Module module, String name, boolean def) {
         if (module == null) {
             return def;

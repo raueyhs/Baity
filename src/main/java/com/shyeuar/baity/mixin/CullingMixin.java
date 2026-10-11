@@ -184,8 +184,7 @@ public class CullingMixin {
         
         @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true)
         private void baity$cancelHurtCam(CameraRenderState cameraState, PoseStack matrices, CallbackInfo ci) {
-            Module m = ModuleManager.getModuleByName("NoHurtCam");
-            if (m != null && m.isEnabled()) {
+            if (ModuleUtils.shouldCancelHurtCam()) {
                 ci.cancel();
             }
         }

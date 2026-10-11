@@ -294,7 +294,7 @@ public class ModuleManager {
         );
         
         ModuleRegistry.registerModuleWithValues(
-            "NoSwimPose", "NoSwimPose", ModuleCategory.QOL,
+            "NoSwimPose", "NoSwimPose", ModuleCategory.RENDER,
             () -> ConfigManager.noSwimPoseEnabled,
             val -> ConfigManager.noSwimPoseEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
@@ -1001,22 +1001,32 @@ public class ModuleManager {
             }
         );
         
-        ModuleRegistry.registerSimpleModule(
-            "NoHurtCam", "NoHurtCam", ModuleCategory.QOL,
-            () -> ConfigManager.noHurtCamEnabled,
-            val -> ConfigManager.noHurtCamEnabled = val
+        ModuleRegistry.registerModuleWithValues(
+            "CameraTweaks", "CameraTweaks", ModuleCategory.RENDER,
+            () -> ConfigManager.cameraTweaksEnabled,
+            val -> ConfigManager.cameraTweaksEnabled = val,
+            new com.shyeuar.baity.gui.value.Value[]{
+                new Option("no camera clip", "no camera clip", ConfigManager.cameraNoClipEnabled, ModuleCategory.RENDER),
+                new Option("no hurt cam", "no hurt cam", ConfigManager.noHurtCamEnabled, ModuleCategory.RENDER)
+            },
+            new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "no camera clip",
+                    () -> ConfigManager.cameraNoClipEnabled,
+                    val -> ConfigManager.cameraNoClipEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "no hurt cam",
+                    () -> ConfigManager.noHurtCamEnabled,
+                    val -> ConfigManager.noHurtCamEnabled = (Boolean) val
+                )
+            }
         );
 
         ModuleRegistry.registerSimpleModule(
-            "SoftFullscreen", "SoftFullscreen", ModuleCategory.QOL,
+            "SoftFullscreen", "SoftFullscreen", ModuleCategory.RENDER,
             () -> ConfigManager.softFullscreenEnabled,
             val -> ConfigManager.softFullscreenEnabled = val
-        );
-
-        ModuleRegistry.registerSimpleModule(
-            "CameraNoClip", "CameraNoClip", ModuleCategory.QOL,
-            () -> ConfigManager.cameraNoClipEnabled,
-            val -> ConfigManager.cameraNoClipEnabled = val
         );
 
         ModuleRegistry.registerModuleWithValues(
@@ -1072,9 +1082,9 @@ public class ModuleManager {
             () -> ConfigManager.inventoryTweaksEnabled,
             val -> ConfigManager.inventoryTweaksEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
-                inventoryMiddleClickGroup,
-                withSeparator(new Option("remove recipe book", "remove recipe book", ConfigManager.removeRecipeBookEnabled, ModuleCategory.QOL)),
-                withSeparator(inventorySidePanelGroup)
+                inventorySidePanelGroup,
+                new Option("remove recipe book", "remove recipe book", ConfigManager.removeRecipeBookEnabled, ModuleCategory.QOL),
+                withSeparator(inventoryMiddleClickGroup)
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
@@ -1167,7 +1177,7 @@ public class ModuleManager {
             .addChild(new com.shyeuar.baity.gui.value.SliderValue("chroma size", "chroma size", 2.5, 0.5, 10.0, 0.1, ModuleCategory.RENDER));
 
         ModuleRegistry.registerModuleWithValues(
-            "PrismBreak", "prismatic breaking glow", ModuleCategory.RENDER,
+            "PrismBreak", "prismatic breaking glow", ModuleCategory.MISC,
             () -> ConfigManager.prismBreakEnabled,
             val -> ConfigManager.prismBreakEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
@@ -1395,9 +1405,9 @@ public class ModuleManager {
         );
 
         ModuleRegistry.registerModuleWithValues(
-            "Nodebuff", "Nodebuff", ModuleCategory.RENDER,
-            () -> ConfigManager.nodebuffEnabled,
-            val -> ConfigManager.nodebuffEnabled = val,
+            "NoDebuff", "NoDebuff", ModuleCategory.RENDER,
+            () -> ConfigManager.noDebuffEnabled,
+            val -> ConfigManager.noDebuffEnabled = val,
             new Option[]{
                 new Option("remove nausea", "remove nausea", true, ModuleCategory.RENDER),
                 new Option("remove blindness", "remove blindness", true, ModuleCategory.RENDER),
@@ -1406,18 +1416,18 @@ public class ModuleManager {
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
                     "remove nausea",
-                    () -> ConfigManager.nodebuffRemoveNausea,
-                    val -> ConfigManager.nodebuffRemoveNausea = (Boolean) val
+                    () -> ConfigManager.noDebuffRemoveNausea,
+                    val -> ConfigManager.noDebuffRemoveNausea = (Boolean) val
                 ),
                 new ModuleRegistry.ValueConfigInfo(
                     "remove blindness",
-                    () -> ConfigManager.nodebuffRemoveBlindness,
-                    val -> ConfigManager.nodebuffRemoveBlindness = (Boolean) val
+                    () -> ConfigManager.noDebuffRemoveBlindness,
+                    val -> ConfigManager.noDebuffRemoveBlindness = (Boolean) val
                 ),
                 new ModuleRegistry.ValueConfigInfo(
                     "remove darkness",
-                    () -> ConfigManager.nodebuffRemoveDarkness,
-                    val -> ConfigManager.nodebuffRemoveDarkness = (Boolean) val
+                    () -> ConfigManager.noDebuffRemoveDarkness,
+                    val -> ConfigManager.noDebuffRemoveDarkness = (Boolean) val
                 )
             }
         );
@@ -1715,6 +1725,7 @@ public class ModuleManager {
         TooltipManager.registerTooltip("FancyCreeperVeil", "Replace the wither cloak ability creeper model to a fancy one.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoSwimPose", "Only disables the swimming pose and eye height change on your client.", 0xFFFFFF);
         TooltipManager.registerTooltip("area blacklist", "disable effect when in.", 0xFFFFFF);
+        TooltipManager.registerTooltip("CameraTweaks", "Client-side tweaks for the third-person camera.", 0xFFFFFF);
         TooltipManager.registerTooltip("SoftFullscreen", "Borderless Fullscreen.", 0xFFFFFF);
         TooltipManager.registerTooltip(
             "InventoryTweaks",

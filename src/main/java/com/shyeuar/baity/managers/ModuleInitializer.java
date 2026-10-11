@@ -22,7 +22,7 @@ public class ModuleInitializer {
             "compact damage number"
     );
     private static final Set<String> HIGHLIGHTS_OPTIONS = Set.of("shulker", "invisibug", "safari", "pest");
-    private static final Set<String> NODEBUFF_OPTIONS = Set.of("remove nausea", "remove blindness", "remove darkness");
+    private static final Set<String> NO_DEBUFF_OPTIONS = Set.of("remove nausea", "remove blindness", "remove darkness");
 
     public static boolean isHiddenGuiValue(String valueName) {
         return FANCYDMGSPLASH_HIDDEN_GUI.contains(valueName);
@@ -38,7 +38,7 @@ public class ModuleInitializer {
         initializePlayerESP();
         initializeFancyDmgSplash();
         initializeHighlights();
-        initializeNodebuff();
+        initializeNoDebuff();
         initializeModernTooltip();
         initializeMiscModules();
         
@@ -249,16 +249,16 @@ public class ModuleInitializer {
         }
     }
     
-    private static void initializeNodebuff() {
-        Module nodebuff = ModuleManager.getModuleByName("Nodebuff");
-        if (nodebuff != null) {
-            nodebuff.setEnabled(ConfigManager.nodebuffEnabled);
-            for (Value v : nodebuff.getValues()) {
-                if (NODEBUFF_OPTIONS.contains(v.getName())) {
+    private static void initializeNoDebuff() {
+        Module noDebuff = ModuleManager.getModuleByName("NoDebuff");
+        if (noDebuff != null) {
+            noDebuff.setEnabled(ConfigManager.noDebuffEnabled);
+            for (Value v : noDebuff.getValues()) {
+                if (NO_DEBUFF_OPTIONS.contains(v.getName())) {
                     switch (v.getName()) {
-                        case "remove nausea" -> v.setValue(ConfigManager.nodebuffRemoveNausea);
-                        case "remove blindness" -> v.setValue(ConfigManager.nodebuffRemoveBlindness);
-                        case "remove darkness" -> v.setValue(ConfigManager.nodebuffRemoveDarkness);
+                        case "remove nausea" -> v.setValue(ConfigManager.noDebuffRemoveNausea);
+                        case "remove blindness" -> v.setValue(ConfigManager.noDebuffRemoveBlindness);
+                        case "remove darkness" -> v.setValue(ConfigManager.noDebuffRemoveDarkness);
                     }
                 }
             }

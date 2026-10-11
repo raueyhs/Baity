@@ -153,6 +153,8 @@ public class ConfigManager {
     
     public static boolean skinLayer3DEnabled = false;
     
+    public static boolean cameraTweaksEnabled = false;
+
     public static boolean noHurtCamEnabled = false;
 
     public static boolean cameraNoClipEnabled = false;
@@ -187,10 +189,10 @@ public class ConfigManager {
     public static int scrollableTooltipHorizontalKey = 341;
     public static boolean scrollableTooltipGroupExpanded = false;
     public static boolean scrollableTooltipKeepScrollInGui = false;
-    public static boolean nodebuffEnabled = false;
-    public static boolean nodebuffRemoveNausea = true;
-    public static boolean nodebuffRemoveBlindness = true;
-    public static boolean nodebuffRemoveDarkness = true;
+    public static boolean noDebuffEnabled = false;
+    public static boolean noDebuffRemoveNausea = true;
+    public static boolean noDebuffRemoveBlindness = true;
+    public static boolean noDebuffRemoveDarkness = true;
     
     public static boolean soundsEnabled = false;
     
@@ -698,6 +700,9 @@ public class ConfigManager {
         registerField("3DSkins", Boolean.class,
             c -> ConfigManager.skinLayer3DEnabled,
             (c, v) -> ConfigManager.skinLayer3DEnabled = (Boolean) v);
+        registerField("CameraTweaks", Boolean.class,
+            c -> ConfigManager.cameraTweaksEnabled,
+            (c, v) -> ConfigManager.cameraTweaksEnabled = (Boolean) v);
         registerField("NoHurtCam", Boolean.class,
             c -> ConfigManager.noHurtCamEnabled,
             (c, v) -> ConfigManager.noHurtCamEnabled = (Boolean) v);
@@ -785,18 +790,18 @@ public class ConfigManager {
         registerField("  horizontal scrolling", Integer.class,
             c -> ConfigManager.scrollableTooltipHorizontalKey,
             (c, v) -> ConfigManager.scrollableTooltipHorizontalKey = (Integer) v);
-        registerField("Nodebuff", Boolean.class,
-            c -> ConfigManager.nodebuffEnabled,
-            (c, v) -> ConfigManager.nodebuffEnabled = (Boolean) v);
+        registerField("NoDebuff", Boolean.class,
+            c -> ConfigManager.noDebuffEnabled,
+            (c, v) -> ConfigManager.noDebuffEnabled = (Boolean) v);
         registerField("  RemoveNausea", Boolean.class,
-            c -> ConfigManager.nodebuffRemoveNausea,
-            (c, v) -> ConfigManager.nodebuffRemoveNausea = (Boolean) v);
+            c -> ConfigManager.noDebuffRemoveNausea,
+            (c, v) -> ConfigManager.noDebuffRemoveNausea = (Boolean) v);
         registerField("  RemoveBlindness", Boolean.class,
-            c -> ConfigManager.nodebuffRemoveBlindness,
-            (c, v) -> ConfigManager.nodebuffRemoveBlindness = (Boolean) v);
+            c -> ConfigManager.noDebuffRemoveBlindness,
+            (c, v) -> ConfigManager.noDebuffRemoveBlindness = (Boolean) v);
         registerField("  RemoveDarkness", Boolean.class,
-            c -> ConfigManager.nodebuffRemoveDarkness,
-            (c, v) -> ConfigManager.nodebuffRemoveDarkness = (Boolean) v);
+            c -> ConfigManager.noDebuffRemoveDarkness,
+            (c, v) -> ConfigManager.noDebuffRemoveDarkness = (Boolean) v);
         registerField("Sounds", Boolean.class,
             c -> ConfigManager.soundsEnabled,
             (c, v) -> ConfigManager.soundsEnabled = (Boolean) v);
@@ -1370,6 +1375,17 @@ public class ConfigManager {
             return;
         }
 
+        // TODO(future): Transitional Nodebuff key migration — can be removed in a future release when ready.
+        if ("Nodebuff".equals(key)) {
+            Object legacy = parseValue(valueStr, Boolean.class);
+            if (legacy instanceof Boolean enabled) {
+                ConfigManager.noDebuffEnabled = enabled;
+            }
+            seenKeys.add(key);
+            return;
+        }
+        // END TODO(future)
+
         SettingField field = CONFIG_FIELDS.get(key);
         if (field == null) {
             return;
@@ -1387,6 +1403,13 @@ public class ConfigManager {
         if (ConfigManager.droppedItemEnabled && !seenKeys.contains("DroppedItemRarityScaleEnabled")) {
             ConfigManager.droppedItemRarityScaleEnabled = true;
         }
+        // TODO(future): Transitional CameraTweaks parent-module migration — can be removed in a future release when ready.
+        if (!seenKeys.contains("CameraTweaks")
+                && (seenKeys.contains("CameraNoClip") || seenKeys.contains("NoHurtCam"))) {
+            ConfigManager.cameraTweaksEnabled =
+                    ConfigManager.cameraNoClipEnabled || ConfigManager.noHurtCamEnabled;
+        }
+        // END TODO(future)
     }
 
     private static void putJsonValue(JsonObject settings, String key, Object value) {
