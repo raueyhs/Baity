@@ -571,9 +571,9 @@ public class Reminder {
                 .append(Component.literal(" is ready at Kat!").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
 
         message.append(Component.literal(" "));
-        message.append(Component.literal("[错误提醒?click to cancel!]")
+        message.append(Component.literal("[Error alert!]")
                 .withStyle(style -> style
-                        .withColor(ChatFormatting.YELLOW)
+                        .withColor(0xFF69B4)
                         .withUnderlined(true)
                         .withClickEvent(new ClickEvent.RunCommand("/baity katclear"))));
 
