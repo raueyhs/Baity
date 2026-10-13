@@ -13,6 +13,8 @@ import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 @Environment(EnvType.CLIENT)
 public final class ModernTooltip {
 
+    private static Module cachedModule;
+
     private ModernTooltip() {
     }
 
@@ -20,8 +22,10 @@ public final class ModernTooltip {
         if (!ConfigManager.modernTooltipEnabled) {
             return false;
         }
-        Module module = ModuleManager.getModuleByName("ModernTooltip");
-        return module == null || module.isEnabled();
+        if (cachedModule == null) {
+            cachedModule = ModuleManager.getModuleByName("ModernTooltip");
+        }
+        return cachedModule == null || cachedModule.isEnabled();
     }
 
     public static void init() {

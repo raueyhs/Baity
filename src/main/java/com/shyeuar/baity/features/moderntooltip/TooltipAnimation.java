@@ -51,7 +51,7 @@ public final class TooltipAnimation {
             return raw;
         }
 
-        if (prepare(font, components, raw.x(), raw.y(), tooltipWidth, tooltipHeight) == null) {
+        if (prepare(components, raw.x(), raw.y(), tooltipWidth, tooltipHeight) == null) {
             return raw;
         }
         AnimationFrame frame = CURRENT_FRAME.get();
@@ -78,7 +78,6 @@ public final class TooltipAnimation {
     }
 
     public static AnimatedBox prepareAnimatedBox(
-            Font font,
             List<ClientTooltipComponent> components,
             int targetWidth,
             int targetHeight,
@@ -98,7 +97,7 @@ public final class TooltipAnimation {
             return AnimatedBox.immediate(targetWidth, targetHeight, targetX, targetY);
         }
 
-        int signature = computeSignature(font, components);
+        int signature = computeSignature(components.size(), targetWidth, targetHeight);
         TooltipSizeAnimator.Frame frame = updateAnimatedFrame(signature, targetWidth, targetHeight, targetX, targetY);
         tooltipsRenderedThisPass++;
         tooltipsRenderedThisFrame++;
@@ -125,7 +124,6 @@ public final class TooltipAnimation {
     }
 
     private static AnimationFrame prepare(
-            Font font,
             List<ClientTooltipComponent> components,
             int targetX,
             int targetY,
@@ -147,7 +145,7 @@ public final class TooltipAnimation {
             return null;
         }
 
-        int signature = computeSignature(font, components);
+        int signature = computeSignature(components.size(), targetWidth, targetHeight);
         TooltipSizeAnimator.Frame frame = updateAnimatedFrame(signature, targetWidth, targetHeight, targetX, targetY);
 
         AnimationFrame result = new AnimationFrame(
@@ -222,13 +220,8 @@ public final class TooltipAnimation {
         CLIP_PUSHED.set(false);
     }
 
-    private static int computeSignature(Font font, List<ClientTooltipComponent> components) {
-        int signature = components.size();
-        for (ClientTooltipComponent component : components) {
-            signature = 31 * signature + component.getWidth(font);
-            signature = 31 * signature + component.getHeight(font);
-        }
-        return signature;
+    private static int computeSignature(int componentCount, int width, int height) {
+        return 31 * (31 * componentCount + width) + height;
     }
 
     public record AnimationFrame(

@@ -55,14 +55,14 @@ public final class ScrollableTooltip {
             return;
         }
 
-        onBeforeRender(font, components);
-
         int contentWidth = 0;
         int contentHeight = components.size() == 1 ? -2 : 0;
         for (ClientTooltipComponent component : components) {
             contentWidth = Math.max(contentWidth, component.getWidth(font));
             contentHeight += component.getHeight(font);
         }
+
+        onBeforeRender(components.size(), contentWidth, contentHeight);
 
         int screenWidth = graphics.guiWidth();
         int screenHeight = graphics.guiHeight();
@@ -97,7 +97,6 @@ public final class ScrollableTooltip {
         setHorizontalScrollBounds(targetBoxX, boxW, screenWidth);
 
         TooltipAnimation.AnimatedBox animatedBox = TooltipAnimation.prepareAnimatedBox(
-                font,
                 components,
                 visibleContentW,
                 visibleContentH,
@@ -143,8 +142,8 @@ public final class ScrollableTooltip {
         }
     }
 
-    private static void onBeforeRender(Font font, List<ClientTooltipComponent> components) {
-        int signature = computeSignature(font, components);
+    private static void onBeforeRender(int componentCount, int contentWidth, int contentHeight) {
+        int signature = computeSignature(componentCount, contentWidth, contentHeight);
         if (signature != contentSignature) {
             if (ConfigManager.scrollableTooltipKeepScrollInGui) {
                 persistScrollState(contentSignature);
@@ -261,13 +260,8 @@ public final class ScrollableTooltip {
         return Math.max(min, Math.min(max, value));
     }
 
-    private static int computeSignature(Font font, List<ClientTooltipComponent> components) {
-        int signature = components.size();
-        for (ClientTooltipComponent component : components) {
-            signature = 31 * signature + component.getWidth(font);
-            signature = 31 * signature + component.getHeight(font);
-        }
-        return signature;
+    private static int computeSignature(int componentCount, int width, int height) {
+        return 31 * (31 * componentCount + width) + height;
     }
 
     private record ScrollState(double scrollX, double scrollY) {
