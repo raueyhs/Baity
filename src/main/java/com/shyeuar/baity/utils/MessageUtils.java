@@ -109,10 +109,11 @@ public class MessageUtils {
         MutableComponent msg = createColoredText(base + " ", color);
 
         if (isNotification) {
-            MutableComponent stop = Component.literal("[stop notifications]")
+            MutableComponent stop = Component.literal("[")
+                .append(Component.literal("stop notifications").withStyle(style -> style.withUnderlined(true)))
+                .append(Component.literal("]"))
                 .withStyle(style -> style
                     .withColor(0xFF69B4)
-                    .withUnderlined(true)
                     .withClickEvent(new ClickEvent.RunCommand("/baity notification off")));
             msg.append(stop);
             if (!success) {
@@ -131,10 +132,11 @@ public class MessageUtils {
     }
 
     private static MutableComponent buildHelpClickable() {
-        return Component.literal("[What's wrong?]")
+        return Component.literal("[")
+            .append(Component.literal("What's wrong?").withStyle(style -> style.withUnderlined(true)))
+            .append(Component.literal("]"))
             .withStyle(Style.EMPTY
                 .withColor(0xFF69B4)
-                .withUnderlined(true)
                 .withClickEvent(new ClickEvent.RunCommand("/baity sync error")));
     }
 

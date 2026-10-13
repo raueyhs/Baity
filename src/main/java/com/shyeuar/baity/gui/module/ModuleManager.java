@@ -755,23 +755,23 @@ public class ModuleManager {
             }
         );
 
-        GroupValue enchantLoreRainbowGroup = new GroupValue("rainbow", "rainbow", ModuleCategory.RENDER)
+        GroupValue enchantLoreRainbowGroup = new GroupValue("rainbow", "rainbow", ModuleCategory.QOL)
             .setExpanded(ConfigManager.enchantLoreRainbowGroupExpanded)
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
-                "rainbow speed", "speed", 1.0, 0.1, 2.0, 0.1, ModuleCategory.RENDER
+                "rainbow speed", "speed", 1.0, 0.1, 2.0, 0.1, ModuleCategory.QOL
             ))
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
-                "rainbow saturation", "saturation", 0.8, 0.0, 1.0, 0.05, ModuleCategory.RENDER
+                "rainbow saturation", "saturation", 0.8, 0.0, 1.0, 0.05, ModuleCategory.QOL
             ))
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
-                "rainbow gradient", "gradient", 100.0, 25.0, 200.0, 1.0, ModuleCategory.RENDER
+                "rainbow gradient", "gradient", 100.0, 25.0, 200.0, 1.0, ModuleCategory.QOL
             ))
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
-                "rainbow angle", "angle", 45.0, 1.0, 89.0, 1.0, ModuleCategory.RENDER
+                "rainbow angle", "angle", 45.0, 1.0, 89.0, 1.0, ModuleCategory.QOL
             ));
 
         EnchantLoreColorEditorValue enchantLoreColorEditor = new EnchantLoreColorEditorValue(
-                "color editer", "color editer", ModuleCategory.RENDER
+                "color editer", "color editer", ModuleCategory.QOL
         );
 
         ButtonValue enchantLoreLayoutMode = new ButtonValue(
@@ -779,22 +779,31 @@ public class ModuleManager {
                 "layout mode",
                 ConfigManager.enchantLoreLayoutMode,
                 "default",
-                ModuleCategory.RENDER,
+                ModuleCategory.QOL,
                 ButtonValue.ButtonValueType.CYCLE,
                 false
         );
 
-        GroupValue enchantLoreRomanNumeralsGroup = new GroupValue("roman numerals", "arabic numerals", ModuleCategory.RENDER)
+        GroupValue enchantLoreRomanNumeralsGroup = new GroupValue("roman numerals", "arabic numerals", ModuleCategory.QOL)
             .setExpanded(ConfigManager.enchantLoreRomanNumeralsGroupExpanded)
             .setSubModuleSwitchChildName("arabic numerals")
-            .addChild(new Option("arabic numerals", "arabic numerals", ConfigManager.enchantLoreArabicNumerals, ModuleCategory.RENDER))
-            .addChild(new Option("don't replace item name", "don't replace item name", ConfigManager.enchantLoreDontReplaceRomanInItemName, ModuleCategory.RENDER));
+            .addChild(new Option("arabic numerals", "arabic numerals", ConfigManager.enchantLoreArabicNumerals, ModuleCategory.QOL))
+            .addChild(new Option("don't replace item name", "don't replace item name", ConfigManager.enchantLoreDontReplaceRomanInItemName, ModuleCategory.QOL));
+
+        ButtonValue enchantLoreMissingKeybind = new ButtonValue(
+            "missing enchants",
+            "missing enchants",
+            ConfigManager.enchantLoreMissingKeybind,
+            ModuleCategory.QOL,
+            ButtonValue.ButtonValueType.KEYBIND,
+            false
+        );
 
         ModuleRegistry.registerModuleWithValues(
-            "EnchantLore", "EnchantLore", ModuleCategory.RENDER,
+            "EnchantLore", "EnchantLore", ModuleCategory.QOL,
             () -> ConfigManager.enchantLoreEnabled,
             val -> ConfigManager.enchantLoreEnabled = val,
-            new com.shyeuar.baity.gui.value.Value[]{enchantLoreLayoutMode, enchantLoreColorEditor, enchantLoreRainbowGroup, enchantLoreRomanNumeralsGroup},
+            new com.shyeuar.baity.gui.value.Value[]{enchantLoreLayoutMode, enchantLoreColorEditor, enchantLoreRainbowGroup, enchantLoreRomanNumeralsGroup, enchantLoreMissingKeybind},
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
                     "layout mode",
@@ -857,6 +866,11 @@ public class ModuleManager {
                         ConfigManager.enchantLoreDontReplaceRomanInItemName = (Boolean) val;
                         com.shyeuar.baity.features.enchantlore.EnchantLore.invalidateCache();
                     }
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "missing enchants",
+                    () -> ConfigManager.enchantLoreMissingKeybind,
+                    val -> ConfigManager.enchantLoreMissingKeybind = ((Number) val).intValue()
                 )
             }
         );

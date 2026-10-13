@@ -15,6 +15,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -27,10 +28,10 @@ final class EnchantCatalog {
     private static final Logger LOGGER = LoggerFactory.getLogger("Baity/EnchantCatalog");
     private static final Gson GSON = new Gson();
 
-    private static final List<String> REMOTE_CATALOG_URLS = List.of(
-        "https://raw.githubusercontent.com/hannibal002/SkyHanni-REPO/main/constants/Enchants.json",
-        "https://raw.githubusercontent.com/hannibal002/SkyHanni-REPO/main/constants/enchants.json"
-    );
+    // Enchant data is maintained by the SkyblockAddons project (LGPL-3.0):
+    // https://github.com/Fix3dll/SkyblockAddons
+    private static final String REMOTE_CATALOG_URL =
+        "https://raw.githubusercontent.com/Fix3dll/SkyblockAddons/26.2/src/main/resources/enchants.json";
     private static final String CACHE_FILE_NAME = "enchants.json";
     private static final String EMBEDDED_RESOURCE = "/assets/baity/enchants.json";
 
@@ -60,17 +61,23 @@ final class EnchantCatalog {
     }
 
     static EnchantDef resolve(String loreName, Map<String, Integer> enchantments, Map<String, Integer> attributes) {
-        if (loreName == null || loreName.isBlank() || enchantments.isEmpty()) {
+        if (loreName == null || loreName.isBlank()) {
             return null;
         }
         Catalog current = catalog;
         EnchantDef known = current.fromLore(loreName);
         if (known != null) {
+            if (enchantments.isEmpty()) {
+                return known;
+            }
             String nbtKey = findNbtKey(known.nbtName, enchantments);
             if (nbtKey == null || containsKeyIgnoreCase(attributes, nbtKey)) {
                 return null;
             }
             return known;
+        }
+        if (enchantments.isEmpty()) {
+            return null;
         }
         String nbtKey = findNbtKey(normalizeLoreName(loreName.trim()), enchantments);
         if (nbtKey == null || containsKeyIgnoreCase(attributes, nbtKey)) {
@@ -83,9 +90,20 @@ final class EnchantCatalog {
         return EnchantDef.unknown(loreName.trim(), nbtKey);
     }
 
+    static List<EnchantDef> applicableEnchants(String itemType) {
+        if (itemType == null || itemType.isBlank()) {
+            return List.of();
+        }
+        return catalog.applicableTo(itemType.toUpperCase(Locale.US));
+    }
+
+    static List<List<String>> enchantPools() {
+        return catalog.enchantPools;
+    }
+
     private static void refreshFromRemote() {
         String body = RemoteFileFetcher.fetchText(
-                REMOTE_CATALOG_URLS,
+                List.of(REMOTE_CATALOG_URL),
                 "EnchantCatalog",
                 ProxyFallbacks.proxies()
         );
@@ -210,8 +228,11 @@ final class EnchantCatalog {
         HashMap<String, RawEnchant> ultimate = new HashMap<>();
         @SerializedName("STACKING")
         HashMap<String, RawEnchant> stacking = new HashMap<>();
+        @SerializedName("ENCHANT_POOLS")
+        List<List<String>> enchantPools = new ArrayList<>();
         final Map<String, EnchantDef> byLoreKey = new HashMap<>();
         final Map<String, EnchantDef> byNbtKey = new HashMap<>();
+        final Map<String, List<EnchantDef>> byAppliedTo = new HashMap<>();
 
         static Catalog parse(String body) {
             if (body == null || body.isBlank()) {
@@ -253,10 +274,17 @@ final class EnchantCatalog {
                         raw.maxLevel,
                         ultimate,
                         stacking,
-                        raw.maxLevel <= 0
+                        raw.maxLevel <= 0,
+                        raw.appliedTo == null ? List.of() : raw.appliedTo
                 );
                 byLoreKey.put(raw.loreName.toLowerCase(Locale.US), def);
                 byNbtKey.putIfAbsent(raw.nbtName.toLowerCase(Locale.US), def);
+                for (String itemType : def.appliedTo) {
+                    if (itemType == null || itemType.isBlank()) {
+                        continue;
+                    }
+                    byAppliedTo.computeIfAbsent(itemType.toUpperCase(Locale.US), key -> new ArrayList<>()).add(def);
+                }
             }
         }
 
@@ -273,6 +301,11 @@ final class EnchantCatalog {
             }
             return byNbtKey.get(nbtName.toLowerCase(Locale.US));
         }
+
+        List<EnchantDef> applicableTo(String itemType) {
+            List<EnchantDef> defs = byAppliedTo.get(itemType);
+            return defs == null ? List.of() : defs;
+        }
     }
 
     static final class EnchantDef implements Comparable<EnchantDef> {
@@ -287,9 +320,10 @@ final class EnchantCatalog {
         final boolean ultimate;
         final boolean stacking;
         final boolean unknown;
+        final List<String> appliedTo;
 
         EnchantDef(String loreName, String nbtName, int goodLevel, int maxLevel,
-                   boolean ultimate, boolean stacking, boolean unknown) {
+                   boolean ultimate, boolean stacking, boolean unknown, List<String> appliedTo) {
             this.loreName = loreName;
             this.nbtName = nbtName;
             this.goodLevel = goodLevel;
@@ -297,6 +331,7 @@ final class EnchantCatalog {
             this.ultimate = ultimate;
             this.stacking = stacking;
             this.unknown = unknown;
+            this.appliedTo = appliedTo;
         }
 
         static EnchantDef unknown(String loreName, String nbtName) {
@@ -307,12 +342,13 @@ final class EnchantCatalog {
                     0,
                     nbtName.toLowerCase(Locale.US).startsWith("ultimate_"),
                     false,
-                    true
+                    true,
+                    List.of()
             );
         }
 
         EnchantDef withLoreName(String name) {
-            return new EnchantDef(name, nbtName, goodLevel, maxLevel, ultimate, stacking, unknown);
+            return new EnchantDef(name, nbtName, goodLevel, maxLevel, ultimate, stacking, unknown, appliedTo);
         }
 
         EnchantLore.Tier tierFor(int level) {
@@ -349,5 +385,7 @@ final class EnchantCatalog {
         int goodLevel;
         @SerializedName("maxLevel")
         int maxLevel;
+        @SerializedName("appliedTo")
+        List<String> appliedTo;
     }
 }

@@ -93,8 +93,11 @@ public class ModuleInitializer {
         if (enchantLore != null) {
             enchantLore.setEnabled(ConfigManager.enchantLoreEnabled);
             for (Value v : enchantLore.getValues()) {
-                if ("layout mode".equals(v.getName())) {
-                    v.setValue(ConfigManager.enchantLoreLayoutMode);
+                switch (v.getName()) {
+                    case "layout mode" -> v.setValue(ConfigManager.enchantLoreLayoutMode);
+                    case "missing enchants" -> v.setValue(ConfigManager.enchantLoreMissingKeybind);
+                    default -> {
+                    }
                 }
             }
         }

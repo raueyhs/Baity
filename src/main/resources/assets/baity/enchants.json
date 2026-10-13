@@ -6,8 +6,7 @@
       "maxLevel": 6,
       "nbtName": "angler",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "aqua affinity": {
@@ -26,7 +25,6 @@
       "nbtName": "bane_of_arthropods",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -59,8 +57,16 @@
       "maxLevel": 6,
       "nbtName": "blessing",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
+      ]
+    },
+    "bug blender": {
+      "goodLevel": 0,
+      "loreName": "Bug Blender",
+      "maxLevel": 5,
+      "nbtName": "bug_blender",
+      "appliedTo": [
+        "VACUUM"
       ]
     },
     "caster": {
@@ -69,8 +75,7 @@
       "maxLevel": 6,
       "nbtName": "caster",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "cayenne": {
@@ -101,8 +106,7 @@
       "maxLevel": 6,
       "nbtName": "charm",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "cleave": {
@@ -112,7 +116,6 @@
       "nbtName": "cleave",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -123,8 +126,7 @@
       "maxLevel": 5,
       "nbtName": "corruption",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "counter-strike": {
@@ -143,7 +145,6 @@
       "nbtName": "critical",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -156,7 +157,6 @@
       "appliedTo": [
         "SWORD",
         "BOW",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -167,8 +167,7 @@
       "maxLevel": 4,
       "nbtName": "dedication",
       "appliedTo": [
-        "AXE",
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "delicate": {
@@ -177,8 +176,7 @@
       "maxLevel": 5,
       "nbtName": "delicate",
       "appliedTo": [
-        "AXE",
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "depth strider": {
@@ -198,7 +196,6 @@
       "appliedTo": [
         "SWORD",
         "BOW",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -219,7 +216,6 @@
       "nbtName": "syphon",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -244,7 +240,6 @@
       "nbtName": "ender_slayer",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -256,7 +251,6 @@
       "nbtName": "execute",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -270,9 +264,17 @@
         "SWORD",
         "PICKAXE",
         "DRILL",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
+      ]
+    },
+    "feast": {
+      "goodLevel": 0,
+      "loreName": "Feast",
+      "maxLevel": 5,
+      "nbtName": "feast",
+      "appliedTo": [
+        "FARMING_TOOL"
       ]
     },
     "feather falling": {
@@ -284,9 +286,9 @@
         "BOOTS"
       ]
     },
-    "ferocious mana": {
+    "vivacious vitality": {
       "goodLevel": 10,
-      "loreName": "Ferocious Mana",
+      "loreName": "Vivacious Vitality",
       "maxLevel": 10,
       "nbtName": "ferocious_mana",
       "appliedTo": [
@@ -304,7 +306,6 @@
       "nbtName": "fire_aspect",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -329,7 +330,6 @@
       "nbtName": "first_strike",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -373,8 +373,7 @@
       "maxLevel": 7,
       "nbtName": "frail",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "frost walker": {
@@ -393,7 +392,6 @@
       "nbtName": "giant_killer",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -406,7 +404,6 @@
       "appliedTo": [
         "SWORD",
         "BOW",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -449,9 +446,9 @@
         "CARNIVAL_MASK"
       ]
     },
-    "hardened mana": {
+    "hardened vitality": {
       "goodLevel": 10,
-      "loreName": "Hardened Mana",
+      "loreName": "Hardened Vitality",
       "maxLevel": 10,
       "nbtName": "hardened_mana",
       "appliedTo": [
@@ -468,7 +465,7 @@
       "maxLevel": 6,
       "nbtName": "harvesting",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "ice cold": {
@@ -493,7 +490,6 @@
         "SWORD",
         "BOW",
         "FISHING_ROD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -507,6 +503,15 @@
         "BOW"
       ]
     },
+    "karma": {
+      "goodLevel": 5,
+      "loreName": "Karma",
+      "maxLevel": 6,
+      "nbtName": "Karma",
+      "appliedTo": [
+        "AXE"
+      ]
+    },
     "knockback": {
       "goodLevel": 2,
       "loreName": "Knockback",
@@ -514,7 +519,6 @@
       "nbtName": "knockback",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -537,7 +541,6 @@
       "nbtName": "lethality",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -549,7 +552,6 @@
       "nbtName": "life_steal",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -562,7 +564,6 @@
       "appliedTo": [
         "SWORD",
         "FISHING_ROD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -574,7 +575,6 @@
       "nbtName": "luck",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -585,8 +585,7 @@
       "maxLevel": 7,
       "nbtName": "luck_of_the_sea",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "lure": {
@@ -595,8 +594,7 @@
       "maxLevel": 6,
       "nbtName": "lure",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "magnet": {
@@ -605,8 +603,19 @@
       "maxLevel": 6,
       "nbtName": "magnet",
       "appliedTo": [
+        "FISHING_ROD"
+      ]
+    },
+    "pyroclasm": {
+      "goodLevel": 5,
+      "loreName": "Pyroclasm",
+      "maxLevel": 6,
+      "nbtName": "magmarizer",
+      "appliedTo": [
+        "SWORD",
         "FISHING_ROD",
-        "FISHING_WEAPON"
+        "LONGSWORD",
+        "GAUNTLET"
       ]
     },
     "mana steal": {
@@ -616,14 +625,13 @@
       "nbtName": "mana_steal",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
     },
-    "mana vampire": {
+    "vampiric vitality": {
       "goodLevel": 10,
-      "loreName": "Mana Vampire",
+      "loreName": "Vampiric Vitality",
       "maxLevel": 10,
       "nbtName": "mana_vampire",
       "appliedTo": [
@@ -667,6 +675,15 @@
         "CARNIVAL_MASK"
       ]
     },
+    "petalfall": {
+      "goodLevel": 0,
+      "loreName": "Petalfall",
+      "maxLevel": 5,
+      "nbtName": "petalfall",
+      "appliedTo": [
+        "AXE"
+      ]
+    },
     "piercing": {
       "goodLevel": 1,
       "loreName": "Piercing",
@@ -682,8 +699,7 @@
       "maxLevel": 7,
       "nbtName": "piscary",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "power": {
@@ -726,7 +742,6 @@
       "nbtName": "PROSECUTE",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -781,8 +796,7 @@
       "maxLevel": 5,
       "nbtName": "quick_bite",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "rainbow": {
@@ -822,8 +836,7 @@
       "maxLevel": 1,
       "nbtName": "replenish",
       "appliedTo": [
-        "AXE",
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "respiration": {
@@ -855,7 +868,6 @@
       "nbtName": "scavenger",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -863,7 +875,7 @@
     "scuba": {
       "goodLevel": 0,
       "loreName": "Scuba",
-      "maxLevel": 5,
+      "maxLevel": 6,
       "nbtName": "scuba",
       "appliedTo": [
         "HELMET",
@@ -880,7 +892,6 @@
       "nbtName": "sharpness",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -935,7 +946,6 @@
       "nbtName": "smite",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -948,8 +958,6 @@
       "appliedTo": [
         "SWORD",
         "BOW",
-        "FISHING_ROD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -969,22 +977,21 @@
       "maxLevel": 7,
       "nbtName": "spiked_hook",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "stealth": {
-      "goodLevel": 0,
+      "goodLevel": 5,
       "loreName": "Stealth",
-      "maxLevel": 1,
+      "maxLevel": 6,
       "nbtName": "stealth",
       "appliedTo": [
         "BOOTS"
       ]
     },
-    "strong mana": {
+    "strong vitality": {
       "goodLevel": 10,
-      "loreName": "Strong Mana",
+      "loreName": "Strong Vitality",
       "maxLevel": 10,
       "nbtName": "strong_mana",
       "appliedTo": [
@@ -1004,15 +1011,6 @@
         "BOOTS"
       ]
     },
-    "sunder": {
-      "goodLevel": 0,
-      "loreName": "Sunder",
-      "maxLevel": 6,
-      "nbtName": "sunder",
-      "appliedTo": [
-        "AXE"
-      ]
-    },
     "tabasco": {
       "goodLevel": 0,
       "loreName": "Tabasco",
@@ -1022,7 +1020,7 @@
         "SWORD",
         "BOW",
         "FISHING_ROD",
-        "FISHING_WEAPON",
+        "AXE",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1030,7 +1028,7 @@
     "thorns": {
       "goodLevel": 3,
       "loreName": "Thorns",
-      "maxLevel": 3,
+      "maxLevel": 4,
       "nbtName": "thorns",
       "appliedTo": [
         "HELMET",
@@ -1047,7 +1045,6 @@
       "nbtName": "thunderbolt",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1059,7 +1056,6 @@
       "nbtName": "thunderlord",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1080,7 +1076,6 @@
       "nbtName": "titan_killer",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1101,7 +1096,6 @@
       "nbtName": "triple_strike",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1118,118 +1112,118 @@
     "turbo-cacti": {
       "goodLevel": 0,
       "loreName": "Turbo-Cacti",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_cactus",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-cane": {
       "goodLevel": 0,
       "loreName": "Turbo-Cane",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_cane",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-carrot": {
       "goodLevel": 0,
       "loreName": "Turbo-Carrot",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_carrot",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-cocoa": {
       "goodLevel": 0,
       "loreName": "Turbo-Cocoa",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_coco",
       "appliedTo": [
-        "AXE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-melon": {
       "goodLevel": 0,
       "loreName": "Turbo-Melon",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_melon",
       "appliedTo": [
-        "AXE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-moonflower": {
       "goodLevel": 0,
       "loreName": "Turbo-Moonflower",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_moonflower",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-mushrooms": {
       "goodLevel": 0,
       "loreName": "Turbo-Mushrooms",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_mushrooms",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-potato": {
       "goodLevel": 0,
       "loreName": "Turbo-Potato",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_potato",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-pumpkin": {
       "goodLevel": 0,
       "loreName": "Turbo-Pumpkin",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_pumpkin",
       "appliedTo": [
-        "AXE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-rose": {
       "goodLevel": 0,
       "loreName": "Turbo-Rose",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_rose",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-sunflower": {
       "goodLevel": 0,
       "loreName": "Turbo-Sunflower",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_sunflower",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-warts": {
       "goodLevel": 0,
       "loreName": "Turbo-Warts",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_warts",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "turbo-wheat": {
       "goodLevel": 0,
       "loreName": "Turbo-Wheat",
-      "maxLevel": 5,
+      "maxLevel": 7,
       "nbtName": "turbo_wheat",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "vampirism": {
@@ -1239,7 +1233,6 @@
       "nbtName": "vampirism",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1251,7 +1244,6 @@
       "nbtName": "venomous",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1264,7 +1256,6 @@
       "appliedTo": [
         "SWORD",
         "BOW",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1324,7 +1315,6 @@
       "statLabel": "championCombatXp",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1374,7 +1364,7 @@
       ],
       "statLabel": "cultivatedCrops",
       "appliedTo": [
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "expertise": {
@@ -1397,8 +1387,7 @@
       ],
       "statLabel": "expertiseKills",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "hecatomb": {
@@ -1462,7 +1451,7 @@
         "CARNIVAL_MASK"
       ]
     },
-    "bobbin time": {
+    "bobbin' time": {
       "goodLevel": 3,
       "loreName": "Bobbin' Time",
       "maxLevel": 5,
@@ -1482,8 +1471,6 @@
       "nbtName": "ultimate_chimera",
       "appliedTo": [
         "SWORD",
-        "BOW",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1495,7 +1482,6 @@
       "nbtName": "ultimate_combo",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1506,8 +1492,7 @@
       "maxLevel": 5,
       "nbtName": "ultimate_crop_fever",
       "appliedTo": [
-        "AXE",
-        "HOE"
+        "FARMING_TOOL"
       ]
     },
     "duplex": {
@@ -1528,7 +1513,7 @@
         "SWORD",
         "BOW",
         "FISHING_ROD",
-        "FISHING_WEAPON",
+        "AXE",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1548,8 +1533,7 @@
       "maxLevel": 5,
       "nbtName": "ultimate_flash",
       "appliedTo": [
-        "FISHING_ROD",
-        "FISHING_WEAPON"
+        "FISHING_ROD"
       ]
     },
     "flowstate": {
@@ -1585,7 +1569,7 @@
         "SWORD",
         "BOW",
         "FISHING_ROD",
-        "FISHING_WEAPON",
+        "AXE",
         "LONGSWORD",
         "GAUNTLET"
       ]
@@ -1645,9 +1629,7 @@
       "nbtName": "ultimate_one_for_all",
       "appliedTo": [
         "SWORD",
-        "FISHING_WEAPON",
-        "LONGSWORD",
-        "GAUNTLET"
+        "LONGSWORD"
       ]
     },
     "refrigerate": {
@@ -1679,10 +1661,8 @@
       "nbtName": "ultimate_soul_eater",
       "appliedTo": [
         "SWORD",
-        "BOW",
-        "FISHING_WEAPON",
         "LONGSWORD",
-        "GAUNTLET"
+        "BOW"
       ]
     },
     "swarm": {
@@ -1692,10 +1672,20 @@
       "nbtName": "ultimate_swarm",
       "appliedTo": [
         "SWORD",
-        "BOW",
-        "FISHING_WEAPON",
         "LONGSWORD",
         "GAUNTLET"
+      ]
+    },
+    "sunset": {
+      "goodLevel": 0,
+      "loreName": "Sunset",
+      "maxLevel": 5,
+      "nbtName": "ultimate_sunset",
+      "appliedTo": [
+        "HELMET",
+        "CHESTPLATE",
+        "LEGGINGS",
+        "BOOTS"
       ]
     },
     "the one": {
@@ -1720,13 +1710,18 @@
       "maxLevel": 5,
       "nbtName": "ultimate_wise",
       "appliedTo": [
-        "SWORD",
-        "BOW",
-        "FISHING_WEAPON",
-        "LONGSWORD",
-        "GAUNTLET",
+        "FISHING_ROD",
+        "WAND",
+        "SHOVEL",
+        "PICKAXE",
+        "DRILL",
         "SHEARS",
-        "SHOVEL"
+        "SWORD",
+        "FARMING_TOOL",
+        "LONGSWORD",
+        "AXE",
+        "BOW",
+        "GAUNTLET"
       ]
     },
     "wisdom": {

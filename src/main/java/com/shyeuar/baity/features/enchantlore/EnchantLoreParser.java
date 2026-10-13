@@ -4,7 +4,6 @@ import com.shyeuar.baity.utils.RomanNumeralUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -15,8 +14,11 @@ import net.minecraft.world.item.component.CustomData;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,29 +33,32 @@ final class EnchantLoreParser {
 
     static Section findSection(List<Component> lore, ItemStack stack) {
         Map<String, Integer> enchantments = enchantmentsOn(stack);
-        if (enchantments.isEmpty() && !isSuperpairsScreen()) {
-            return null;
-        }
         Map<String, Integer> attributes = attributesOn(stack);
         int start = -1;
         int end = -1;
+        int lastEnchantLine = -1;
         int maxTooltipWidth = 0;
         for (int i = 0; i < lore.size(); i++) {
             Component line = lore.get(i);
-            String stripped = EnchantLoreRender.stripColor(line.getString());
-            if (start == -1) {
-                if (lineContainsItemEnchant(enchantments, attributes, stripped)) {
-                    start = i;
+            if (start == -1 || end == -1) {
+                String stripped = EnchantLoreRender.stripColor(line.getString());
+                if (start == -1) {
+                    if (lineContainsItemEnchant(enchantments, attributes, stripped)) {
+                        start = i;
+                        lastEnchantLine = i;
+                    }
+                } else if (lineContainsItemEnchant(enchantments, attributes, stripped)) {
+                    lastEnchantLine = i;
+                } else if (stripped.isBlank()) {
+                    end = i - 1;
                 }
-            } else if (stripped.isBlank() && end == -1) {
-                end = i - 1;
             }
             if (start == -1 || end != -1) {
                 maxTooltipWidth = Math.max(Minecraft.getInstance().font.width(line), maxTooltipWidth);
             }
         }
-        if (enchantments.isEmpty() && end == -1 && start != -1) {
-            end = start;
+        if (end == -1 && start != -1 && enchantments.isEmpty()) {
+            end = lastEnchantLine;
         }
         if (start == -1 || end == -1) {
             return null;
@@ -174,14 +179,6 @@ final class EnchantLoreParser {
         return extra == null ? null : extra.getString("id").orElse(null);
     }
 
-    private static boolean isSuperpairsScreen() {
-        Minecraft mc = Minecraft.getInstance();
-        if (!(mc.gui.screen() instanceof AbstractContainerScreen<?> screen)) {
-            return false;
-        }
-        return EnchantLoreRender.stripColor(screen.getTitle().getString()).contains("Superpairs");
-    }
-
     private static boolean lineContainsItemEnchant(
             Map<String, Integer> enchantments,
             Map<String, Integer> attributes,
@@ -196,34 +193,71 @@ final class EnchantLoreParser {
         return false;
     }
 
-    private static Map<String, Integer> enchantmentsOn(ItemStack stack) {
-        CompoundTag tag = extraAttributes(stack);
-        if (tag == null) {
-            return Collections.emptyMap();
+    private record NbtSnapshot(CustomData data, CompoundTag tag,
+                               Map<String, Integer> enchantments, Map<String, Integer> attributes) {
+    }
+
+    private static final NbtSnapshot EMPTY_SNAPSHOT =
+            new NbtSnapshot(null, null, Collections.emptyMap(), Collections.emptyMap());
+    private static NbtSnapshot nbtSnapshot = EMPTY_SNAPSHOT;
+
+    private static NbtSnapshot snapshotOf(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return EMPTY_SNAPSHOT;
         }
-        HashMap<String, Integer> map = new HashMap<>();
+        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
+        if (data == null) {
+            return EMPTY_SNAPSHOT;
+        }
+        NbtSnapshot current = nbtSnapshot;
+        if (current.data() == data) {
+            return current;
+        }
+        CompoundTag tag = data.copyTag();
+        HashMap<String, Integer> enchantments = new HashMap<>();
         tag.getCompound("enchantments").ifPresent(enchants -> enchants.forEach((key, value) ->
-                map.put(key, value.asInt().orElse(0))));
-        return map;
+                enchantments.put(key, value.asInt().orElse(0))));
+        HashMap<String, Integer> attributes = new HashMap<>();
+        tag.getCompound("attributes").ifPresent(attrs -> attrs.forEach((key, value) ->
+                attributes.put(key, value.asInt().orElse(0))));
+        NbtSnapshot fresh = new NbtSnapshot(data, tag, enchantments, attributes);
+        nbtSnapshot = fresh;
+        return fresh;
+    }
+
+    static Map<String, Integer> enchantmentsOn(ItemStack stack) {
+        return snapshotOf(stack).enchantments();
     }
 
     private static Map<String, Integer> attributesOn(ItemStack stack) {
-        CompoundTag tag = extraAttributes(stack);
-        if (tag == null) {
-            return Collections.emptyMap();
+        return snapshotOf(stack).attributes();
+    }
+
+    static Set<String> presentNbtNames(List<Component> lore, ItemStack stack) {
+        Map<String, Integer> enchantments = enchantmentsOn(stack);
+        Set<String> names = new HashSet<>();
+        if (!enchantments.isEmpty()) {
+            for (String key : enchantments.keySet()) {
+                names.add(key.toLowerCase(Locale.US));
+            }
+            return names;
         }
-        HashMap<String, Integer> map = new HashMap<>();
-        tag.getCompound("attributes").ifPresent(attrs -> attrs.forEach((key, value) ->
-                map.put(key, value.asInt().orElse(0))));
-        return map;
+        Map<String, Integer> attributes = attributesOn(stack);
+        for (Component line : lore) {
+            Matcher matcher = ENCHANTMENT_PATTERN.matcher(EnchantLoreRender.stripColor(line.getString()));
+            while (matcher.find()) {
+                EnchantCatalog.EnchantDef def = EnchantCatalog.resolve(
+                        matcher.group("enchant"), enchantments, attributes);
+                if (def != null && def.nbtName != null) {
+                    names.add(def.nbtName.toLowerCase(Locale.US));
+                }
+            }
+        }
+        return names;
     }
 
     private static CompoundTag extraAttributes(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return null;
-        }
-        CustomData data = stack.get(DataComponents.CUSTOM_DATA);
-        return data == null ? null : data.copyTag();
+        return snapshotOf(stack).tag();
     }
 
     private static int correctTooltipWidth(int maxTooltipWidth) {

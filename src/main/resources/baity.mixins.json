@@ -121,6 +121,7 @@
     "GuiRendererMixin",
     "ModernTooltipMixin",
     "ModernTooltipScreenMixin",
+    "EnchantLoreMixin",
     "HollowScannerMixin$ShareClickMixin",
     "CullingMixin$RemoveWeatherFilterMixin",
     "CullingMixin$RemoveWeatherFogFilterMixin",

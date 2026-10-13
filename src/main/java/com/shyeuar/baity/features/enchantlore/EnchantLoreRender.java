@@ -31,13 +31,22 @@ final class EnchantLoreRender {
         if (ordered.isEmpty()) {
             return List.of();
         }
+        Font font = Minecraft.getInstance().font;
+        List<Component> formatted = new ArrayList<>(ordered.size());
+        int[] widths = new int[ordered.size()];
+        int width = maxTooltipWidth;
+        int index = 0;
         for (EnchantLoreParser.ParsedEnchant parsed : ordered) {
-            maxTooltipWidth = Math.max(maxTooltipWidth, getRenderLength(parsed, nowMs));
+            Component component = formatEnchant(parsed, nowMs);
+            formatted.add(component);
+            widths[index] = font.width(component);
+            width = Math.max(width, widths[index]);
+            index++;
         }
-        if (ordered.size() != 1 && !hasLore) {
-            return compress(ordered, maxTooltipWidth, nowMs);
+        if (ordered.size() != 1) {
+            return compress(ordered, formatted, widths, width, nowMs);
         }
-        return expand(ordered, hasLore, nowMs);
+        return expand(ordered, formatted, hasLore);
     }
 
     static Component formatEnchant(EnchantLoreParser.ParsedEnchant parsed, long nowMs) {
@@ -106,6 +115,8 @@ final class EnchantLoreRender {
 
     private static List<Component> compress(
             TreeSet<EnchantLoreParser.ParsedEnchant> ordered,
+            List<Component> formatted,
+            int[] widths,
             int maxTooltipWidth,
             long nowMs
     ) {
@@ -113,11 +124,12 @@ final class EnchantLoreRender {
         int commaLength = font.width(COMMA);
         List<Component> lines = new ArrayList<>();
         int sum = 0;
+        int index = 0;
         MutableComponent loreLine = Component.empty();
         float lineRainbowX = 0.0f;
         for (EnchantLoreParser.ParsedEnchant parsed : ordered) {
-            Component formatted = formatEnchant(parsed, nowMs);
-            int renderLength = font.width(formatted);
+            Component formattedEnchant = formatted.get(index);
+            int renderLength = widths[index];
             if (sum + renderLength > maxTooltipWidth && !loreLine.getSiblings().isEmpty()) {
                 trimTrailingComma(loreLine);
                 lines.add(loreLine);
@@ -125,10 +137,11 @@ final class EnchantLoreRender {
                 sum = 0;
                 lineRainbowX = 0.0f;
             }
-            loreLine.append(formatted);
+            loreLine.append(formattedEnchant);
             appendCommaAfterEnchant(loreLine, parsed, lineRainbowX + renderLength, nowMs);
             lineRainbowX += renderLength + commaLength;
             sum += renderLength + commaLength;
+            index++;
         }
         if (font.width(loreLine) >= commaLength) {
             trimTrailingComma(loreLine);
@@ -139,21 +152,19 @@ final class EnchantLoreRender {
 
     private static List<Component> expand(
             TreeSet<EnchantLoreParser.ParsedEnchant> ordered,
-            boolean hasLore,
-            long nowMs
+            List<Component> formatted,
+            boolean hasLore
     ) {
         List<Component> lines = new ArrayList<>((hasLore ? 3 : 1) * ordered.size());
+        int index = 0;
         for (EnchantLoreParser.ParsedEnchant parsed : ordered) {
-            lines.add(formatEnchant(parsed, nowMs));
+            lines.add(formatted.get(index));
             if (hasLore) {
                 lines.addAll(parsed.lore());
             }
+            index++;
         }
         return lines;
-    }
-
-    private static int getRenderLength(EnchantLoreParser.ParsedEnchant parsed, long nowMs) {
-        return Minecraft.getInstance().font.width(formatEnchant(parsed, nowMs));
     }
 
     private static Component formatTierText(
@@ -173,6 +184,10 @@ final class EnchantLoreRender {
     private static Component gradientText(String text, EnchantLore.Tier tier, Style base, float xStart) {
         if (text.isEmpty()) {
             return Component.empty();
+        }
+        int flatColor = EnchantLoreColorSettings.colorAt(tier, 0.0f);
+        if (flatColor == EnchantLoreColorSettings.colorAt(tier, 1.0f)) {
+            return Component.literal(text).withStyle(base.withColor(flatColor));
         }
         Font font = Minecraft.getInstance().font;
         int totalWidth = font.width(text);

@@ -571,10 +571,11 @@ public class Reminder {
                 .append(Component.literal(" is ready at Kat!").withStyle(ChatFormatting.YELLOW, ChatFormatting.BOLD));
 
         message.append(Component.literal(" "));
-        message.append(Component.literal("[Error alert!]")
+        message.append(Component.literal("[")
+                .append(Component.literal("Error alert?").withStyle(style -> style.withUnderlined(true)))
+                .append(Component.literal("]"))
                 .withStyle(style -> style
                         .withColor(0xFF69B4)
-                        .withUnderlined(true)
                         .withClickEvent(new ClickEvent.RunCommand("/baity katclear"))));
 
         MessageUtils.sendCustomMessage(prefix.append(message));

@@ -8,6 +8,9 @@ import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
 import net.fabricmc.fabric.api.event.Event;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -15,12 +18,18 @@ import net.minecraft.world.item.TooltipFlag;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.TreeSet;
 
 @Environment(EnvType.CLIENT)
 public final class EnchantLore {
     private static final Identifier TOOLTIP_LAST_PHASE = Identifier.fromNamespaceAndPath("baity", "enchant_lore_last");
     private static final LoreCache LORE_CACHE = new LoreCache();
+    private static FormattedText hoverCacheSource = null;
+    private static FormattedText hoverCacheResult = null;
+    private static boolean hoverCacheMissing = false;
+    private static boolean missingWasActive = false;
+
     private EnchantLore() {
     }
 
@@ -34,6 +43,8 @@ public final class EnchantLore {
 
     public static void invalidateCache() {
         LORE_CACHE.invalidate();
+        hoverCacheSource = null;
+        hoverCacheResult = null;
     }
 
     public static Component tierPreview(Tier tier) {
@@ -46,6 +57,75 @@ public final class EnchantLore {
 
     public static int tierButtonHeight(net.minecraft.client.gui.Font font) {
         return font.lineHeight + 8;
+    }
+
+    public static FormattedText rewriteHoverText(FormattedText text) {
+        if (!isEnabled() || text == null) {
+            return text;
+        }
+        Minecraft mc = Minecraft.getInstance();
+        if (mc == null || !LocateUtils.inSkyBlock(mc)) {
+            return text;
+        }
+        boolean missingActive = EnchantLoreMissing.isActive();
+        if (hoverCacheSource != null
+                && hoverCacheMissing == missingActive
+                && (hoverCacheSource == text || hoverCacheSource.getString().equals(text.getString()))) {
+            return hoverCacheResult;
+        }
+        List<Component> lines = toComponents(text);
+        if (lines.size() < 2) {
+            return text;
+        }
+        applyToTooltipLore(lines, ItemStack.EMPTY);
+        FormattedText result = joinLines(lines);
+        if (!LORE_CACHE.isCacheable()) {
+            hoverCacheSource = null;
+            hoverCacheResult = null;
+            return result;
+        }
+        hoverCacheSource = text;
+        hoverCacheMissing = missingActive;
+        hoverCacheResult = result;
+        return result;
+    }
+
+    private static List<Component> toComponents(FormattedText text) {
+        List<Component> lines = new ArrayList<>();
+        MutableComponent[] current = {Component.empty()};
+        text.visit((style, content) -> {
+            int start = 0;
+            for (int i = 0; i < content.length(); i++) {
+                if (content.charAt(i) != '\n') {
+                    continue;
+                }
+                appendText(current, style, content.substring(start, i));
+                lines.add(current[0]);
+                current[0] = Component.empty();
+                start = i + 1;
+            }
+            appendText(current, style, content.substring(start));
+            return Optional.empty();
+        }, Style.EMPTY);
+        lines.add(current[0]);
+        return lines;
+    }
+
+    private static void appendText(MutableComponent[] current, Style style, String part) {
+        if (!part.isEmpty()) {
+            current[0].append(Component.literal(part).withStyle(style));
+        }
+    }
+
+    private static Component joinLines(List<Component> lines) {
+        MutableComponent merged = Component.empty();
+        for (int i = 0; i < lines.size(); i++) {
+            if (i > 0) {
+                merged.append(Component.literal("\n"));
+            }
+            merged.append(lines.get(i));
+        }
+        return merged;
     }
 
     private static void onTooltip(
@@ -66,12 +146,17 @@ public final class EnchantLore {
     }
 
     static void applyToTooltipLore(List<Component> lore, ItemStack stack) {
-        if (!isEnabled() || lore == null || lore.isEmpty() || stack == null || stack.isEmpty()) {
+        if (!isEnabled() || lore == null || lore.isEmpty() || stack == null) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
         if (!LocateUtils.inSkyBlock(mc)) {
             return;
+        }
+        boolean missingActive = EnchantLoreMissing.isActive();
+        if (missingActive != missingWasActive) {
+            missingWasActive = missingActive;
+            LORE_CACHE.invalidate();
         }
         if (LORE_CACHE.isCached(lore, stack)) {
             lore.clear();
@@ -79,10 +164,12 @@ public final class EnchantLore {
             return;
         }
         LORE_CACHE.updateBefore(lore, stack);
+        List<Component> missingLines = missingWasActive ? EnchantLoreMissing.buildLines(lore, stack) : List.of();
         EnchantLoreParser.Section section = EnchantLoreParser.findSection(lore, stack);
         if (section == null) {
             EnchantLoreNumeralApplier.applyToTooltip(lore, null, null);
-            LORE_CACHE.updateAfter(lore, stack, true);
+            insertMissingEnchants(lore, missingLines, lore.size());
+            LORE_CACHE.updateAfter(lore, stack, !missingActive);
             return;
         }
         long nowMs = System.currentTimeMillis();
@@ -90,7 +177,8 @@ public final class EnchantLore {
             EnchantLoreParser.InPlaceResult inPlace = EnchantLoreParser.collectInPlace(lore, stack, section, nowMs);
             if (inPlace.enchants().isEmpty()) {
                 EnchantLoreNumeralApplier.applyToTooltip(lore, null, null);
-                LORE_CACHE.updateAfter(lore, stack, true);
+                insertMissingEnchants(lore, missingLines, section.end() + 1);
+                LORE_CACHE.updateAfter(lore, stack, !missingActive);
                 return;
             }
             for (int i = 0; i < inPlace.lines().size(); i++) {
@@ -100,13 +188,15 @@ public final class EnchantLore {
                 }
             }
             EnchantLoreNumeralApplier.applyToTooltip(lore, section.start(), section.end());
-            LORE_CACHE.updateAfter(lore, stack, !hasAnimatedRainbow(inPlace.enchants()));
+            insertMissingEnchants(lore, missingLines, section.end() + 1);
+            LORE_CACHE.updateAfter(lore, stack, !hasAnimatedRainbow(inPlace.enchants()) && !missingActive);
             return;
         }
         EnchantLoreParser.CollectResult collected = EnchantLoreParser.collectEnchants(lore, stack, section);
         if (collected.ordered().isEmpty()) {
             EnchantLoreNumeralApplier.applyToTooltip(lore, null, null);
-            LORE_CACHE.updateAfter(lore, stack, true);
+            insertMissingEnchants(lore, missingLines, section.end() + 1);
+            LORE_CACHE.updateAfter(lore, stack, !missingActive);
             return;
         }
         List<Component> insertLines = EnchantLoreRender.buildInsertLines(
@@ -121,18 +211,20 @@ public final class EnchantLore {
         int enchantStart = insertIndex;
         int enchantEnd = insertIndex + insertLines.size() - 1;
         EnchantLoreNumeralApplier.applyToTooltip(lore, enchantStart, enchantEnd);
-        LORE_CACHE.updateAfter(lore, stack, !hasAnimatedRainbow(collected.ordered()));
+        insertMissingEnchants(lore, missingLines, enchantEnd + 1);
+        LORE_CACHE.updateAfter(lore, stack, !hasAnimatedRainbow(collected.ordered()) && !missingActive);
+    }
+
+    private static void insertMissingEnchants(List<Component> lore, List<Component> missingLines, int insertIndex) {
+        if (missingLines.isEmpty()) {
+            return;
+        }
+        lore.addAll(Math.min(insertIndex, lore.size()), missingLines);
     }
 
     private static boolean hasAnimatedRainbow(TreeSet<EnchantLoreParser.ParsedEnchant> ordered) {
-        if (!isEnabled()) {
-            return false;
-        }
         for (EnchantLoreParser.ParsedEnchant parsed : ordered) {
-            if (parsed.level >= parsed.def.maxLevel
-                    && !parsed.def.ultimate
-                    && !parsed.def.unknown
-                    && EnchantLoreColorSettings.isRainbow(EnchantLore.Tier.PERFECT)) {
+            if (parsed.toEntry().rainbow()) {
                 return true;
             }
         }
@@ -220,6 +312,10 @@ public final class EnchantLore {
         void invalidate() {
             cacheable = false;
             cachedAfter = List.of();
+        }
+
+        boolean isCacheable() {
+            return cacheable;
         }
     }
 }

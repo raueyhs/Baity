@@ -365,10 +365,11 @@ public class HollowScanner implements LevelRenderEvents.AfterSolidFeatures {
         String name = structure.displayName();
         int nameColor = 0xFF000000 | HollowScannerSettings.colorRgb(
                 HollowScannerSettings.color(structure.family()));
-        MutableComponent share = Component.literal("[click to send coord]")
+        MutableComponent share = Component.literal("[")
+                .append(Component.literal("click to send coords").withStyle(Style.EMPTY.withBold(true)))
+                .append(Component.literal("]"))
                 .withStyle(Style.EMPTY
                         .withColor(CLICK_TEXT_COLOR)
-                        .withBold(true)
                         .withClickEvent(new ClickEvent.RunCommand(
                                 SHARE_MARKER + x + " " + y + " " + z + " " + name)));
         return MessageUtils.createBaityPrefix()

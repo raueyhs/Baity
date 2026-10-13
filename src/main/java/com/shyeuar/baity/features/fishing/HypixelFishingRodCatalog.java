@@ -30,6 +30,8 @@ public final class HypixelFishingRodCatalog {
 
     private static final Logger LOGGER = LoggerFactory.getLogger("Baity/HypixelFishingRodCatalog");
 
+    // Rod ids are derived from the public item list published by the SkyHanni project (LGPL-2.1):
+    // https://github.com/hannibal002/SkyHanni
     private static final String PUBLIC_ITEMS_JSON =
         "https://raw.githubusercontent.com/hannibal002/SkyHanni-REPO/main/constants/Items.json";
     private static final String CACHE_FILE_NAME = "hypixel-fishing-rod-catalog.json";

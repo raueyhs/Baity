@@ -312,6 +312,7 @@ public class ConfigManager {
     public static boolean enchantLoreArabicNumerals = false;
     public static boolean enchantLoreDontReplaceRomanInItemName = false;
     public static String enchantLoreLayoutMode = "default";
+    public static int enchantLoreMissingKeybind = 341;
     public static boolean nametagDefaultNametag = false;
     public static final String DEFAULT_BAITY_PRESENCE_SYNC_URL = "https://baity-sync-d7gx0aiqb6c3727d5-1502560706.ap-shanghai.app.tcloudbase.com";
     public static String baityPresenceSyncUrl = DEFAULT_BAITY_PRESENCE_SYNC_URL;
@@ -1064,6 +1065,9 @@ public class ConfigManager {
                 ConfigManager.enchantLoreLayoutMode = "normal".equals(v) ? "default" : (String) v;
                 com.shyeuar.baity.features.enchantlore.EnchantLore.invalidateCache();
             });
+        registerField("EnchantLoreMissingKeybind", Integer.class,
+            c -> ConfigManager.enchantLoreMissingKeybind,
+            (c, v) -> ConfigManager.enchantLoreMissingKeybind = (Integer) v);
         registerField("BaityPresenceSyncUrl", String.class,
             c -> ConfigManager.baityPresenceSyncUrl,
             (c, v) -> ConfigManager.baityPresenceSyncUrl = (String) v);
