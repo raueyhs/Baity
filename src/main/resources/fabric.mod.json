@@ -9,7 +9,7 @@
     "homepage": "https://github.com/raueyhs/Baity",
     "issues": "https://github.com/raueyhs/Baity/issues"
   },
-  "license": "AGPL-3.0",
+  "license": "LGPL-3.0-only",
   "environment": "client",
   "icon": "assets/baity/textures/gui/logo.png",
   "entrypoints": {

@@ -6,10 +6,10 @@ A visual and utility mod currently in development mainly for Hypixel SkyBlock.
 
 ## License / 许可证
 
-This project is licensed under the GNU Affero General Public License v3.0 (AGPL-3.0).
+This project is licensed under the GNU Lesser General Public License v3.0 (LGPL-3.0).
 For full license text, please see the [LICENSE](LICENSE) file.
 
-本项目采用 GNU Affero General Public License v3.0 (AGPL-3.0) 许可证。
+本项目采用 GNU Lesser General Public License v3.0 (LGPL-3.0) 许可证。
 完整条款请参阅 [LICENSE](LICENSE) 文件。
 
 ## Usage Disclaimer / 使用声明
