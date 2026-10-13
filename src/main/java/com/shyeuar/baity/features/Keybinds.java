@@ -194,13 +194,17 @@ public final class Keybinds {
         if (!raw.equals(loadedBindingsSource)) {
             loadedBindingsSource = raw;
             commandBindings = parseCommandBindings(raw);
-            Set<Integer> relevant = new HashSet<>();
-            for (CommandBinding binding : commandBindings) {
-                relevant.addAll(binding.keys());
-            }
-            relevantCommandKeys = Set.copyOf(relevant);
+            refreshRelevantCommandKeys();
         }
         return commandBindings;
+    }
+
+    private static void refreshRelevantCommandKeys() {
+        Set<Integer> relevant = new HashSet<>();
+        for (CommandBinding binding : commandBindings) {
+            relevant.addAll(binding.keys());
+        }
+        relevantCommandKeys = Set.copyOf(relevant);
     }
 
     public static void addCommandBinding() {
@@ -254,6 +258,8 @@ public final class Keybinds {
         }
         loadedBindingsSource = builder.toString();
         commandBindings = List.copyOf(bindings);
+        refreshRelevantCommandKeys();
+        triggeredCommandBindings.clear();
         ConfigManager.keybindsCommandBindings = loadedBindingsSource;
         ConfigManager.requestSave();
     }

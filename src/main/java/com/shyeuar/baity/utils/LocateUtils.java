@@ -45,6 +45,8 @@ public final class LocateUtils {
             Pattern.CASE_INSENSITIVE);
     private static final Pattern SB_SUBAREA_AFTER_LOC = Pattern.compile("\u23e3\\s*(?<area>.+)");
     private static final Pattern SB_SUBAREA_RIFT = Pattern.compile("\u0444\\s*(?<area>.+)");
+    private static final Pattern LEGACY_HEX_COLOR = Pattern.compile("(?i)\u00A7x(\u00A7[0-9a-f]){6}");
+    private static final Pattern LEGACY_COLOR_CODE = Pattern.compile("\u00a7[0-9a-fk-or]");
     private static final Set<String> GALATEA_SUBAREAS = Set.of(
             "moonglade marsh",
             "tangleburg",
@@ -687,15 +689,25 @@ public final class LocateUtils {
         return "";
     }
 
+    private static List<java.lang.reflect.Method> sortedScoresMethods;
+
     private static List<?> tryGetSortedScores(Scoreboard scoreboard, Objective objective) {
         try {
-            for (java.lang.reflect.Method m : scoreboard.getClass().getMethods()) {
-                if (!"getSortedScores".equals(m.getName())) {
-                    continue;
+            List<java.lang.reflect.Method> methods = sortedScoresMethods;
+            if (methods == null) {
+                methods = new java.util.ArrayList<>();
+                for (java.lang.reflect.Method m : scoreboard.getClass().getMethods()) {
+                    if (!"getSortedScores".equals(m.getName())) {
+                        continue;
+                    }
+                    if (m.getParameterCount() != 1) {
+                        continue;
+                    }
+                    methods.add(m);
                 }
-                if (m.getParameterCount() != 1) {
-                    continue;
-                }
+                sortedScoresMethods = methods;
+            }
+            for (java.lang.reflect.Method m : methods) {
                 try {
                     Object res = m.invoke(scoreboard, objective);
                     if (res instanceof List<?> list) {
@@ -896,9 +908,7 @@ public final class LocateUtils {
         if (text == null || text.isEmpty()) {
             return text == null ? "" : text;
         }
-        return text
-                .replaceAll("(?i)\u00A7x(\u00A7[0-9a-f]){6}", "")
-                .replaceAll("\u00a7[0-9a-fk-or]", "");
+        return LEGACY_COLOR_CODE.matcher(LEGACY_HEX_COLOR.matcher(text).replaceAll("")).replaceAll("");
     }
 
     private static void clear() {

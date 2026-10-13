@@ -3,6 +3,9 @@ package com.shyeuar.baity.features.hollowscanner;
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.gui.value.ValueCycleUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public final class HollowScannerSettings {
 
     public static final String[] COLOR_NAMES = {
@@ -23,6 +26,16 @@ public final class HollowScannerSettings {
     private static final String KEY_WORM_FISHING = "worm fishing";
 
     private static final State[] STATES = new State[HollowFamily.values().length];
+
+    private static final Map<String, HollowFamily> FAMILY_BY_KEY = buildFamilyIndex();
+
+    private static Map<String, HollowFamily> buildFamilyIndex() {
+        Map<String, HollowFamily> index = new HashMap<>();
+        for (HollowFamily family : HollowFamily.values()) {
+            index.put(family.key(), family);
+        }
+        return Map.copyOf(index);
+    }
 
     private static String loadedSource = null;
     private static boolean selectAreasExpanded = false;
@@ -242,12 +255,7 @@ public final class HollowScannerSettings {
         if (key == null) {
             return null;
         }
-        for (HollowFamily family : HollowFamily.values()) {
-            if (family.key().equals(key)) {
-                return family;
-            }
-        }
-        return null;
+        return FAMILY_BY_KEY.get(key);
     }
 
     private static final class State {

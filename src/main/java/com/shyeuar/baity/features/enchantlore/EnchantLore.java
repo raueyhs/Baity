@@ -26,6 +26,7 @@ public final class EnchantLore {
     private static final Identifier TOOLTIP_LAST_PHASE = Identifier.fromNamespaceAndPath("baity", "enchant_lore_last");
     private static final LoreCache LORE_CACHE = new LoreCache();
     private static FormattedText hoverCacheSource = null;
+    private static String hoverCacheSourceString = null;
     private static FormattedText hoverCacheResult = null;
     private static boolean hoverCacheMissing = false;
     private static boolean missingWasActive = false;
@@ -44,6 +45,7 @@ public final class EnchantLore {
     public static void invalidateCache() {
         LORE_CACHE.invalidate();
         hoverCacheSource = null;
+        hoverCacheSourceString = null;
         hoverCacheResult = null;
     }
 
@@ -70,7 +72,7 @@ public final class EnchantLore {
         boolean missingActive = EnchantLoreMissing.isActive();
         if (hoverCacheSource != null
                 && hoverCacheMissing == missingActive
-                && (hoverCacheSource == text || hoverCacheSource.getString().equals(text.getString()))) {
+                && (hoverCacheSource == text || hoverCacheSourceString.equals(text.getString()))) {
             return hoverCacheResult;
         }
         List<Component> lines = toComponents(text);
@@ -81,10 +83,12 @@ public final class EnchantLore {
         FormattedText result = joinLines(lines);
         if (!LORE_CACHE.isCacheable()) {
             hoverCacheSource = null;
+            hoverCacheSourceString = null;
             hoverCacheResult = null;
             return result;
         }
         hoverCacheSource = text;
+        hoverCacheSourceString = text.getString();
         hoverCacheMissing = missingActive;
         hoverCacheResult = result;
         return result;
@@ -231,14 +235,23 @@ public final class EnchantLore {
         return false;
     }
 
+    private static int cachedRainbowAngle = Integer.MIN_VALUE;
+    private static double cachedRainbowTan;
+    private static double cachedRainbowCos;
+
     static int rainbowRgbAt(float x, float y, long nowMs) {
         double speed = Math.max(0.1, ConfigManager.enchantLoreRainbowSpeed);
         int cycleMs = (int) (4000.0 / speed);
         float time = 1.0f - (nowMs % cycleMs) / (float) cycleMs;
         int gradient = Math.max(1, ConfigManager.enchantLoreRainbowGradient);
         int angle = Math.max(1, Math.min(89, ConfigManager.enchantLoreRainbowAngle));
-        double angleRad = Math.toRadians(angle);
-        double coord = Math.abs(y + x * Math.tan(angleRad)) * Math.cos(angleRad);
+        if (angle != cachedRainbowAngle) {
+            cachedRainbowAngle = angle;
+            double angleRad = Math.toRadians(angle);
+            cachedRainbowTan = Math.tan(angleRad);
+            cachedRainbowCos = Math.cos(angleRad);
+        }
+        double coord = Math.abs(y + x * cachedRainbowTan) * cachedRainbowCos;
         float saturation = (float) Math.min(1.0, Math.max(0.0, ConfigManager.enchantLoreRainbowSaturation));
         float hue = (float) positiveModulo((time % 1.0) + (coord % gradient) / gradient, 1.0);
         return net.minecraft.util.Mth.hsvToRgb(hue, saturation, 1.0f);

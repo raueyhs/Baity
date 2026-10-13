@@ -36,6 +36,16 @@ public final class MiddleClickGui {
             "Bits Shop"
     );
 
+    private static final List<Pattern> ALLOW_GUI_PATTERNS = buildAllowGuiPatterns();
+
+    private static List<Pattern> buildAllowGuiPatterns() {
+        List<Pattern> patterns = new java.util.ArrayList<>(ALLOW_GUIS.size());
+        for (String gui : ALLOW_GUIS) {
+            patterns.add(Pattern.compile("\\(\\d+/\\d+\\) " + Pattern.quote(gui) + ".*"));
+        }
+        return List.copyOf(patterns);
+    }
+
     private static final List<String> AVOID_GUIS = List.of(
             "Drill Anvil",
             "Anvil",
@@ -157,8 +167,9 @@ public final class MiddleClickGui {
         if (plainTitle == null) {
             return false;
         }
-        for (String gui : ALLOW_GUIS) {
-            if (matchesGuiTitle(plainTitle, gui)) {
+        for (int i = 0; i < ALLOW_GUIS.size(); i++) {
+            if (plainTitle.startsWith(ALLOW_GUIS.get(i))
+                    || ALLOW_GUI_PATTERNS.get(i).matcher(plainTitle).matches()) {
                 return true;
             }
         }
@@ -185,13 +196,6 @@ public final class MiddleClickGui {
             }
         }
         return false;
-    }
-
-    private static boolean matchesGuiTitle(String plainTitle, String gui) {
-        if (plainTitle.startsWith(gui)) {
-            return true;
-        }
-        return plainTitle.matches("\\(\\d+/\\d+\\) " + Pattern.quote(gui) + ".*");
     }
 
     private static boolean isTradeSlot(ItemStack stack) {

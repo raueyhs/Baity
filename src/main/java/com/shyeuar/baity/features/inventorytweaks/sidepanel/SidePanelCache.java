@@ -239,11 +239,7 @@ final class SidePanelCache {
     }
 
     static Map<String, ItemStack> exportItems() {
-        Map<String, ItemStack> copy = new HashMap<>();
-        for (Map.Entry<String, ItemStack> entry : EQUIPMENT_BY_NAME.entrySet()) {
-            copy.put(entry.getKey(), entry.getValue().copy());
-        }
-        return copy;
+        return new HashMap<>(EQUIPMENT_BY_NAME);
     }
 
     public static void registerCurrentPanelSlots() {
@@ -472,7 +468,7 @@ final class SidePanelCache {
             }
             ItemStack[] copy = new ItemStack[4];
             for (int i = 0; i < 4; i++) {
-                copy[i] = row[i] == null ? ItemStack.EMPTY : row[i].copy();
+                copy[i] = row[i] == null ? ItemStack.EMPTY : row[i];
             }
             snapshot.put(entry.getKey(), copy);
         }
