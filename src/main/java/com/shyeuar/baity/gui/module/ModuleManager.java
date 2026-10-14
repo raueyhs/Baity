@@ -1015,19 +1015,37 @@ public class ModuleManager {
             }
         );
         
+        GroupValue cameraNoClipGroup = new GroupValue("no camera clip", "no camera clip", ModuleCategory.RENDER)
+            .setExpanded(ConfigManager.cameraNoClipGroupExpanded)
+            .setSubModuleSwitchChildName("no camera clip enabled")
+            .addChild(new Option("no camera clip enabled", "enabled", ConfigManager.cameraNoClipEnabled, ModuleCategory.RENDER))
+            .addChild(new com.shyeuar.baity.gui.value.SliderValue(
+                "camera distance", "camera distance", ConfigManager.cameraNoClipDistance, 1.0, 12.0, 0.5, ModuleCategory.RENDER
+            ));
+
         ModuleRegistry.registerModuleWithValues(
             "CameraTweaks", "CameraTweaks", ModuleCategory.RENDER,
             () -> ConfigManager.cameraTweaksEnabled,
             val -> ConfigManager.cameraTweaksEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
-                new Option("no camera clip", "no camera clip", ConfigManager.cameraNoClipEnabled, ModuleCategory.RENDER),
+                cameraNoClipGroup,
                 new Option("no hurt cam", "no hurt cam", ConfigManager.noHurtCamEnabled, ModuleCategory.RENDER)
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
                     "no camera clip",
+                    () -> ConfigManager.cameraNoClipGroupExpanded,
+                    val -> ConfigManager.cameraNoClipGroupExpanded = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "no camera clip enabled",
                     () -> ConfigManager.cameraNoClipEnabled,
                     val -> ConfigManager.cameraNoClipEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "camera distance",
+                    () -> ConfigManager.cameraNoClipDistance,
+                    val -> ConfigManager.cameraNoClipDistance = ((Number) val).doubleValue()
                 ),
                 new ModuleRegistry.ValueConfigInfo(
                     "no hurt cam",
@@ -1739,7 +1757,6 @@ public class ModuleManager {
         TooltipManager.registerTooltip("FancyCreeperVeil", "Replace the wither cloak ability creeper model to a fancy one.", 0xFFFFFF);
         TooltipManager.registerTooltip("NoSwimPose", "Only disables the swimming pose and eye height change on your client.", 0xFFFFFF);
         TooltipManager.registerTooltip("area blacklist", "disable effect when in.", 0xFFFFFF);
-        TooltipManager.registerTooltip("CameraTweaks", "Client-side tweaks for the third-person camera.", 0xFFFFFF);
         TooltipManager.registerTooltip("SoftFullscreen", "Borderless Fullscreen.", 0xFFFFFF);
         TooltipManager.registerTooltip(
             "InventoryTweaks",

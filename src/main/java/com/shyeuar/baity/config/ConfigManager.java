@@ -159,6 +159,10 @@ public class ConfigManager {
 
     public static boolean cameraNoClipEnabled = false;
 
+    public static boolean cameraNoClipGroupExpanded = false;
+
+    public static double cameraNoClipDistance = 4.0;
+
     public static boolean softFullscreenEnabled = false;
     public static boolean inventoryTweaksEnabled = false;
     public static boolean inventoryMiddleClickGroupExpanded = false;
@@ -710,6 +714,12 @@ public class ConfigManager {
         registerField("CameraNoClip", Boolean.class,
             c -> ConfigManager.cameraNoClipEnabled,
             (c, v) -> ConfigManager.cameraNoClipEnabled = (Boolean) v);
+        registerField("CameraNoClipGroupExpanded", Boolean.class,
+            c -> ConfigManager.cameraNoClipGroupExpanded,
+            (c, v) -> ConfigManager.cameraNoClipGroupExpanded = (Boolean) v);
+        registerField("CameraNoClipDistance", Double.class,
+            c -> ConfigManager.cameraNoClipDistance,
+            (c, v) -> ConfigManager.cameraNoClipDistance = ((Number) v).doubleValue());
         registerField("SoftFullscreen", Boolean.class,
             c -> ConfigManager.softFullscreenEnabled,
             (c, v) -> ConfigManager.softFullscreenEnabled = (Boolean) v);

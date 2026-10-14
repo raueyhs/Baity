@@ -25,6 +25,13 @@ public class ModuleUtils {
         return ConfigManager.cameraTweaksEnabled && ConfigManager.cameraNoClipEnabled;
     }
 
+    public static float getCameraDistance(float original) {
+        if (!shouldDisableCameraClip()) {
+            return original;
+        }
+        return (float) ConfigManager.cameraNoClipDistance;
+    }
+
     public static boolean shouldCancelHurtCam() {
         return ConfigManager.cameraTweaksEnabled && ConfigManager.noHurtCamEnabled;
     }
