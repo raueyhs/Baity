@@ -39,13 +39,18 @@ void main() {
     float depth = texelFetch(MainDepthSampler, texel, 0).x;
 
     if (depth > 0.56) {color = texture(MainSampler, texCoord); return;}
+
+    vec2 velCenter = texCoord - reproject(vec3(texCoord, depth)).xy;
+    vec2 centerSpan = blendFactor * velCenter * view_res;
+    if (dot(centerSpan, centerSpan) < 0.25) {color = texture(MainSampler, texCoord); return;}
+
     float dilatedDepth = depth;
     dilatedDepth = max(dilatedDepth, texelFetch(MainDepthSampler, texel + ivec2( 1,  0), 0).x);
     dilatedDepth = max(dilatedDepth, texelFetch(MainDepthSampler, texel + ivec2(-1,  0), 0).x);
     dilatedDepth = max(dilatedDepth, texelFetch(MainDepthSampler, texel + ivec2( 0,  1), 0).x);
     dilatedDepth = max(dilatedDepth, texelFetch(MainDepthSampler, texel + ivec2( 0, -1), 0).x);
 
-    vec2 velocity = clampLength(texCoord - reproject(vec3(texCoord, dilatedDepth)).xy);
+    vec2 velocity = clampLength(dilatedDepth == depth ? velCenter : texCoord - reproject(vec3(texCoord, dilatedDepth)).xy);
 
     float speed   = length(velocity);
     int   samples = clamp(int(ceil(speed * float(sampleCount))), 4, sampleCount);

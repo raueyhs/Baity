@@ -49,6 +49,9 @@ void main() {
     float camMag   = dot(velCamera, velCamera);
     vec2 velocity  = clampLength(camMag > 1e-12 ? velFull - velCamera * (clamp(dot(velFull, velCamera), 0.0, camMag) / camMag) : velFull);
 
+    vec2 pixelSpan = blendFactor * velocity * view_res;
+    if (dot(pixelSpan, pixelSpan) < 0.25) {color = texture(MainSampler, texCoord); return;}
+
     float speed   = length(velocity);
     int   samples = clamp(int(ceil(speed * float(sampleCount))), 4, sampleCount);
 
