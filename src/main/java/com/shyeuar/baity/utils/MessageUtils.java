@@ -56,10 +56,8 @@ public class MessageUtils {
         return prefix.append(message);
     }
     
-    public static int animatedPastelRgbAt(float x, long nowMs) {
-        int cycleMs = 4000;
-        float time = 1.0f - (nowMs % cycleMs) / (float) cycleMs;
-        float hue = (float) positiveModulo(time + (x % 100.0f) / 100.0f, 1.0);
+    public static int pastelRgbAt(float x) {
+        float hue = (float) positiveModulo((x % 100.0f) / 100.0f, 1.0);
         return net.minecraft.util.Mth.hsvToRgb(hue, PASTEL_SATURATION, 1.0f);
     }
     

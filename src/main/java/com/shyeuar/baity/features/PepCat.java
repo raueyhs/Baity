@@ -194,20 +194,19 @@ public class PepCat {
         }
 
         MutableComponent fullMessage = MessageUtils.createBaityPrefix()
-            .append(dynamicColorText(text))
+            .append(pastelText(text))
             .append(MessageUtils.createColoredText(emoji, 0xFF80FF));
 
         MessageUtils.sendCustomMessage(fullMessage);
     }
 
-    private static MutableComponent dynamicColorText(String text) {
+    private static MutableComponent pastelText(String text) {
         net.minecraft.client.gui.Font font = net.minecraft.client.Minecraft.getInstance().font;
-        long nowMs = System.currentTimeMillis();
         MutableComponent root = Component.empty();
         float x = 0.0f;
         for (int i = 0; i < text.length(); i++) {
             String glyph = String.valueOf(text.charAt(i));
-            int glyphColor = MessageUtils.animatedPastelRgbAt(x, nowMs);
+            int glyphColor = MessageUtils.pastelRgbAt(x);
             root.append(Component.literal(glyph)
                     .withStyle(style -> style.withColor(glyphColor)));
             x += font.width(glyph);
