@@ -1335,7 +1335,7 @@ public class ValueStyleRenderer {
        double chroma = Math.max(0.0, Math.min(0.4, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaChroma));
        double size = Math.max(0.1, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaSize);
        double speed = Math.max(0.0, Math.min(8.0, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaSpeed));
-       double phase = (nowMs / 1000.0) * (speed * 0.5);
+       double phase = (com.shyeuar.baity.config.ConfigManager.nickTweaksChromaStatic ? 0.0 : (nowMs / 1000.0) * (speed * 0.5));
        double progress = len <= 1 ? 0.0 : (double) idx / (double) (len - 1);
        float saturation = (float) (chroma / 0.4);
        float hue = (float) (((progress / size) - phase) % 1.0);

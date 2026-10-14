@@ -232,6 +232,7 @@ public class ConfigManager {
     public static double prismBreakChromaLightness = 0.8;
     public static double prismBreakChromaChroma = 0.2;
     public static double prismBreakChromaSize = 2.5;
+    public static boolean prismBreakChromaStatic = false;
     public static boolean prismBreakReplaceVanilla = true;
 
     public static boolean paperDollEnabled = false;
@@ -286,6 +287,7 @@ public class ConfigManager {
     public static double nickTweaksChromaChroma = 0.2;
     public static double nickTweaksChromaSize = 3.1;
     public static double nickTweaksChromaSpeed = 1.0;
+    public static boolean nickTweaksChromaStatic = false;
     public static boolean nickTweaksChromaGroupExpanded = false;
     public static int nickTweaksGradientStartColor = 0xFFFFFF;
     public static int nickTweaksGradientEndColor = 0xFFFFFF;
@@ -298,6 +300,7 @@ public class ConfigManager {
     public static double chromaFishingLineChromaChroma = 0.2;
     public static double chromaFishingLineChromaSize = 3.1;
     public static double chromaFishingLineChromaSpeed = 1.0;
+    public static boolean chromaFishingLineChromaStatic = false;
     public static boolean chromaFishingLineChromaReverseDirection = false;
     public static boolean chromaFishingLineChromaGroupExpanded = false;
 
@@ -312,6 +315,7 @@ public class ConfigManager {
     public static double enchantLoreRainbowSaturation = 0.8;
     public static int enchantLoreRainbowGradient = 100;
     public static int enchantLoreRainbowAngle = 45;
+    public static boolean enchantLoreRainbowStatic = false;
     public static boolean enchantLoreRomanNumeralsGroupExpanded = false;
     public static boolean enchantLoreArabicNumerals = false;
     public static boolean enchantLoreDontReplaceRomanInItemName = false;
@@ -900,6 +904,9 @@ public class ConfigManager {
         registerField("PrismBreakChromaSize", Double.class,
             c -> ConfigManager.prismBreakChromaSize,
             (c, v) -> ConfigManager.prismBreakChromaSize = (Double) v);
+        registerField("PrismBreakChromaStatic", Boolean.class,
+            c -> ConfigManager.prismBreakChromaStatic,
+            (c, v) -> ConfigManager.prismBreakChromaStatic = (Boolean) v);
         registerField("PrismBreakReplaceVanilla", Boolean.class,
             c -> ConfigManager.prismBreakReplaceVanilla,
             (c, v) -> ConfigManager.prismBreakReplaceVanilla = (Boolean) v);
@@ -991,6 +998,9 @@ public class ConfigManager {
         registerField("NickTweaksChromaSpeed", Double.class,
             c -> ConfigManager.nickTweaksChromaSpeed,
             (c, v) -> ConfigManager.nickTweaksChromaSpeed = (Double) v);
+        registerField("NickTweaksChromaStatic", Boolean.class,
+            c -> ConfigManager.nickTweaksChromaStatic,
+            (c, v) -> ConfigManager.nickTweaksChromaStatic = (Boolean) v);
         registerField("NickTweaksChromaGroupExpanded", Boolean.class,
             c -> ConfigManager.nickTweaksChromaGroupExpanded,
             (c, v) -> ConfigManager.nickTweaksChromaGroupExpanded = (Boolean) v);
@@ -1024,6 +1034,9 @@ public class ConfigManager {
         registerField("ChromaFishingLineChromaSpeed", Double.class,
             c -> ConfigManager.chromaFishingLineChromaSpeed,
             (c, v) -> ConfigManager.chromaFishingLineChromaSpeed = (Double) v);
+        registerField("ChromaFishingLineChromaStatic", Boolean.class,
+            c -> ConfigManager.chromaFishingLineChromaStatic,
+            (c, v) -> ConfigManager.chromaFishingLineChromaStatic = (Boolean) v);
         registerField("ChromaFishingLineChromaReverseDirection", Boolean.class,
             c -> ConfigManager.chromaFishingLineChromaReverseDirection,
             (c, v) -> ConfigManager.chromaFishingLineChromaReverseDirection = (Boolean) v);
@@ -1054,6 +1067,9 @@ public class ConfigManager {
         registerField("EnchantLoreRainbowAngle", Integer.class,
             c -> ConfigManager.enchantLoreRainbowAngle,
             (c, v) -> ConfigManager.enchantLoreRainbowAngle = (Integer) v);
+        registerField("EnchantLoreRainbowStatic", Boolean.class,
+            c -> ConfigManager.enchantLoreRainbowStatic,
+            (c, v) -> ConfigManager.enchantLoreRainbowStatic = (Boolean) v);
         registerField("EnchantLoreRomanNumeralsGroupExpanded", Boolean.class,
             c -> ConfigManager.enchantLoreRomanNumeralsGroupExpanded,
             (c, v) -> ConfigManager.enchantLoreRomanNumeralsGroupExpanded = (Boolean) v);

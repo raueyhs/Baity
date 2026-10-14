@@ -212,7 +212,7 @@ public final class ChromaFishingLine implements LevelRenderEvents.EndMain {
         double chroma = Mth.clamp(ConfigManager.chromaFishingLineChromaChroma, 0.0, 0.4);
         double size = Math.max(0.1, ConfigManager.chromaFishingLineChromaSize);
         double speed = Mth.clamp(ConfigManager.chromaFishingLineChromaSpeed, 0.0, 8.0);
-        double phase = (nowMs / 1000.0) * (speed * 0.5);
+        double phase = ConfigManager.chromaFishingLineChromaStatic ? 0.0 : (nowMs / 1000.0) * (speed * 0.5);
         float lineProgress = ConfigManager.chromaFishingLineChromaReverseDirection
                 ? 1.0f - rodToHookProgress
                 : rodToHookProgress;

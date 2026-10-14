@@ -431,6 +431,7 @@ public final class BaityPresenceSync {
                 local.smolEnabled(),
                 local.nickTweaksEnabled(),
                 local.chromaEnabled(),
+                local.chromaStatic(),
                 local.chromaPalette(),
                 local.chromaSpeed(),
                 local.chromaSize(),
@@ -616,6 +617,7 @@ public final class BaityPresenceSync {
             if (state.chromaEnabled()) {
                 JsonObject chroma = new JsonObject();
                 chroma.addProperty("enabled", true);
+                chroma.addProperty("static", state.chromaStatic());
                 chroma.addProperty("speed", state.chromaSpeed());
                 chroma.addProperty("size", state.chromaSize());
                 chroma.addProperty("chroma", state.chromaAmount());
@@ -662,6 +664,7 @@ public final class BaityPresenceSync {
         Module chromaModule = ModuleManager.getModuleByName("NickTweaks");
         boolean nickTweaksEnabled = chromaModule != null && chromaModule.isEnabled();
         boolean chromaEnabled = ConfigManager.nickTweaksChromaEnabled;
+        boolean chromaStatic = ConfigManager.nickTweaksChromaStatic;
         boolean smolEnabled = ConfigManager.smolpeopleMode;
         double chromaSize = Math.max(0.1, Math.min(12.0, ConfigManager.nickTweaksChromaSize));
         double chromaAmount = Math.max(0.0, Math.min(0.4, ConfigManager.nickTweaksChromaChroma));
@@ -680,6 +683,7 @@ public final class BaityPresenceSync {
             true,
             nickTweaksEnabled,
             chromaEnabled,
+            chromaStatic,
             smolEnabled,
             palette,
             speed,
@@ -743,6 +747,7 @@ public final class BaityPresenceSync {
             boolean nickTweaksEnabled = getAsBoolean(nickTweaksObj, "enabled", false);
 
             boolean chromaEnabled = false;
+            boolean chromaStatic = false;
             boolean boldSelf = false;
             boolean customNickColorEnabled = false;
             String nickChanger = "";
@@ -762,6 +767,7 @@ public final class BaityPresenceSync {
 
                 if (chromaEnabled) {
                     JsonObject chromaObj = nickTweaksObj == null ? null : nickTweaksObj.getAsJsonObject("chroma");
+                    chromaStatic = getAsBoolean(chromaObj, "static", false);
                     speed = clamp(getAsDouble(chromaObj, "speed", 1.0), 0.0, 8.0);
                     chromaSize = clamp(getAsDouble(chromaObj, "size", 3.1), 0.1, 12.0);
                     chromaAmount = clamp(getAsDouble(chromaObj, "chroma", 0.2), 0.0, 0.4);
@@ -804,6 +810,7 @@ public final class BaityPresenceSync {
                 smolEnabled,
                 nickTweaksEnabled,
                 chromaEnabled,
+                chromaStatic,
                 palette,
                 speed,
                 chromaSize,
@@ -821,7 +828,7 @@ public final class BaityPresenceSync {
                 String nameLower = name.toLowerCase(Locale.ROOT);
                 newChromaByName.put(
                     nameLower,
-                    new ChromaProfile(chromaEnabled, palette, speed, chromaSize, chromaAmount, chromaLightness, gradientStart, gradientEnd, boldSelf, customNickColorEnabled, nickChanger)
+                    new ChromaProfile(chromaEnabled, chromaStatic, palette, speed, chromaSize, chromaAmount, chromaLightness, gradientStart, gradientEnd, boldSelf, customNickColorEnabled, nickChanger)
                 );
                 newChromaDisplayByLower.put(nameLower, name);
             }
@@ -951,6 +958,7 @@ public final class BaityPresenceSync {
 
     public record ChromaProfile(
             boolean chromaEnabled,
+            boolean chromaStatic,
             int[] palette,
             double speed,
             double chromaSize,
@@ -981,6 +989,7 @@ public final class BaityPresenceSync {
             boolean smolPeopleEnabled,
             boolean nickTweaksEnabled,
             boolean chromaEnabled,
+            boolean chromaStatic,
             int[] chromaPalette,
             double chromaSpeed,
             double chromaSize,
@@ -1001,6 +1010,7 @@ public final class BaityPresenceSync {
             boolean isBaityUser,
             boolean nickTweaksEnabled,
             boolean chromaEnabled,
+            boolean chromaStatic,
             boolean smolEnabled,
             int[] chromaPalette,
             double chromaSpeed,
@@ -1014,7 +1024,7 @@ public final class BaityPresenceSync {
             String nickChanger
     ) {
         String signature() {
-            return uuid + "|" + name + "|" + isBaityUser + "|" + nickTweaksEnabled + "|" + chromaEnabled + "|" + smolEnabled + "|" + chromaSpeed
+            return uuid + "|" + name + "|" + isBaityUser + "|" + nickTweaksEnabled + "|" + chromaEnabled + "|" + chromaStatic + "|" + smolEnabled + "|" + chromaSpeed
                     + "|" + chromaSize + "|" + chromaAmount + "|" + chromaLightness
                     + "|" + gradientStart + "|" + gradientEnd + "|" + boldSelf + "|" + customNickColorEnabled + "|" + nickChanger
                     + "|" + java.util.Arrays.toString(chromaPalette);

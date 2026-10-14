@@ -620,6 +620,8 @@ public final class NickRenderUtils {
             boolean bold,
             int[] palette,
             double speed,
+            boolean chromaStatic,
+            double chromaSize,
             boolean remoteChromaEnabled,
             boolean customNickColorEnabled,
             int remoteGradientStart,
@@ -640,6 +642,8 @@ public final class NickRenderUtils {
                     ConfigManager.nickTweaksBoldSelf,
                     new int[0],
                     clamp(ConfigManager.nickTweaksChromaSpeed, 0.0, 8.0),
+                    ConfigManager.nickTweaksChromaStatic,
+                    ConfigManager.nickTweaksChromaSize,
                     false,
                     ConfigManager.nickTweaksCustomNickColorEnabled,
                     0,
@@ -662,6 +666,8 @@ public final class NickRenderUtils {
                     profile.boldSelf(),
                     profile.paletteView(),
                     clamp(profile.speed(), 0.0, 8.0),
+                    profile.chromaStatic(),
+                    profile.chromaSize(),
                     profile.chromaEnabled(),
                     profile.customNickColorEnabled(),
                     profile.gradientStart(),
@@ -672,8 +678,9 @@ public final class NickRenderUtils {
         int colorAt(double progress, long nowMs) {
             if (!local) {
                 if (remoteChromaEnabled && palette.length > 0) {
-                    double phase = (nowMs / 1000.0) * speed;
-                    double position = positiveModulo(progress + phase, 1.0) * palette.length;
+                    double size = Math.max(0.1, chromaSize);
+                    double phase = chromaStatic ? 0.0 : (nowMs / 1000.0) * (speed * 0.5);
+                    double position = positiveModulo((progress / size) - phase, 1.0) * palette.length;
                     int fromIndex = Math.floorMod((int) Math.floor(position), palette.length);
                     int toIndex = Math.floorMod(fromIndex + 1, palette.length);
                     double frac = position - Math.floor(position);
@@ -706,8 +713,8 @@ public final class NickRenderUtils {
 
             double lightness = clamp(ConfigManager.nickTweaksChromaLightness, 0.2, 1.0);
             double chroma = clamp(ConfigManager.nickTweaksChromaChroma, 0.0, 0.4);
-            double size = Math.max(0.1, ConfigManager.nickTweaksChromaSize);
-            double phase = (nowMs / 1000.0) * (speed * 0.5);
+            double size = Math.max(0.1, chromaSize);
+            double phase = chromaStatic ? 0.0 : (nowMs / 1000.0) * (speed * 0.5);
             float saturation = (float) (chroma / 0.4);
             float hue = (float) positiveModulo((progress / size) - phase, 1.0);
             return Mth.hsvToRgb(hue, saturation, (float) lightness);
