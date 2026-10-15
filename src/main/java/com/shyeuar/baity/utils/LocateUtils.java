@@ -11,6 +11,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.scores.DisplaySlot;
 import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.PlayerScoreEntry;
+import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 
 import java.util.ArrayList;
@@ -433,12 +435,12 @@ public final class LocateUtils {
             if (sidebarObjective == null) {
                 return out;
             }
-            List<?> scores = tryGetSortedScores(scoreboard, sidebarObjective);
+            List<PlayerScoreEntry> scores = tryGetSortedScores(scoreboard, sidebarObjective);
             if (scores == null || scores.isEmpty()) {
                 return out;
             }
-            for (Object scoreObj : scores) {
-                String raw = extractScoreOwnerText(scoreObj);
+            for (PlayerScoreEntry entry : scores) {
+                String raw = extractScoreOwnerText(scoreboard, entry);
                 String clean = removeColorCodes(raw);
                 if (trimEachLine) {
                     clean = clean.trim();
@@ -659,12 +661,12 @@ public final class LocateUtils {
             if (sidebarObjective == null) {
                 return "";
             }
-            List<?> scores = tryGetSortedScores(scoreboard, sidebarObjective);
+            List<PlayerScoreEntry> scores = tryGetSortedScores(scoreboard, sidebarObjective);
             if (scores == null || scores.isEmpty()) {
                 return "";
             }
-            for (Object scoreObj : scores) {
-                String raw = extractScoreOwnerText(scoreObj);
+            for (PlayerScoreEntry entry : scores) {
+                String raw = extractScoreOwnerText(scoreboard, entry);
                 String clean = removeColorCodes(raw).trim();
                 if (clean.isEmpty()) {
                     continue;
@@ -689,68 +691,28 @@ public final class LocateUtils {
         return "";
     }
 
-    private static List<java.lang.reflect.Method> sortedScoresMethods;
-
-    private static List<?> tryGetSortedScores(Scoreboard scoreboard, Objective objective) {
+    private static List<PlayerScoreEntry> tryGetSortedScores(Scoreboard scoreboard, Objective objective) {
         try {
-            List<java.lang.reflect.Method> methods = sortedScoresMethods;
-            if (methods == null) {
-                methods = new java.util.ArrayList<>();
-                for (java.lang.reflect.Method m : scoreboard.getClass().getMethods()) {
-                    if (!"getSortedScores".equals(m.getName())) {
-                        continue;
-                    }
-                    if (m.getParameterCount() != 1) {
-                        continue;
-                    }
-                    methods.add(m);
-                }
-                sortedScoresMethods = methods;
-            }
-            for (java.lang.reflect.Method m : methods) {
-                try {
-                    Object res = m.invoke(scoreboard, objective);
-                    if (res instanceof List<?> list) {
-                        return list;
-                    }
-                } catch (Exception ignored) {
-                }
-            }
+            return new ArrayList<>(scoreboard.listPlayerScores(objective));
         } catch (Exception ignored) {
+            return List.of();
         }
-        return List.of();
     }
 
-    private static String extractScoreOwnerText(Object scoreObj) {
-        if (scoreObj == null) {
+    private static String extractScoreOwnerText(Scoreboard scoreboard, PlayerScoreEntry entry) {
+        if (entry == null) {
             return "";
         }
-        try {
-            for (String methodName : new String[]{"getOwner", "getName", "getPlayerName"}) {
-                try {
-                    java.lang.reflect.Method m = scoreObj.getClass().getMethod(methodName);
-                    Object v = m.invoke(scoreObj);
-                    if (v == null) {
-                        continue;
-                    }
-                    try {
-                        java.lang.reflect.Method getString = v.getClass().getMethod("getString");
-                        Object s = getString.invoke(v);
-                        if (s != null) {
-                            return String.valueOf(s);
-                        }
-                    } catch (Exception ignored) {
-                    }
-                    if (v instanceof String) {
-                        return (String) v;
-                    }
-                    return String.valueOf(v);
-                } catch (Exception ignored) {
-                }
-            }
-        } catch (Exception ignored) {
+        PlayerTeam team = scoreboard == null ? null : scoreboard.getPlayersTeam(entry.owner());
+        StringBuilder text = new StringBuilder();
+        if (team != null) {
+            text.append(team.getPlayerPrefix().getString());
         }
-        return String.valueOf(scoreObj);
+        text.append(entry.ownerName().getString());
+        if (team != null) {
+            text.append(team.getPlayerSuffix().getString());
+        }
+        return text.toString();
     }
 
     private static void scanTabList(Minecraft mc) {
