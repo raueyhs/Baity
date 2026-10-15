@@ -107,6 +107,7 @@ public final class LocateUtils {
     private static String cachedAreaIslandName = "";
     private static String cachedTabIslandName = "";
     private static String cachedScoreboardSubAreaName = "";
+    private static volatile boolean dungeonBossActive;
     private static boolean cachedInRift;
     private static boolean cachedInSafari;
     private static boolean cachedOnGalatea;
@@ -132,9 +133,17 @@ public final class LocateUtils {
     }
 
     public static void registerClientEvents() {
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> resetShulkerIslandLocateCache());
-        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> resetShulkerIslandLocateCache());
-        ClientReceiveMessageEvents.GAME.register((message, overlay) -> handleLocrawReply(message.getString()));
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            resetShulkerIslandLocateCache();
+            dungeonBossActive = false;
+        });
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) -> {
+            resetShulkerIslandLocateCache();
+            dungeonBossActive = false;
+        });
+        ClientReceiveMessageEvents.GAME.register((message, overlay) -> {
+            handleLocrawReply(message.getString());
+        });
         HypixelModApiLocation.init();
     }
 
@@ -384,6 +393,33 @@ public final class LocateUtils {
             return true;
         }
         return cachedAreaIslandNameRawLineDungeonPrefix;
+    }
+
+    private static final Pattern DUNGEON_BOSS_MESSAGE = Pattern.compile("\\[BOSS]\\s*(.+?):");
+    private static final Pattern DUNGEON_START_MESSAGE = Pattern.compile("\\[NPC] Mort: Here, I found this map");
+
+    private static final Set<String> DUNGEON_BOSS_NAMES = Set.of(
+            "Bonzo", "Scarf", "The Professor", "Thorn", "Livid", "Sadan",
+            "Maxor", "Storm", "Goldor", "Necron", "Wither King");
+
+    public static boolean isInDungeonBossRoom(Minecraft mc) {
+        refresh(mc);
+        return inSkyBlock(mc) && isInDungeonRun(mc) && dungeonBossActive;
+    }
+
+    public static void handleDungeonChat(String raw) {
+        if (raw == null) {
+            return;
+        }
+        String text = removeColorCodes(raw);
+        if (DUNGEON_START_MESSAGE.matcher(text).find()) {
+            dungeonBossActive = false;
+            return;
+        }
+        Matcher matcher = DUNGEON_BOSS_MESSAGE.matcher(text);
+        if (matcher.find() && DUNGEON_BOSS_NAMES.contains(matcher.group(1).trim())) {
+            dungeonBossActive = true;
+        }
     }
 
     public static String areaIslandName(Minecraft mc) {
@@ -883,6 +919,7 @@ public final class LocateUtils {
         cachedAreaIslandName = "";
         cachedTabIslandName = "";
         cachedScoreboardSubAreaName = "";
+        dungeonBossActive = false;
         cachedAreaIslandNameRawLineDungeonPrefix = false;
         cachedInRift = false;
         cachedInSafari = false;

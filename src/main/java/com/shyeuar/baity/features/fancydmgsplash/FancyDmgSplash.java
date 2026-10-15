@@ -1,7 +1,9 @@
 package com.shyeuar.baity.features.fancydmgsplash;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.utils.FloatingWorldTextCompat;
+import com.shyeuar.baity.utils.LocateUtils;
 import com.shyeuar.baity.gui.module.Module;
 import com.shyeuar.baity.gui.module.ModuleManager;
 import net.fabricmc.api.EnvType;
@@ -213,16 +215,28 @@ public class FancyDmgSplash implements LevelRenderEvents.EndMain {
                 }
             }
 
-            for (DamageNumber dn : damageNumbers) {
-                renderDamageNumber(matrices, submits, dn, cameraPos, cameraYaw, cameraPitch, currentTime);
-            }
+            if (!shouldHideInDungeon()) {
+                for (DamageNumber dn : damageNumbers) {
+                    renderDamageNumber(matrices, submits, dn, cameraPos, cameraYaw, cameraPitch, currentTime);
+                }
 
-            for (ReactionText rt : reactionTexts) {
-                renderReactionText(matrices, submits, rt, cameraPos, cameraYaw, cameraPitch, currentTime);
+                for (ReactionText rt : reactionTexts) {
+                    renderReactionText(matrices, submits, rt, cameraPos, cameraYaw, cameraPitch, currentTime);
+                }
             }
         } finally {
             FloatingWorldTextCompat.endFrame();
         }
+    }
+
+    private static boolean shouldHideInDungeon() {
+        if (LocateUtils.isInDungeonBossRoom(mc)) {
+            return ConfigManager.fancyDmgSplashHideInDungeonBoss;
+        }
+        if (LocateUtils.isInDungeonRun(mc)) {
+            return ConfigManager.fancyDmgSplashHideInDungeonClear;
+        }
+        return false;
     }
 
     private static void checkWetAndHealReactions() {

@@ -131,6 +131,9 @@ public class ConfigManager {
     public static boolean fancyDmgSplashBold = false;
     public static String fancyDmgSplashSeparator = "none";
     public static String fancyDmgSplashStyle = "default";
+    public static boolean fancyDmgSplashMiscGroupExpanded = false;
+    public static boolean fancyDmgSplashHideInDungeonClear = false;
+    public static boolean fancyDmgSplashHideInDungeonBoss = false;
     
     public static boolean noSwimPoseEnabled = false;
     public static boolean noSwimPoseAreaRestrictionGroupExpanded = false;
@@ -661,6 +664,15 @@ public class ConfigManager {
         registerField("FancyDmgSplashColorEditor", String.class,
             c -> com.shyeuar.baity.features.fancydmgsplash.FancyDmgSplashSettings.encodeColorEditor(),
             (c, v) -> com.shyeuar.baity.features.fancydmgsplash.FancyDmgSplashSettings.decodeColorEditor((String) v));
+        registerField("FancyDmgSplashMiscGroupExpanded", Boolean.class,
+            c -> ConfigManager.fancyDmgSplashMiscGroupExpanded,
+            (c, v) -> ConfigManager.fancyDmgSplashMiscGroupExpanded = (Boolean) v);
+        registerField("FancyDmgSplashHideInDungeonClear", Boolean.class,
+            c -> ConfigManager.fancyDmgSplashHideInDungeonClear,
+            (c, v) -> ConfigManager.fancyDmgSplashHideInDungeonClear = (Boolean) v);
+        registerField("FancyDmgSplashHideInDungeonBoss", Boolean.class,
+            c -> ConfigManager.fancyDmgSplashHideInDungeonBoss,
+            (c, v) -> ConfigManager.fancyDmgSplashHideInDungeonBoss = (Boolean) v);
         registerField("NoSwimPose", Boolean.class,
             c -> ConfigManager.noSwimPoseEnabled,
             (c, v) -> ConfigManager.noSwimPoseEnabled = (Boolean) v);

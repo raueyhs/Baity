@@ -106,6 +106,7 @@
     "SidePanelMixin$InventoryScreenMixin",
     "SidePanelMixin$PacketMixin",
     "ReminderMixin$SystemChatMixin",
+    "LocateMixin$SystemChatMixin",
     "RenderScopeMixin$LivingEntityRenderStateMixin",
     "RenderScopeMixin$LivingEntityRendererScopeMixin",
     "accessor.PlayerAccessor",

@@ -953,6 +953,11 @@ public class ModuleManager {
             }
         );
         
+        GroupValue fancyDmgSplashMiscGroup = new GroupValue("misc", "misc", ModuleCategory.MISC)
+            .setExpanded(ConfigManager.fancyDmgSplashMiscGroupExpanded)
+            .addChild(new Option("hide in dungeon clear", "hide in dungeon clear", ConfigManager.fancyDmgSplashHideInDungeonClear, ModuleCategory.MISC))
+            .addChild(new Option("hide in dungeon boss", "hide in dungeon boss", ConfigManager.fancyDmgSplashHideInDungeonBoss, ModuleCategory.MISC));
+
         ModuleRegistry.registerModuleWithValues(
             "FancyDmgSplash", "FancyDmgSplash", ModuleCategory.MISC,
             () -> ConfigManager.fancyDmgSplashEnabled,
@@ -981,7 +986,8 @@ public class ModuleManager {
                     false
                 ),
                 new com.shyeuar.baity.gui.value.FancyDmgSplashColorEditorValue("color editor", "color editor", ModuleCategory.MISC),
-                new com.shyeuar.baity.gui.value.FancyDmgSplashPresetValue("preset", "preset", ModuleCategory.MISC)
+                new com.shyeuar.baity.gui.value.FancyDmgSplashPresetValue("preset", "preset", ModuleCategory.MISC),
+                fancyDmgSplashMiscGroup
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
@@ -1023,6 +1029,21 @@ public class ModuleManager {
                     "preset",
                     () -> com.shyeuar.baity.features.fancydmgsplash.FancyDmgSplashPresetStore.packPaletteConfig(),
                     val -> com.shyeuar.baity.features.fancydmgsplash.FancyDmgSplashPresetStore.unpackPaletteConfig(((Number) val).longValue())
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "misc",
+                    () -> ConfigManager.fancyDmgSplashMiscGroupExpanded,
+                    val -> ConfigManager.fancyDmgSplashMiscGroupExpanded = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "hide in dungeon clear",
+                    () -> ConfigManager.fancyDmgSplashHideInDungeonClear,
+                    val -> ConfigManager.fancyDmgSplashHideInDungeonClear = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "hide in dungeon boss",
+                    () -> ConfigManager.fancyDmgSplashHideInDungeonBoss,
+                    val -> ConfigManager.fancyDmgSplashHideInDungeonBoss = (Boolean) val
                 )
             }
         );
