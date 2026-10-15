@@ -28,6 +28,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -339,7 +340,7 @@ public final class SmolFriendManager {
         UUID uuid = player.getUUID();
         String textureValue = getTexturesPropertyValue(player.getGameProfile());
         ProfileIdCacheEntry cached = PROFILE_ID_CACHE.get(uuid);
-        if (cached != null && cached.textureValue().equals(textureValue)) {
+        if (cached != null && Objects.equals(cached.textureValue(), textureValue)) {
             UUID cachedProfileId = cached.profileId();
             return cachedProfileId != null ? cachedProfileId : UNSET_SKIN_OWNER_ID;
         }
