@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.blockanimation;
+package com.shyeuar.baity.features.legacytweaks.blockanimation;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;

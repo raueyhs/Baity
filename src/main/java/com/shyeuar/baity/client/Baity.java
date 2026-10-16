@@ -15,7 +15,7 @@ import com.shyeuar.baity.features.fishing.ChromaFishingLine;
 import com.shyeuar.baity.features.fishing.FishHookTimer;
 import com.shyeuar.baity.features.PaperDoll;
 import com.shyeuar.baity.features.ChatChannelSwitcher;
-import com.shyeuar.baity.features.blockanimation.BlockAnimationSwordCatalog;
+import com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationSwordCatalog;
 import com.shyeuar.baity.features.fishing.HypixelFishingRodCatalog;
 import com.shyeuar.baity.features.smolpeople.SmolFriendManager;
 import com.shyeuar.baity.features.highlights.PestEntityRegistry;
@@ -86,6 +86,7 @@ public class Baity implements ClientModInitializer {
             long windowHandle = client.getWindow().handle();
             ConfigManager.flushPendingSave();
             HypixelFishingRodCatalog.clientTickRefreshMainHandIfSkyblock(client);
+            com.shyeuar.baity.features.legacytweaks.legacymusic.LegacyMusicPriority.tick();
 
             if (openGuiNextTick) {
                 openGuiNextTick = false;

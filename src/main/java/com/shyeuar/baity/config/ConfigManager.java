@@ -276,6 +276,8 @@ public class ConfigManager {
     public static double droppedItemRarityAdmin = DROPPED_ITEM_RARITY_SCALE_DEFAULTS[10];
     
     public static boolean oldSneakingEnabled = false;
+    public static boolean legacyMusicPriorityEnabled = false;
+    public static boolean legacyMoongladeReplayFixEnabled = false;
     
     public static boolean fishHookTimerEnabled = false;
     public static boolean fishHookTimerHideDefaultTimer = true;
@@ -976,6 +978,12 @@ public class ConfigManager {
         registerField("OldSneaking", Boolean.class,
             c -> ConfigManager.oldSneakingEnabled,
             (c, v) -> ConfigManager.oldSneakingEnabled = (Boolean) v);
+        registerField("LegacyMusicPriority", Boolean.class,
+            c -> ConfigManager.legacyMusicPriorityEnabled,
+            (c, v) -> ConfigManager.legacyMusicPriorityEnabled = (Boolean) v);
+        registerField("LegacyMoongladeReplayFix", Boolean.class,
+            c -> ConfigManager.legacyMoongladeReplayFixEnabled,
+            (c, v) -> ConfigManager.legacyMoongladeReplayFixEnabled = (Boolean) v);
         registerField("FishHookTimer", Boolean.class,
             c -> ConfigManager.fishHookTimerEnabled,
             (c, v) -> ConfigManager.fishHookTimerEnabled = (Boolean) v);

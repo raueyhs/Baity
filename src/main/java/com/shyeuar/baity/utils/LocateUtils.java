@@ -260,6 +260,15 @@ public final class LocateUtils {
         return cachedOnTorrhus;
     }
 
+    public static boolean isMoongladeMarsh(Minecraft mc) {
+        return isMoongladeMarshName(areaIslandName(mc))
+                || isMoongladeMarshName(scoreboardSubAreaName(mc));
+    }
+
+    private static boolean isMoongladeMarshName(String raw) {
+        return raw != null && raw.trim().equalsIgnoreCase("Moonglade Marsh");
+    }
+
     public static boolean isInCrystalHollows(Minecraft mc) {
         refresh(mc);
         if (isCrystalHollowsMode()) {
@@ -373,6 +382,17 @@ public final class LocateUtils {
         }
         String area = normalizeAreaName(cachedAreaIslandName);
         return "Hub".equalsIgnoreCase(area);
+    }
+
+    public static boolean isHubIsland(Minecraft mc) {
+        refresh(mc);
+        if (!inSkyBlock(mc) || isDungeonHub(mc)) {
+            return false;
+        }
+        if ("Hub".equalsIgnoreCase(normalizeAreaName(cachedTabIslandName))) {
+            return true;
+        }
+        return "Hub".equalsIgnoreCase(normalizeAreaName(cachedAreaIslandName));
     }
 
     public static boolean isDungeonHub(Minecraft mc) {

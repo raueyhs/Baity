@@ -52,8 +52,20 @@ public class ModuleManager {
             () -> ConfigManager.legacyTweaksEnabled,
             val -> ConfigManager.legacyTweaksEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
-                legacyTweaksBlockAnimationGroup,
-                new Option("old sneaking", "old sneaking", ConfigManager.oldSneakingEnabled, ModuleCategory.MISC)
+                new Option(
+                    "legacy music priority",
+                    "legacy music priority",
+                    ConfigManager.legacyMusicPriorityEnabled,
+                    ModuleCategory.MISC
+                ),
+                new Option(
+                    "legacy moonglade marsh replay fix",
+                    "legacy moonglade marsh replay fix",
+                    ConfigManager.legacyMoongladeReplayFixEnabled,
+                    ModuleCategory.MISC
+                ),
+                withSeparator(legacyTweaksBlockAnimationGroup),
+                withSeparator(new Option("old sneaking", "old sneaking", ConfigManager.oldSneakingEnabled, ModuleCategory.MISC))
             },
             new ModuleRegistry.ValueConfigInfo[]{
                 new ModuleRegistry.ValueConfigInfo(
@@ -75,6 +87,16 @@ public class ModuleManager {
                     "old sneaking",
                     () -> ConfigManager.oldSneakingEnabled,
                     val -> ConfigManager.oldSneakingEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "legacy music priority",
+                    () -> ConfigManager.legacyMusicPriorityEnabled,
+                    val -> ConfigManager.legacyMusicPriorityEnabled = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "legacy moonglade marsh replay fix",
+                    () -> ConfigManager.legacyMoongladeReplayFixEnabled,
+                    val -> ConfigManager.legacyMoongladeReplayFixEnabled = (Boolean) val
                 )
             }
         );
@@ -1777,6 +1799,18 @@ public class ModuleManager {
     private static void initTooltips() {
         TooltipManager.registerTooltip("SmolPeople", "Make your character smaller and cuter.", 0xFFFFFF);
         TooltipManager.registerTooltip("block animation", "Restore the blocking animation of version 1.7.", 0xFFFFFF);
+        TooltipManager.registerTooltip("legacy music priority", "Fade out the resource pack's music when old note block songs start playing, so the two never overlap.", 0xFFFFFF);
+        TooltipManager.registerTooltip("legacy moonglade marsh replay fix",
+            MessageUtils.createColoredText(
+                "This feature only exists to fix the legacy music playback issue of the ",
+                0xFFFF55)
+                .append(MessageUtils.createColoredText("Hypixel SkyBlock Legacy", 0x55FF55))
+                .append(MessageUtils.createColoredText(
+                    " resource pack in Moonglade Marsh (Galatea).\n",
+                    0xFFFF55))
+                .append(MessageUtils.createColoredText(
+                    "It does not provide any functionality of its own!",
+                    0xFF6B6B)));
         TooltipManager.registerTooltip("PepCat", "Play an animation and give pep talk when you died. It's a skill issue!", 0xFFFFFF);
         TooltipManager.registerTooltip("the pep", "give tips when u die.", 0xFFFFFF);
         TooltipManager.registerTooltip("the cat", "throw a cat animation when u die.", 0xFFFFFF);

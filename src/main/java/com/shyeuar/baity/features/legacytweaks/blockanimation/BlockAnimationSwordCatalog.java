@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.blockanimation;
+package com.shyeuar.baity.features.legacytweaks.blockanimation;
 
 import com.shyeuar.baity.config.BaityConfigDir;
 import com.shyeuar.baity.utils.ProxyFallbacks;

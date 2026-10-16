@@ -1,4 +1,4 @@
-package com.shyeuar.baity.features.blockanimation;
+package com.shyeuar.baity.features.legacytweaks.blockanimation;
 
 import com.shyeuar.baity.features.CustomHandHoldingManager;
 import com.shyeuar.baity.gui.module.Module;

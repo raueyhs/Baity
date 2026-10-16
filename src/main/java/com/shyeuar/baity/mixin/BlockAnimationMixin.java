@@ -111,8 +111,8 @@ public abstract class BlockAnimationMixin {
                 int combinedLight, CallbackInfo callback) {
             
             ItemInHandRenderer itemInHandRenderer = (ItemInHandRenderer) (Object) this;
-            com.shyeuar.baity.features.blockanimation.BlockAnimationRenderer.RenderResult result = 
-                    com.shyeuar.baity.features.blockanimation.BlockAnimationRenderer.renderFirstPerson(
+            com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationRenderer.RenderResult result = 
+                    com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationRenderer.renderFirstPerson(
                             itemInHandRenderer,
                             interactionHand,
                             player,
@@ -127,7 +127,7 @@ public abstract class BlockAnimationMixin {
                             equippedProgress
                     );
             
-            if (result == com.shyeuar.baity.features.blockanimation.BlockAnimationRenderer.RenderResult.INTERRUPT) {
+            if (result == com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationRenderer.RenderResult.INTERRUPT) {
                 callback.cancel();
             }
         }
@@ -195,7 +195,7 @@ public abstract class BlockAnimationMixin {
             if (this.player == null) return;
             Minecraft self = (Minecraft) (Object) this;
             if (self.isPaused()) return;
-            com.shyeuar.baity.features.blockanimation.BlockAnimationCircleController.tick(
+            com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationCircleController.tick(
                     this.player, self);
         }
 
@@ -285,9 +285,9 @@ public abstract class BlockAnimationMixin {
             float raiseFactor = 1f;
             float rotorWobble = 0f;
             if (BlockAnimationUtils.isRotorAnimaMode()) {
-                raiseFactor = com.shyeuar.baity.features.blockanimation.BlockAnimationCircleController
+                raiseFactor = com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationCircleController
                         .getRotorAimNow();
-                rotorWobble = com.shyeuar.baity.features.blockanimation.BlockAnimationCircleController
+                rotorWobble = com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationCircleController
                         .getRotorThirdPersonWobbleArmRadians();
             }
 
@@ -323,7 +323,7 @@ public abstract class BlockAnimationMixin {
 
             boolean blockingNow = BlockAnimationUtils.isPlayerBlockingWithSword(mc.player);
             boolean keepCircleSpin = BlockAnimationUtils.isSpinAnimaMode()
-                    && com.shyeuar.baity.features.blockanimation.BlockAnimationCircleController.hasActiveSpin();
+                    && com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationCircleController.hasActiveSpin();
             if (!blockingNow && !keepCircleSpin) return;
 
             InteractionHand interactionHand =
@@ -336,7 +336,7 @@ public abstract class BlockAnimationMixin {
             ArmedModel<AvatarRenderState> model = 
                     (ArmedModel<AvatarRenderState>) this.getParentModel();
             
-            com.shyeuar.baity.features.blockanimation.BlockAnimationRenderer.renderThirdPerson(
+            com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationRenderer.renderThirdPerson(
                     (AvatarRenderState) renderState,
                     model,
                     itemStackRenderState,
@@ -370,9 +370,9 @@ public abstract class BlockAnimationMixin {
                 return;
             }
             if (BlockAnimationUtils.isPlayerBlockingWithSword(player)) {
-                com.shyeuar.baity.features.blockanimation.BlockAnimationCircleController.queueSpin();
+                com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationCircleController.queueSpin();
             } else {
-                com.shyeuar.baity.features.blockanimation.BlockAnimationCircleController.queueSwingGraceSpin();
+                com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationCircleController.queueSwingGraceSpin();
             }
         }
     }
