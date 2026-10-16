@@ -515,13 +515,13 @@ public class ValueStyleRenderer {
                context, client.font, preview, editingTextCaretCp,
                (int) lineX1, textY, valueTextColor, true,
                LineTextInput.shouldBlinkCursor(),
-               maxTextWidth);
+               maxTextWidth, true);
        } else if (!preview.isEmpty()) {
            LineTextInput.drawTextWithBlinkCursor(
                context, client.font, preview, 0,
                (int) lineX1, textY, valueTextColor, false,
                false,
-               maxTextWidth);
+               maxTextWidth, true);
        }
    }
 

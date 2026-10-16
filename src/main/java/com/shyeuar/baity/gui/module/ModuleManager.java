@@ -1776,6 +1776,7 @@ public class ModuleManager {
     
     private static void initTooltips() {
         TooltipManager.registerTooltip("SmolPeople", "Make your character smaller and cuter.", 0xFFFFFF);
+        TooltipManager.registerTooltip("block animation", "Restore the blocking animation of version 1.7.", 0xFFFFFF);
         TooltipManager.registerTooltip("PepCat", "Play an animation and give pep talk when you died. It's a skill issue!", 0xFFFFFF);
         TooltipManager.registerTooltip("the pep", "give tips when u die.", 0xFFFFFF);
         TooltipManager.registerTooltip("the cat", "throw a cat animation when u die.", 0xFFFFFF);
@@ -1861,6 +1862,9 @@ public class ModuleManager {
         TooltipManager.registerTooltip("DroppedItem", "Client-side dropped item rendering tweaks.", 0xFFFFFF);
         TooltipManager.registerTooltip("2D dropped item", "Render dropped items as 2D sprites.", 0xFFFFFF);
         TooltipManager.registerTooltip("rarity scale", "Scale ground drops by Skyblock rarity.", 0xFFFFFF);
+        TooltipManager.registerTooltip("old sneaking",
+            MessageUtils.createColoredText("Restore the sneaking animation of version 1.7.", 0xFFFFFF)
+                .append(MessageUtils.createColoredText(" Fake sneaking eye height!", 0xFFFF00)));
         TooltipManager.registerTooltip("remove recipe book", "Remove the recipe book button and keep the recipe book hidden.", 0xFFFFFF);
         TooltipManager.registerTooltip("arabic numerals", "Replace roman number with arabic number.", 0xFFFFFF);
         TooltipManager.registerTooltip("transparentize other tags", "Remove the black background of tags.", 0xFFFFFF);

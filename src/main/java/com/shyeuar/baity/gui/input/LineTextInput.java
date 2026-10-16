@@ -312,6 +312,22 @@ public final class LineTextInput {
         boolean blinkOn,
         int maxWidth
     ) {
+        drawTextWithBlinkCursor(context, font, text, caretCp, x, y, color, focused, blinkOn, maxWidth, false);
+    }
+
+    public static void drawTextWithBlinkCursor(
+        GuiGraphicsExtractor context,
+        Font font,
+        String text,
+        Integer caretCp,
+        int x,
+        int y,
+        int color,
+        boolean focused,
+        boolean blinkOn,
+        int maxWidth,
+        boolean legacyColors
+    ) {
         if (text == null) {
             text = "";
         }
@@ -326,7 +342,11 @@ public final class LineTextInput {
         }
         String mid = sliceByCodePoints(text, win.startCp(), win.endCp());
         if (!focused || !blinkOn) {
-            context.text(font, mid, drawX, y, color, false);
+            if (legacyColors) {
+                drawLegacyColoredText(context, font, mid, drawX, y, color);
+            } else {
+                context.text(font, mid, drawX, y, color, false);
+            }
         } else {
             int cpCount = codePointCount(text);
             int absCaret = caretCp != null ? caretCp : cpCount;
@@ -335,16 +355,79 @@ public final class LineTextInput {
             int midCharPos = cpIndexToCharIndex(mid, relCaret);
             String before = mid.substring(0, midCharPos);
             String after = mid.substring(midCharPos);
-            context.text(font, before, drawX, y, color, false);
-            int caretX = drawX + font.width(before);
+            int caretX;
+            if (legacyColors) {
+                caretX = drawLegacyColoredText(context, font, before, drawX, y, color);
+            } else {
+                context.text(font, before, drawX, y, color, false);
+                caretX = drawX + font.width(before);
+            }
             if (!after.isEmpty()) {
-                context.text(font, after, caretX, y, color, false);
+                if (legacyColors) {
+                    drawLegacyColoredText(context, font, after, caretX, y, color);
+                } else {
+                    context.text(font, after, caretX, y, color, false);
+                }
             }
             context.fill(caretX, y, caretX + 1, y + 9, color);
         }
         if (win.rightEllipsis()) {
             context.text(font, ELLIPSIS, drawX + font.width(mid), y, color, false);
         }
+    }
+
+    public static int drawLegacyColoredText(
+        GuiGraphicsExtractor context,
+        Font font,
+        String text,
+        int x,
+        int y,
+        int defaultColor
+    ) {
+        if (text == null || text.isEmpty()) {
+            return x;
+        }
+        int alpha = defaultColor & 0xFF000000;
+        int currentColor = defaultColor;
+        int drawX = x;
+        int segmentStart = 0;
+        int i = 0;
+        while (i < text.length()) {
+            int cp = text.codePointAt(i);
+            int cpLength = Character.charCount(cp);
+            Integer nextColor = null;
+            int consumed = cpLength;
+            if (cp == '&' && i + cpLength < text.length()) {
+                int nextCp = text.codePointAt(i + cpLength);
+                char code = Character.toLowerCase((char) nextCp);
+                Integer rgb = com.shyeuar.baity.utils.NickRenderUtils.legacyColorRgb(code);
+                if (rgb != null) {
+                    nextColor = alpha | rgb;
+                    consumed = cpLength + Character.charCount(nextCp);
+                } else if (code == 'r') {
+                    nextColor = defaultColor;
+                    consumed = cpLength + Character.charCount(nextCp);
+                }
+            }
+            if (nextColor != null) {
+                if (i > segmentStart) {
+                    String segment = text.substring(segmentStart, i);
+                    context.text(font, segment, drawX, y, currentColor, false);
+                    drawX += font.width(segment);
+                }
+                currentColor = nextColor;
+                segmentStart = i;
+                i += consumed;
+                continue;
+            }
+            i += cpLength;
+        }
+        if (segmentStart < text.length()) {
+            String segment = text.substring(segmentStart);
+            context.text(font, segment, drawX, y, currentColor, false);
+            drawX += font.width(segment);
+        }
+        return drawX;
     }
 
     public static void drawCenteredClippedWithBlinkCursor(
