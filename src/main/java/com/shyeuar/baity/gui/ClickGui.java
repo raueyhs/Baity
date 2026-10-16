@@ -365,7 +365,7 @@ public class ClickGui extends Screen {
 
         if ("Crosshair".equals(module.getName()) && "anima mode".equals(buttonValue.getName())) {
             next = ValueCycleUtils.cycle(current, new String[]{"always", "bow only"}, forward);
-        } else if ("BlockAnimation".equals(module.getName()) && "anima mode".equals(buttonValue.getName())) {
+        } else if ("LegacyTweaks".equals(module.getName()) && "anima mode".equals(buttonValue.getName())) {
             next = ValueCycleUtils.cycle(current, new String[]{"default", "circle", "rotor"}, forward);
         } else if ("Nametag".equals(module.getName()) && "mode".equals(buttonValue.getName())) {
             next = ValueCycleUtils.cycle(current, new String[]{"Toggle", "Hold"}, forward);

@@ -33,26 +33,48 @@ public class ModuleManager {
     public static void init() {
         initTooltips();
         
+        GroupValue legacyTweaksBlockAnimationGroup = new GroupValue("block animation", "block animation", ModuleCategory.MISC)
+            .setExpanded(ConfigManager.legacyTweaksBlockAnimationGroupExpanded)
+            .setSubModuleSwitchChildName("block animation enabled")
+            .addChild(new Option("block animation enabled", "enabled", ConfigManager.blockAnimationMode, ModuleCategory.MISC))
+            .addChild(new ButtonValue(
+                "anima mode",
+                "anima mode",
+                ConfigManager.blockAnimationAnimaMode,
+                "default",
+                ModuleCategory.MISC,
+                ButtonValue.ButtonValueType.CYCLE,
+                false
+            ));
+
         ModuleRegistry.registerModuleWithValues(
-            "BlockAnimation", "BlockAnimation", ModuleCategory.MISC,
-            () -> ConfigManager.blockAnimationMode,
-            val -> ConfigManager.blockAnimationMode = val,
+            "LegacyTweaks", "LegacyTweaks", ModuleCategory.MISC,
+            () -> ConfigManager.legacyTweaksEnabled,
+            val -> ConfigManager.legacyTweaksEnabled = val,
             new com.shyeuar.baity.gui.value.Value[]{
-                new ButtonValue(
-                    "anima mode",
-                    "anima mode",
-                    ConfigManager.blockAnimationAnimaMode,
-                    "default",
-                    ModuleCategory.MISC,
-                    ButtonValue.ButtonValueType.CYCLE,
-                    false
-                )
+                legacyTweaksBlockAnimationGroup,
+                new Option("old sneaking", "old sneaking", ConfigManager.oldSneakingEnabled, ModuleCategory.MISC)
             },
             new ModuleRegistry.ValueConfigInfo[]{
+                new ModuleRegistry.ValueConfigInfo(
+                    "block animation",
+                    () -> ConfigManager.legacyTweaksBlockAnimationGroupExpanded,
+                    val -> ConfigManager.legacyTweaksBlockAnimationGroupExpanded = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "block animation enabled",
+                    () -> ConfigManager.blockAnimationMode,
+                    val -> ConfigManager.blockAnimationMode = (Boolean) val
+                ),
                 new ModuleRegistry.ValueConfigInfo(
                     "anima mode",
                     () -> ConfigManager.blockAnimationAnimaMode,
                     val -> ConfigManager.blockAnimationAnimaMode = (String) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "old sneaking",
+                    () -> ConfigManager.oldSneakingEnabled,
+                    val -> ConfigManager.oldSneakingEnabled = (Boolean) val
                 )
             }
         );
@@ -1718,12 +1740,6 @@ public class ModuleManager {
             droppedItemValueConfigs.toArray(ModuleRegistry.ValueConfigInfo[]::new)
         );
         
-        ModuleRegistry.registerSimpleModule(
-            "OldSneaking", "OldSneaking", ModuleCategory.MISC,
-            () -> ConfigManager.oldSneakingEnabled,
-            val -> ConfigManager.oldSneakingEnabled = val
-        );
-
         ModuleRegistry.registerModuleWithValues(
             "FishHookTimer", "FishHookTimer", ModuleCategory.QOL,
             () -> ConfigManager.fishHookTimerEnabled,
@@ -1760,7 +1776,6 @@ public class ModuleManager {
     
     private static void initTooltips() {
         TooltipManager.registerTooltip("SmolPeople", "Make your character smaller and cuter.", 0xFFFFFF);
-        TooltipManager.registerTooltip("BlockAnimation", "Restore the blocking animation of version 1.7.", 0xFFFFFF);
         TooltipManager.registerTooltip("PepCat", "Play an animation and give pep talk when you died. It's a skill issue!", 0xFFFFFF);
         TooltipManager.registerTooltip("the pep", "give tips when u die.", 0xFFFFFF);
         TooltipManager.registerTooltip("the cat", "throw a cat animation when u die.", 0xFFFFFF);
@@ -1846,9 +1861,6 @@ public class ModuleManager {
         TooltipManager.registerTooltip("DroppedItem", "Client-side dropped item rendering tweaks.", 0xFFFFFF);
         TooltipManager.registerTooltip("2D dropped item", "Render dropped items as 2D sprites.", 0xFFFFFF);
         TooltipManager.registerTooltip("rarity scale", "Scale ground drops by Skyblock rarity.", 0xFFFFFF);
-        TooltipManager.registerTooltip("OldSneaking",
-            MessageUtils.createColoredText("Restore the sneaking animation of version 1.7.", 0xFFFFFF)
-                .append(MessageUtils.createColoredText(" Fake sneaking eye height!", 0xFFFF00)));
         TooltipManager.registerTooltip("remove recipe book", "Remove the recipe book button and keep the recipe book hidden.", 0xFFFFFF);
         TooltipManager.registerTooltip("arabic numerals", "Replace roman number with arabic number.", 0xFFFFFF);
         TooltipManager.registerTooltip("transparentize other tags", "Remove the black background of tags.", 0xFFFFFF);

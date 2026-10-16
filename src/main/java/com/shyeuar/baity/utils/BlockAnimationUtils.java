@@ -23,8 +23,7 @@ public final class BlockAnimationUtils {
     public static final int DEFAULT_ITEM_USE_DURATION = 72_000;
 
     public static boolean isFeatureActive() {
-        com.shyeuar.baity.gui.module.Module blockAnimationModule = com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("BlockAnimation");
-        return blockAnimationModule != null && blockAnimationModule.isEnabled();
+        return com.shyeuar.baity.config.ConfigManager.blockAnimationMode;
     }
 
     public static boolean isInteractAnimationsEnabled() {

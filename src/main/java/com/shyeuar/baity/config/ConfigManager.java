@@ -28,6 +28,8 @@ public class ConfigManager {
     public static double smolLimbSwingSpeed = 2.5;
     public static String smolFriendList = "";
     public static boolean smolFriendsEnabled = true;
+    public static boolean legacyTweaksEnabled = false;
+    public static boolean legacyTweaksBlockAnimationGroupExpanded = false;
     public static boolean blockAnimationMode = false;
     public static boolean blockAnimationInteractAnimations = true;
     public static boolean blockAnimationNoReequipWhenUsing = true;
@@ -355,6 +357,12 @@ public class ConfigManager {
         registerField("SmolFriendsEnabled", Boolean.class,
             c -> ConfigManager.smolFriendsEnabled,
             (c, v) -> ConfigManager.smolFriendsEnabled = (Boolean) v);
+        registerField("LegacyTweaks", Boolean.class,
+            c -> ConfigManager.legacyTweaksEnabled,
+            (c, v) -> ConfigManager.legacyTweaksEnabled = (Boolean) v);
+        registerField("LegacyTweaksBlockAnimationGroupExpanded", Boolean.class,
+            c -> ConfigManager.legacyTweaksBlockAnimationGroupExpanded,
+            (c, v) -> ConfigManager.legacyTweaksBlockAnimationGroupExpanded = (Boolean) v);
         registerField("BlockAnimation", Boolean.class,
             c -> ConfigManager.blockAnimationMode,
             (c, v) -> ConfigManager.blockAnimationMode = (Boolean) v);
@@ -1450,6 +1458,13 @@ public class ConfigManager {
                 && (seenKeys.contains("CameraNoClip") || seenKeys.contains("NoHurtCam"))) {
             ConfigManager.cameraTweaksEnabled =
                     ConfigManager.cameraNoClipEnabled || ConfigManager.noHurtCamEnabled;
+        }
+        // END TODO(future)
+        // TODO(future): Transitional LegacyTweaks parent-module migration — can be removed in a future release when ready.
+        if (!seenKeys.contains("LegacyTweaks")
+                && (seenKeys.contains("BlockAnimation") || seenKeys.contains("OldSneaking"))) {
+            ConfigManager.legacyTweaksEnabled =
+                    ConfigManager.blockAnimationMode || ConfigManager.oldSneakingEnabled;
         }
         // END TODO(future)
     }

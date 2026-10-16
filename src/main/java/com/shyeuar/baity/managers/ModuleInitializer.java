@@ -31,7 +31,6 @@ public class ModuleInitializer {
     public static void initializeModules() {
         initializeSmolPeople();
         initializeCrosshair();
-        initializeBlockAnimation();
         initializeEnchantLore();
         initializePepCat();
         initializeReminder();
@@ -40,7 +39,6 @@ public class ModuleInitializer {
         initializeHighlights();
         initializeNoDebuff();
         initializeModernTooltip();
-        initializeMiscModules();
         
         com.shyeuar.baity.gui.sync.ConfigSynchronizer.syncModuleStates();
         
@@ -76,18 +74,6 @@ public class ModuleInitializer {
         }
     }
     
-    private static void initializeBlockAnimation() {
-        Module blockAnimation = ModuleManager.getModuleByName("BlockAnimation");
-        if (blockAnimation != null) {
-            blockAnimation.setEnabled(ConfigManager.blockAnimationMode);
-            for (Value v : blockAnimation.getValues()) {
-                if ("anima mode".equals(v.getName())) {
-                    v.setValue(ConfigManager.blockAnimationAnimaMode);
-                }
-            }
-        }
-    }
-
     private static void initializeEnchantLore() {
         Module enchantLore = ModuleManager.getModuleByName("EnchantLore");
         if (enchantLore != null) {
@@ -298,14 +284,4 @@ public class ModuleInitializer {
         }
     }
 
-    private static void initializeMiscModules() {
-        setModuleEnabled("OldSneaking", ConfigManager.oldSneakingEnabled);
-    }
-
-    private static void setModuleEnabled(String moduleName, boolean enabled) {
-        Module module = ModuleManager.getModuleByName(moduleName);
-        if (module != null) {
-            module.setEnabled(enabled);
-        }
-    }
 }
