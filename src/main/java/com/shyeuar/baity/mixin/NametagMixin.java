@@ -107,6 +107,7 @@ public class NametagMixin {
             }
 
             if (NametagUtils.isHudEntityRender(cameraState)) {
+                RenderScope.exitNameTagSubmit();
                 ci.cancel();
                 RenderScope.clearNameTagEntity(cameraState);
                 return;
@@ -126,20 +127,9 @@ public class NametagMixin {
 
             Entity entity = mc.level.getEntity(entityId);
             if (entity instanceof Player player && NametagUtils.shouldSuppressVanillaNametag(player)) {
+                RenderScope.exitNameTagSubmit();
                 ci.cancel();
             }
-        }
-
-        @ModifyVariable(
-            method = SUBMIT_NAME_DISPLAY,
-            at = @At("STORE"),
-            ordinal = 0
-        )
-        private Component baity$applyNickTweaksBeforeLayout(Component originalComponent, LivingEntityRenderState state) {
-            if (!NametagUtils.shouldProcessNametagText()) {
-                return originalComponent;
-            }
-            return NametagUtils.applyNickProcessedText(originalComponent);
         }
 
         @Inject(
