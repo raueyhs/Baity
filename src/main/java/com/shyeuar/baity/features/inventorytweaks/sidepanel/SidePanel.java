@@ -856,9 +856,7 @@ public final class SidePanel {
                 return;
             }
         }
-        if (activeEquipmentSetIndex >= 0 && activeEquipmentSetIndex / 9 + 1 == page) {
-            clearEquippedSlots();
-        }
+        activeEquipmentSetIndex = -1;
     }
 
     static void clearEquippedSlots() {
