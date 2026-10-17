@@ -29,7 +29,7 @@ public final class LegacyMusicPriority {
     private static final String OFFICIAL_NAMESPACE = "hypixel_skyblock";
     private static final String OFFICIAL_MUSIC_PREFIX = "music.";
     private static final String LEGACY_NAMESPACE = "minecraft";
-    private static final String LEGACY_MUSIC_PREFIX = "block.note_block";
+    private static final String LEGACY_MUSIC_PREFIX = "block.note_block.";
 
     private static final String STEREO_PANTS_ID = "MUSIC_PANTS";
     private static final double STEREO_PANTS_RANGE = 5.0;
@@ -91,12 +91,17 @@ public final class LegacyMusicPriority {
         if (!isLegacyMusic(soundId)) {
             return;
         }
+        if (instance.getVolume() < MIN_VOLUME) {
+            return;
+        }
 
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.player == null || !LocateUtils.isHubIsland(mc)) {
             return;
         }
-        if (instance.getVolume() < MIN_VOLUME) {
+
+        if (suppressRemaining > 0) {
+            suppressRemaining = SUPPRESS_TICKS;
             return;
         }
 
@@ -117,9 +122,7 @@ public final class LegacyMusicPriority {
             return;
         }
 
-        if (suppressRemaining <= 0) {
-            fadeFactor = 1.0f;
-        }
+        fadeFactor = 1.0f;
         suppressRemaining = SUPPRESS_TICKS;
     }
 
