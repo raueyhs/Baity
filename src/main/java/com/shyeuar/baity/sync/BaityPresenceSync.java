@@ -590,6 +590,18 @@ public final class BaityPresenceSync {
         });
     }
 
+    private static boolean isLocalPlayerUuid(UUID uuid) {
+        if (uuid == null) {
+            return false;
+        }
+        UUID localUuid = lastSeenLocalPlayerUuid;
+        if (localUuid != null) {
+            return localUuid.equals(uuid);
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+        return player != null && uuid.equals(player.getUUID());
+    }
+
     private static long nowIsoToEpochMs(String iso) {
         try {
             return java.time.Instant.parse(iso).toEpochMilli();
@@ -824,7 +836,7 @@ public final class BaityPresenceSync {
                 lastSeenEpochMs
             );
             newUsers.put(uuid, state);
-            if (nickTweaksEnabled) {
+            if (nickTweaksEnabled && !isLocalPlayerUuid(uuid)) {
                 String nameLower = name.toLowerCase(Locale.ROOT);
                 newChromaByName.put(
                     nameLower,

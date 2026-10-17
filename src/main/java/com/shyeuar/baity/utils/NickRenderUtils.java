@@ -368,12 +368,16 @@ public final class NickRenderUtils {
         if (glyphs.isEmpty()) return original;
 
         List<Glyph> outGlyphs = applyReplacementAndStyle(glyphs, matchByIndex, nowMs);
-        List<FormattedCharSequence> out = new ArrayList<>(outGlyphs.size());
-        for (Glyph glyph : outGlyphs) {
-            out.add(FormattedCharSequence.codepoint(glyph.codepoint(), glyph.style()));
-        }
-        FormattedCharSequence result = FormattedCharSequence.composite(out);
-        return result;
+        if (outGlyphs.isEmpty()) return original;
+        return sink -> {
+            int index = 0;
+            for (Glyph glyph : outGlyphs) {
+                if (!sink.accept(index++, glyph.style(), glyph.codepoint())) {
+                    return false;
+                }
+            }
+            return true;
+        };
     }
 
     private static String applySectionColorToStringWithReplacement(String text, List<Glyph> glyphs, TargetMatch[] matchByIndex) {
@@ -472,9 +476,7 @@ public final class NickRenderUtils {
                 if (!ok) continue;
 
                 int end = i + tLen;
-                boolean leftBoundary = i == 0 || !isNameCodepoint(codePoints[i - 1]);
-                boolean rightBoundary = end >= codePoints.length || !isNameCodepoint(codePoints[end]);
-                if (!leftBoundary || !rightBoundary) continue;
+                if (!isBoundaryBefore(codePoints, i) || !isBoundaryAfter(codePoints, end)) continue;
                 if (isAlreadyReplaced(codePoints, i, end, affixes)) continue;
 
                 TargetMatch match = new TargetMatch(target, i, tLen);
@@ -495,6 +497,31 @@ public final class NickRenderUtils {
 
     private static boolean isNameCodepoint(int codepoint) {
         return Character.isLetterOrDigit(codepoint) || codepoint == '_';
+    }
+
+    private static boolean isBoundaryBefore(int[] codePoints, int index) {
+        if (index <= 0) {
+            return true;
+        }
+        int prev = codePoints[index - 1];
+        if (prev == '\u00A7') {
+            return true;
+        }
+        if (index >= 2 && codePoints[index - 2] == '\u00A7') {
+            return true;
+        }
+        return !isNameCodepoint(prev);
+    }
+
+    private static boolean isBoundaryAfter(int[] codePoints, int index) {
+        if (index >= codePoints.length) {
+            return true;
+        }
+        int next = codePoints[index];
+        if (next == '\u00A7') {
+            return true;
+        }
+        return !isNameCodepoint(next);
     }
 
     private static boolean isAlreadyReplaced(int[] codePoints, int start, int end, List<ReplacementAffix> affixes) {
@@ -552,18 +579,20 @@ public final class NickRenderUtils {
         }
 
         Set<String> seenRemoteLower = new HashSet<>();
+        String selfLower = selfName == null ? "" : selfName.toLowerCase(Locale.ROOT);
         if (client.level != null) {
             client.level.players().forEach(player -> {
                 String name = player.getName().getString();
                 if (name == null || name.isBlank()) return;
+                String lk = name.toLowerCase(Locale.ROOT);
+                if (!selfLower.isEmpty() && lk.equals(selfLower)) return;
                 BaityPresenceSync.ChromaProfile profile = BaityPresenceSync.getChromaProfileByName(name);
                 if (profile == null) return;
-                seenRemoteLower.add(name.toLowerCase(Locale.ROOT));
+                seenRemoteLower.add(lk);
                 targets.add(Target.remote(name, profile));
             });
         }
 
-        String selfLower = selfName == null ? "" : selfName.toLowerCase(Locale.ROOT);
         BaityPresenceSync.forEachChromaProfileByCachedName((name, profile) -> {
             if (name == null || name.isBlank()) return;
             String lk = name.toLowerCase(Locale.ROOT);
