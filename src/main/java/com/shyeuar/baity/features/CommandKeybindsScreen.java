@@ -374,13 +374,15 @@ public class CommandKeybindsScreen extends Screen {
         int mouseX = (int) local[0];
         int mouseY = (int) local[1];
 
+        commitFocusedInput();
+        focusedIndex = -1;
+
         if (bindingIndex >= 0) {
             if (insideKeyBox(bindingIndex, mouseX, mouseY)) {
                 recordKey(Keybinds.mouseKey(click.button()));
-            } else {
-                bindingIndex = -1;
+                return true;
             }
-            return true;
+            bindingIndex = -1;
         }
 
         int addX1 = ROW_PADDING;

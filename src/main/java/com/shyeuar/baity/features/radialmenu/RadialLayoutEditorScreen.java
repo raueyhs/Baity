@@ -404,6 +404,8 @@ public class RadialLayoutEditorScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean isInsideWindow) {
+        commitInputs();
+        focusField = FocusField.NONE;
         if (click.button() == 0) {
             return handlePrimaryClick(click) || super.mouseClicked(click, isInsideWindow);
         }
