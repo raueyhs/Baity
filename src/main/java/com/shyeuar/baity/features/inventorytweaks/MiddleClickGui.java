@@ -11,12 +11,10 @@ import net.minecraft.client.gui.screens.inventory.ContainerScreen;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.item.component.ItemLore;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
 import java.util.Set;
@@ -111,13 +109,13 @@ public final class MiddleClickGui {
         return client != null && client.player != null && LocateUtils.inSkyBlock(client);
     }
 
-    public static boolean convertLeftClickToMiddleClick(AbstractContainerScreen<?> screen, Slot slot) {
+    public static boolean shouldConvertLeftClick(AbstractContainerScreen<?> screen, Slot slot) {
         if (!isActive() || slot == null || !(screen instanceof ContainerScreen)) {
             return false;
         }
 
         Minecraft client = Minecraft.getInstance();
-        if (client == null || client.player == null || client.gameMode == null) {
+        if (client == null || client.player == null) {
             return false;
         }
         if (slot.container == client.player.getInventory()) {
@@ -131,13 +129,7 @@ public final class MiddleClickGui {
 
         Component title = screen.getTitle();
         String plainTitle = title != null ? title.getString() : null;
-        if (!isAllowedGui(plainTitle) && !passesFilters(plainTitle, stack)) {
-            return false;
-        }
-
-        client.gameMode.handleContainerInput(screen.getMenu().containerId, slot.index,
-                GLFW.GLFW_MOUSE_BUTTON_MIDDLE, ContainerInput.CLONE, client.player);
-        return true;
+        return isAllowedGui(plainTitle) || passesFilters(plainTitle, stack);
     }
 
     private static boolean passesFilters(String plainTitle, ItemStack stack) {
