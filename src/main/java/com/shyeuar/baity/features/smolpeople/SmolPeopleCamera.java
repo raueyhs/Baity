@@ -18,6 +18,13 @@ public final class SmolPeopleCamera {
             return false;
         }
         Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) {
+            return false;
+        }
+        boolean swimming = mc.player.isVisuallySwimming() || mc.player.isSwimming();
+        if (swimming && !com.shyeuar.baity.utils.NoSwimPoseUtils.shouldForceStandingModelAppearance()) {
+            return false;
+        }
         return mc.options.getCameraType() == CameraType.THIRD_PERSON_FRONT;
     }
 

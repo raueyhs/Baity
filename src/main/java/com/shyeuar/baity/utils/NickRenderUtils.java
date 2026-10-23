@@ -708,7 +708,9 @@ public final class NickRenderUtils {
             if (!local) {
                 if (remoteChromaEnabled && palette.length > 0) {
                     double size = Math.max(0.1, chromaSize);
-                    double phase = chromaStatic ? 0.0 : (nowMs / 1000.0) * (speed * 0.5);
+                    double phase = chromaStatic
+                            ? -ConfigManager.nickTweaksChromaStartHue
+                            : (nowMs / 1000.0) * (speed * 0.5);
                     double position = positiveModulo((progress / size) - phase, 1.0) * palette.length;
                     int fromIndex = Math.floorMod((int) Math.floor(position), palette.length);
                     int toIndex = Math.floorMod(fromIndex + 1, palette.length);
@@ -743,7 +745,9 @@ public final class NickRenderUtils {
             double lightness = clamp(ConfigManager.nickTweaksChromaLightness, 0.2, 1.0);
             double chroma = clamp(ConfigManager.nickTweaksChromaChroma, 0.0, 0.4);
             double size = Math.max(0.1, chromaSize);
-            double phase = chromaStatic ? 0.0 : (nowMs / 1000.0) * (speed * 0.5);
+            double phase = chromaStatic
+                    ? -ConfigManager.nickTweaksChromaStartHue
+                    : (nowMs / 1000.0) * (speed * 0.5);
             float saturation = (float) (chroma / 0.4);
             float hue = (float) positiveModulo((progress / size) - phase, 1.0);
             return Mth.hsvToRgb(hue, saturation, (float) lightness);

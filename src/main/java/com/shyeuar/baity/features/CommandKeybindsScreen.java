@@ -48,6 +48,7 @@ public class CommandKeybindsScreen extends Screen {
     private final List<LineTextInput> textInputs = new ArrayList<>();
     private int focusedIndex = -1;
     private int bindingIndex = -1;
+    private int armedDeleteIndex = -1;
     private int scrollRow;
 
     public CommandKeybindsScreen(Screen parentScreen) {
@@ -211,9 +212,21 @@ public class CommandKeybindsScreen extends Screen {
 
         int deleteX2 = rowX2 - 8;
         int deleteX1 = deleteX2 - 16;
+        boolean deleteArmed = armedDeleteIndex == index;
+        boolean deleteHovered = GuiRenderUtil.isHovered(deleteX1, centerY - 8, deleteX2, centerY + 8, mouseX, mouseY);
         g.text(this.font, "x", deleteX1 + 5, centerY - 4,
-                GuiRenderUtil.isHovered(deleteX1, centerY - 8, deleteX2, centerY + 8, mouseX, mouseY)
-                        ? 0xFFFF5555 : LinearTheme.TEXT_SECONDARY.getRGB(), false);
+                (deleteArmed || deleteHovered) ? 0xFFFF5555 : LinearTheme.TEXT_SECONDARY.getRGB(), false);
+        if (deleteArmed && deleteHovered) {
+            String tip = "reclick to confirm";
+            int tipWidth = this.font.width(tip);
+            int tipX1 = (int) mouseX + 10;
+            int tipY1 = (int) mouseY + 10;
+            int tipX2 = tipX1 + tipWidth + 10;
+            int tipY2 = tipY1 + 16;
+            GuiRenderUtil.draw3DRect(g, tipX1, tipY1, tipX2, tipY2, LinearTheme.BG_TERTIARY.getRGB(), 4f);
+            GuiRenderUtil.stroke1px(g, tipX1, tipY1, tipX2, tipY2, LinearTheme.BORDER_PRIMARY.getRGB());
+            g.text(this.font, tip, tipX1 + 5, tipY1 + 4, 0xFFFF5555, false);
+        }
 
         int lineX1 = keyX2 + 12;
         int lineX2 = deleteX1 - 10;
@@ -377,6 +390,9 @@ public class CommandKeybindsScreen extends Screen {
         commitFocusedInput();
         focusedIndex = -1;
 
+        int previousArmedDelete = armedDeleteIndex;
+        armedDeleteIndex = -1;
+
         if (bindingIndex >= 0) {
             if (insideKeyBox(bindingIndex, mouseX, mouseY)) {
                 recordKey(Keybinds.mouseKey(click.button()));
@@ -450,6 +466,12 @@ public class CommandKeybindsScreen extends Screen {
             if (click.button() == 0 && GuiRenderUtil.isHovered(deleteX1, centerY - 8, deleteX2, centerY + 8,
                     mouseX, mouseY)) {
                 commitFocusedInput();
+                if (previousArmedDelete != index) {
+                    armedDeleteIndex = index;
+                    SoundUtils.playBubble();
+                    return true;
+                }
+                armedDeleteIndex = -1;
                 drafts.remove(index);
                 if (index < textInputs.size()) {
                     textInputs.remove(index);

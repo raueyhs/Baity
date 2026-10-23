@@ -12,6 +12,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import net.minecraft.world.phys.AABB;
@@ -34,6 +35,10 @@ public final class LegacyMusicPriority {
     private static final String STEREO_PANTS_ID = "MUSIC_PANTS";
     private static final double STEREO_PANTS_RANGE = 5.0;
 
+    private static final long SPADE_ABILITY_WINDOW_MS = 4000L;
+
+    private static final long MUSIC_IDLE_MS = 8000L;
+
     private static final float MIN_VOLUME = 0.02f;
     private static final int SUPPRESS_TICKS = 20;
     private static final float FADE_STEP = 0.05f;
@@ -47,8 +52,25 @@ public final class LegacyMusicPriority {
     private static float fadeFactor = 1.0f;
     private static int burstCount;
     private static int burstTimer;
+    private static long spadeAbilityUntil;
+    private static long lastMusicNoteMs;
+    private static boolean duckingActive;
 
     private LegacyMusicPriority() {
+    }
+
+    public static void onItemUsed(Player player, InteractionHand hand) {
+        if (!ConfigManager.legacyMusicPriorityEnabled || player == null) {
+            return;
+        }
+        ItemStack stack = player.getItemInHand(hand);
+        if (stack.isEmpty()) {
+            return;
+        }
+        String name = stack.getHoverName().getString();
+        if (name.contains("Spade")) {
+            spadeAbilityUntil = System.currentTimeMillis() + SPADE_ABILITY_WINDOW_MS;
+        }
     }
 
     public static void tick() {
@@ -57,6 +79,7 @@ public final class LegacyMusicPriority {
             if (burstTimer == 0) {
                 burstCount = 0;
                 recentPitches.clear();
+                lastMusicNoteMs = 0L;
             }
         }
 
@@ -65,6 +88,20 @@ public final class LegacyMusicPriority {
                 reset();
             }
             return;
+        }
+
+        long now = System.currentTimeMillis();
+        if (duckingActive) {
+            boolean stillMusical = now - lastMusicNoteMs < MUSIC_IDLE_MS;
+            if (stillMusical) {
+                suppressRemaining = SUPPRESS_TICKS;
+                if (fadeFactor > 0.0f) {
+                    fadeFactor = Math.max(0.0f, fadeFactor - FADE_STEP);
+                    refreshMusicVolume();
+                }
+                return;
+            }
+            duckingActive = false;
         }
 
         if (suppressRemaining > 0) {
@@ -96,12 +133,17 @@ public final class LegacyMusicPriority {
         }
 
         Minecraft mc = Minecraft.getInstance();
-        if (mc == null || mc.player == null || !LocateUtils.isHubIsland(mc)) {
+        if (mc == null || mc.player == null || !isMusicArea(mc)) {
             return;
         }
 
         if (suppressRemaining > 0) {
             suppressRemaining = SUPPRESS_TICKS;
+            lastMusicNoteMs = System.currentTimeMillis();
+            return;
+        }
+
+        if (System.currentTimeMillis() < spadeAbilityUntil) {
             return;
         }
 
@@ -122,6 +164,8 @@ public final class LegacyMusicPriority {
             return;
         }
 
+        lastMusicNoteMs = System.currentTimeMillis();
+        duckingActive = true;
         fadeFactor = 1.0f;
         suppressRemaining = SUPPRESS_TICKS;
     }
@@ -185,6 +229,13 @@ public final class LegacyMusicPriority {
         }
     }
 
+    public static boolean shouldBlockMusic(SoundInstance instance) {
+        if (!ConfigManager.legacyMusicPriorityEnabled || instance == null || !duckingActive) {
+            return false;
+        }
+        return isOfficialMusic(instance.getIdentifier());
+    }
+
     public static float fadeFactorFor(Identifier soundId) {
         if (fadeFactor >= 1.0f || suppressRemaining <= 0) {
             return 1.0f;
@@ -208,6 +259,20 @@ public final class LegacyMusicPriority {
         burstCount = 0;
         burstTimer = 0;
         recentPitches.clear();
+        lastMusicNoteMs = 0L;
+        duckingActive = false;
+    }
+
+    private static boolean isMusicArea(Minecraft mc) {
+        if (LocateUtils.isHubIsland(mc)) {
+            return true;
+        }
+        String area = LocateUtils.areaIslandName(mc);
+        if (area != null && (area.contains("Wilderness") || area.contains("Carnival"))) {
+            return true;
+        }
+        String subArea = LocateUtils.scoreboardSubAreaName(mc);
+        return subArea != null && (subArea.contains("Wilderness") || subArea.contains("Carnival"));
     }
 
     private static boolean isOfficialMusic(Identifier soundId) {

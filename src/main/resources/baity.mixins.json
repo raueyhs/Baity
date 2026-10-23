@@ -126,6 +126,7 @@
     "ModernTooltipScreenMixin",
     "EnchantLoreMixin",
     "HollowScannerMixin$ShareClickMixin",
+    "SpadeUseMixin",
     "CullingMixin$RemoveWeatherFilterMixin",
     "CullingMixin$RemoveWeatherFogFilterMixin",
     "CullingMixin$RemoveWeatherSkyFilterMixin"

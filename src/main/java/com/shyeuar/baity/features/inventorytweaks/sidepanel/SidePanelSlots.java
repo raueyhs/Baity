@@ -32,6 +32,8 @@ public final class SidePanelSlots {
     private static final int ARMOR_SLOT_U = 8;
     private static final int INTERIOR_U = 4;
     private static final int TEX_SIZE = 256;
+    private static final int SLOT_BASE_WIDTH = 17;
+    private static final int SLOT_BASE_HEIGHT = 18;
     private static final int JUNCTION_INNER_U = BORDER;
     private static final int OPEN_INVENTORY_BOTTOM_EDGE_V = 159;
     private static final int ARMOR_SLOT_TEXTURE_V = 8;
@@ -170,14 +172,53 @@ public final class SidePanelSlots {
 
     private static void drawSlotBase(GuiGraphicsExtractor graphics, DisplaySlot slot) {
         boolean petPanel = SidePanel.isPetPanelEnabled();
-        blitInventory(
+        int destY = slot.y - 1;
+        int srcV = mapSrcV(slot.y - 1, panelPixelHeight(petPanel), petPanel);
+        int destH = SLOT_BASE_HEIGHT;
+        if (isEquipmentKind(slot.kind)) {
+            destY -= 1;
+            if (slot.kind == SidePanel.SlotKind.GLOVES) {
+                destH += 1;
+            }
+        }
+        blitSlotBase(
                 graphics,
                 slot.x - 1,
-                slot.y - 1,
-                18,
-                18,
+                destY,
+                SLOT_BASE_WIDTH,
+                destH,
                 slot.x + 23,
-                mapSrcV(slot.y - 1, panelPixelHeight(petPanel), petPanel)
+                srcV
+        );
+    }
+
+    private static boolean isEquipmentKind(SidePanel.SlotKind kind) {
+        return kind == SidePanel.SlotKind.NECKLACE
+                || kind == SidePanel.SlotKind.CLOAK
+                || kind == SidePanel.SlotKind.BELT
+                || kind == SidePanel.SlotKind.GLOVES;
+    }
+
+    private static void blitSlotBase(
+            GuiGraphicsExtractor graphics,
+            int destX,
+            int destY,
+            int destW,
+            int destH,
+            int srcU,
+            int srcV
+    ) {
+        graphics.blit(
+                PANEL_PIPELINE,
+                INVENTORY_BACKGROUND,
+                destX,
+                destY,
+                (float) Math.max(0, srcU - 1),
+                (float) Math.max(0, srcV - 1),
+                destW,
+                destH,
+                TEX_SIZE,
+                TEX_SIZE
         );
     }
 

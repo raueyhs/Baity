@@ -711,6 +711,16 @@ public class ClickGuiInputHandler {
             if (!module.getName().equals(dragInfo.moduleName)) continue;
             
             Value found = ValueTreeUtils.findByName(module, dragInfo.valueName);
+            if (found instanceof com.shyeuar.baity.gui.value.HueBandValue hueBand) {
+                double percentage = (coords.mouseX - dragInfo.sliderX) / (double) dragInfo.sliderWidth;
+                percentage = Math.max(0, Math.min(1, percentage));
+                hueBand.setHue((float) percentage);
+
+                if (ConfigSynchronizer.hasValueConfig(module.getName(), found.getName())) {
+                    ConfigSynchronizer.handleValueUpdate(module.getName(), found.getName(), hueBand.getValue());
+                }
+                return;
+            }
             if (found instanceof SliderValue) {
                 SliderValue sliderValue = (SliderValue) found;
                     
@@ -1615,6 +1625,24 @@ public class ClickGuiInputHandler {
                 if (hitAnyButton) {
                     if (ConfigSynchronizer.hasValueConfig(module.getName(), value.getName())) {
                         ConfigSynchronizer.handleValueUpdate(module.getName(), value.getName(), painter.getValue());
+                    }
+                    timer.reset();
+                    return true;
+                }
+            } else if (button == 0 && style == ValueStyle.HUE_BAND && value instanceof com.shyeuar.baity.gui.value.HueBandValue hueBand) {
+                Minecraft client = Minecraft.getInstance();
+                if (client == null) return false;
+                int bandX1 = (int) (subX1 + 8 + client.font.width(hueBand.getDisplayName()) + 10);
+                int bandX2 = (int) (subX2 - 8);
+                int bandY1 = (int) (subModY + 5);
+                int bandY2 = (int) (subModY + dims.subOptionHeight - 5);
+                if (GuiRenderUtil.isHovered(bandX1, bandY1, bandX2, bandY2, coords.mouseX, coords.mouseY)) {
+                    double percentage = (coords.mouseX - bandX1) / Math.max(1.0, bandX2 - bandX1);
+                    hueBand.setHue((float) Math.max(0, Math.min(1, percentage)));
+                    state.setDraggingSlider(new ClickGuiState.SliderDragInfo(
+                            module.getName(), value.getName(), bandX1, Math.max(1, bandX2 - bandX1)));
+                    if (ConfigSynchronizer.hasValueConfig(module.getName(), value.getName())) {
+                        ConfigSynchronizer.handleValueUpdate(module.getName(), value.getName(), hueBand.getValue());
                     }
                     timer.reset();
                     return true;

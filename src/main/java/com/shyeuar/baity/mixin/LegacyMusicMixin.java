@@ -26,6 +26,10 @@ public class LegacyMusicMixin {
             cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
             return;
         }
+        if (LegacyMusicPriority.shouldBlockMusic(sound)) {
+            cir.setReturnValue(SoundEngine.PlayResult.NOT_STARTED);
+            return;
+        }
         LegacyMusicPriority.onSoundPlay(sound);
     }
 

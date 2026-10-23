@@ -81,7 +81,7 @@ final class EnchantLoreRender {
         if (EnchantLoreColorSettings.isBold(tier)) {
             base = base.withBold(true);
         }
-        if (EnchantLore.isEnabled() && EnchantLoreColorSettings.isRainbow(tier)) {
+        if (EnchantLoreColorSettings.isRainbow(tier)) {
             return rainbowText(text, base, nowMs, 0.0f);
         }
         return gradientText(text, tier, base, 0.0f);
@@ -91,7 +91,7 @@ final class EnchantLoreRender {
         EnchantLore.Tier tier = EnchantLore.Tier.ULTIMATE;
         String text = EnchantLoreColorSettings.TIER_LABELS[tier.ordinal()];
         Style base = Style.EMPTY.withBold(true);
-        if (EnchantLore.isEnabled() && EnchantLoreColorSettings.isRainbow(tier)) {
+        if (EnchantLoreColorSettings.isRainbow(tier)) {
             return rainbowText(text, base, nowMs, 0.0f);
         }
         return gradientText(text, tier, base, 0.0f);
