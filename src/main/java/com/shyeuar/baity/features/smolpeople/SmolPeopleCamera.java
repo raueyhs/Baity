@@ -18,6 +18,15 @@ public final class SmolPeopleCamera {
             return false;
         }
         Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) {
+            return false;
+        }
+        // TODO(26.2 backport): swimming already lowers the third person camera, so the smol offset
+        // would push it too far down. Only exists on this branch.
+        boolean swimming = mc.player.isVisuallySwimming() || mc.player.isSwimming();
+        if (swimming && !com.shyeuar.baity.utils.NoSwimPoseUtils.shouldForceStandingModelAppearance()) {
+            return false;
+        }
         return mc.options.getCameraType() == CameraType.THIRD_PERSON_FRONT;
     }
 
