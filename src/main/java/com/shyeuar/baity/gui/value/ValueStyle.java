@@ -18,6 +18,7 @@ public enum ValueStyle {
     TEXT_LINE_INPUT,
     TEXT_LIST,
     TOGGLE_ROW,
-    CROSSHAIR_PAINTER
+    CROSSHAIR_PAINTER,
+    HUE_BAND
 }
 

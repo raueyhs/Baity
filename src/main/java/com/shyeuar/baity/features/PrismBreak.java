@@ -70,7 +70,10 @@ public class PrismBreak {
         long key = localPos.asLong();
         float reach = resolveReach(key, localState.progress(), now);
         try (var _ = levelRenderer.collectPerFrameRenderThreadGizmos()) {
-            float phase = ConfigManager.prismBreakChromaStatic ? 0.0f : (float) ((now / 1000.0) * (speed * 0.5));
+            // TODO(26.2 backport): custom chroma start hue is new on this branch.
+            float phase = ConfigManager.prismBreakChromaStatic
+                    ? -(float) ConfigManager.prismBreakChromaStartHue
+                    : (float) ((now / 1000.0) * (speed * 0.5));
             float posOffset = (float) ((Math.floorMod(key, 100)) * 0.01);
             var shape = localState.blockState().getShape(level, localPos);
             if (shape.isEmpty()) {

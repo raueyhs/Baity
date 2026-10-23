@@ -440,6 +440,8 @@ public class ValueStyleRenderer {
           renderEnchantLoreColorEditorValue(context, client, (EnchantLoreColorEditorValue) value, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, editingGradient, gradientInputText, gradientInputCaretCp, hoveredTooltipInfo);
       } else if (style == ValueStyle.CHROMA_FISHING_LINE_COLOR_EDITOR && value instanceof ChromaFishingLineColorEditorValue chromaEditor) {
           renderChromaFishingLineColorEditorValue(context, client, chromaEditor, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, editingGradient, gradientInputText, gradientInputCaretCp, hoveredTooltipInfo);
+      } else if (style == ValueStyle.HUE_BAND && value instanceof com.shyeuar.baity.gui.value.HueBandValue hueBand) {
+          renderHueBandValue(context, client, hueBand, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha);
       } else if (style == ValueStyle.CROSSHAIR_PAINTER && value instanceof CrosshairPainterValue) {
           renderCrosshairPainterValue(context, client, (CrosshairPainterValue) value, theme, x1, y, x2, subOptionHeight, mouseX, mouseY, localAlpha, hoveredTooltipInfo);
       } else if (style == ValueStyle.TEXT_LINE_INPUT && value instanceof TextLineInputValue) {
@@ -672,6 +674,40 @@ public class ValueStyleRenderer {
    }
 
    
+   // TODO(26.2 backport): hue band picker rendering, new on this branch.
+   public static void renderHueBandValue(GuiGraphicsExtractor context, Minecraft client,
+                                         com.shyeuar.baity.gui.value.HueBandValue value, Theme theme,
+                                         float x1, float y, float x2, float subOptionHeight,
+                                         float mouseX, float mouseY, int localAlpha) {
+       int valueColor = (new java.awt.Color(40, 40, 40, 50).getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       GuiRenderUtil.draw3DRect(context, x1, y, x2, y + subOptionHeight, valueColor, 6f);
+
+       int textColor = (theme.FONT.getRGB() & 0x00FFFFFF) | (localAlpha << 24);
+       String label = value.getDisplayName();
+       context.text(client.font, label, (int) (x1 + 8), (int) (y + 6), textColor, false);
+
+       float bandX1 = x1 + 8 + client.font.width(label) + 10;
+       float bandX2 = x2 - 8;
+       float bandY1 = y + 5;
+       float bandY2 = y + subOptionHeight - 5;
+       if (bandX2 <= bandX1 + 4 || bandY2 <= bandY1 + 2) {
+           return;
+       }
+
+       int segments = 48;
+       float segmentWidth = (bandX2 - bandX1) / segments;
+       for (int i = 0; i < segments; i++) {
+           float hue = i / (float) segments;
+           int color = (com.shyeuar.baity.gui.value.HueBandValue.hueToRgb(hue) & 0x00FFFFFF) | (localAlpha << 24);
+           float sx1 = bandX1 + segmentWidth * i;
+           float sx2 = i == segments - 1 ? bandX2 : sx1 + segmentWidth + 0.5f;
+           GuiRenderUtil.drawRoundedRect(context, sx1, bandY1, sx2, bandY2, 0, color);
+       }
+       GuiRenderUtil.drawRoundedRectOutline(context, bandX1, bandY1, bandX2, bandY2, 3, 0x66FFFFFF);
+
+       float markerX = bandX1 + (bandX2 - bandX1) * value.getHue();
+       GuiRenderUtil.drawRoundedRect(context, markerX - 1.5f, bandY1, markerX + 1.5f, bandY2, 1, 0xFFFFFFFF);
+   }
    public static void renderSliderValue(GuiGraphicsExtractor context, Minecraft client, Module module, SliderValue sliderValue, Theme theme,
                                         float x1, float y, float x2, float subOptionHeight,
                                         float mouseX, float mouseY, int localAlpha) {
@@ -1351,7 +1387,9 @@ public class ValueStyleRenderer {
        double chroma = Math.max(0.0, Math.min(0.4, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaChroma));
        double size = Math.max(0.1, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaSize);
        double speed = Math.max(0.0, Math.min(8.0, com.shyeuar.baity.config.ConfigManager.nickTweaksChromaSpeed));
-       double phase = (com.shyeuar.baity.config.ConfigManager.nickTweaksChromaStatic ? 0.0 : (nowMs / 1000.0) * (speed * 0.5));
+       double phase = (com.shyeuar.baity.config.ConfigManager.nickTweaksChromaStatic
+                ? -com.shyeuar.baity.config.ConfigManager.nickTweaksChromaStartHue
+                : (nowMs / 1000.0) * (speed * 0.5));
        double progress = len <= 1 ? 0.0 : (double) idx / (double) (len - 1);
        float saturation = (float) (chroma / 0.4);
        float hue = (float) (((progress / size) - phase) % 1.0);

@@ -705,11 +705,19 @@ public class ModuleManager {
             }
         );
 
+        // TODO(26.2 backport): static rainbow groups with a hue band picker are new on this branch.
+        GroupValue nickChromaStaticGroup = new GroupValue("static chroma group", "static chroma", ModuleCategory.RENDER)
+            .setSubModuleSwitchChildName("static chroma")
+            .addChild(new Option("static chroma", "enabled", ConfigManager.nickTweaksChromaStatic, ModuleCategory.RENDER))
+            .addChild(new com.shyeuar.baity.gui.value.HueBandValue(
+                "start hue", "start hue", ModuleCategory.RENDER, (float) ConfigManager.nickTweaksChromaStartHue, () -> ConfigManager.nickTweaksChromaStatic
+            ));
+
         GroupValue nickTweaksChromaGroup = new GroupValue("chroma settings", "chroma settings", ModuleCategory.RENDER)
             .setExpanded(ConfigManager.nickTweaksChromaGroupExpanded)
             .setSubModuleSwitchChildName("chroma settings enabled")
             .addChild(new Option("chroma settings enabled", "enabled", ConfigManager.nickTweaksChromaEnabled, ModuleCategory.RENDER))
-            .addChild(new Option("static chroma", "static chroma", ConfigManager.nickTweaksChromaStatic, ModuleCategory.RENDER))
+            .addChild(nickChromaStaticGroup)
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
                 "chroma lightness", "chroma lightness", 0.8, 0.2, 1.0, 0.05, ModuleCategory.RENDER
             ))
@@ -801,13 +809,25 @@ public class ModuleManager {
                     "static chroma",
                     () -> ConfigManager.nickTweaksChromaStatic,
                     val -> ConfigManager.nickTweaksChromaStatic = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "start hue",
+                    () -> ConfigManager.nickTweaksChromaStartHue,
+                    val -> ConfigManager.nickTweaksChromaStartHue = ((Number) val).doubleValue()
                 )
             }
         );
 
+        GroupValue enchantRainbowStaticGroup = new GroupValue("static rainbow group", "static rainbow", ModuleCategory.QOL)
+            .setSubModuleSwitchChildName("static rainbow")
+            .addChild(new Option("static rainbow", "enabled", ConfigManager.enchantLoreRainbowStatic, ModuleCategory.QOL))
+            .addChild(new com.shyeuar.baity.gui.value.HueBandValue(
+                "start hue", "start hue", ModuleCategory.QOL, (float) ConfigManager.enchantLoreRainbowStartHue, () -> ConfigManager.enchantLoreRainbowStatic
+            ));
+
         GroupValue enchantLoreRainbowGroup = new GroupValue("rainbow", "rainbow", ModuleCategory.QOL)
             .setExpanded(ConfigManager.enchantLoreRainbowGroupExpanded)
-            .addChild(new Option("static rainbow", "static rainbow", ConfigManager.enchantLoreRainbowStatic, ModuleCategory.QOL))
+            .addChild(enchantRainbowStaticGroup)
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
                 "rainbow speed", "speed", 1.0, 0.1, 2.0, 0.1, ModuleCategory.QOL
             ))
@@ -881,6 +901,11 @@ public class ModuleManager {
                     "static rainbow",
                     () -> ConfigManager.enchantLoreRainbowStatic,
                     val -> ConfigManager.enchantLoreRainbowStatic = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "start hue",
+                    () -> ConfigManager.enchantLoreRainbowStartHue,
+                    val -> ConfigManager.enchantLoreRainbowStartHue = ((Number) val).doubleValue()
                 ),
                 new ModuleRegistry.ValueConfigInfo(
                     "rainbow speed",
@@ -1280,8 +1305,15 @@ public class ModuleManager {
             }
         );
 
+        GroupValue prismChromaStaticGroup = new GroupValue("static chroma group", "static chroma", ModuleCategory.RENDER)
+            .setSubModuleSwitchChildName("static chroma")
+            .addChild(new Option("static chroma", "enabled", ConfigManager.prismBreakChromaStatic, ModuleCategory.RENDER))
+            .addChild(new com.shyeuar.baity.gui.value.HueBandValue(
+                "start hue", "start hue", ModuleCategory.RENDER, (float) ConfigManager.prismBreakChromaStartHue, () -> ConfigManager.prismBreakChromaStatic
+            ));
+
         GroupValue prismBreakChromaGroup = new GroupValue("chroma settings", "chroma settings", ModuleCategory.RENDER)
-            .addChild(new Option("static chroma", "static chroma", ConfigManager.prismBreakChromaStatic, ModuleCategory.RENDER))
+            .addChild(prismChromaStaticGroup)
             .addChild(new com.shyeuar.baity.gui.value.SliderValue("chroma lightness", "chroma lightness", 0.8, 0.2, 1.0, 0.05, ModuleCategory.RENDER))
             .addChild(new com.shyeuar.baity.gui.value.SliderValue("chroma chroma", "chroma chroma", 0.2, 0.0, 0.4, 0.01, ModuleCategory.RENDER))
             .addChild(new com.shyeuar.baity.gui.value.SliderValue("chroma size", "chroma size", 2.5, 0.5, 10.0, 0.1, ModuleCategory.RENDER));
@@ -1330,6 +1362,11 @@ public class ModuleManager {
                     "static chroma",
                     () -> ConfigManager.prismBreakChromaStatic,
                     val -> ConfigManager.prismBreakChromaStatic = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "start hue",
+                    () -> ConfigManager.prismBreakChromaStartHue,
+                    val -> ConfigManager.prismBreakChromaStartHue = ((Number) val).doubleValue()
                 ),
                 new ModuleRegistry.ValueConfigInfo(
                     "replace vanilla",
@@ -1385,11 +1422,18 @@ public class ModuleManager {
             }
         );
 
+        GroupValue fishingChromaStaticGroup = new GroupValue("static chroma group", "static chroma", ModuleCategory.MISC)
+            .setSubModuleSwitchChildName("static chroma")
+            .addChild(new Option("static chroma", "enabled", ConfigManager.chromaFishingLineChromaStatic, ModuleCategory.MISC))
+            .addChild(new com.shyeuar.baity.gui.value.HueBandValue(
+                "start hue", "start hue", ModuleCategory.MISC, (float) ConfigManager.chromaFishingLineChromaStartHue, () -> ConfigManager.chromaFishingLineChromaStatic
+            ));
+
         GroupValue chromaFishingLineChromaGroup = new GroupValue("chroma settings", "chroma settings", ModuleCategory.MISC)
             .setExpanded(ConfigManager.chromaFishingLineChromaGroupExpanded)
             .setSubModuleSwitchChildName("chroma settings enabled")
             .addChild(new Option("chroma settings enabled", "enabled", ConfigManager.chromaFishingLineChromaEnabled, ModuleCategory.MISC))
-            .addChild(new Option("static chroma", "static chroma", ConfigManager.chromaFishingLineChromaStatic, ModuleCategory.MISC))
+            .addChild(fishingChromaStaticGroup)
             .addChild(new com.shyeuar.baity.gui.value.SliderValue(
                 "chroma lightness", "chroma lightness", 0.8, 0.2, 1.0, 0.05, ModuleCategory.MISC
             ))
@@ -1470,6 +1514,11 @@ public class ModuleManager {
                     "static chroma",
                     () -> ConfigManager.chromaFishingLineChromaStatic,
                     val -> ConfigManager.chromaFishingLineChromaStatic = (Boolean) val
+                ),
+                new ModuleRegistry.ValueConfigInfo(
+                    "start hue",
+                    () -> ConfigManager.chromaFishingLineChromaStartHue,
+                    val -> ConfigManager.chromaFishingLineChromaStartHue = ((Number) val).doubleValue()
                 )
             }
         );

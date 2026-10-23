@@ -241,6 +241,7 @@ public class ConfigManager {
     public static double prismBreakChromaChroma = 0.2;
     public static double prismBreakChromaSize = 2.5;
     public static boolean prismBreakChromaStatic = false;
+    public static double prismBreakChromaStartHue = 0.0;
     public static boolean prismBreakReplaceVanilla = true;
 
     public static boolean paperDollEnabled = false;
@@ -298,6 +299,7 @@ public class ConfigManager {
     public static double nickTweaksChromaSize = 3.1;
     public static double nickTweaksChromaSpeed = 1.0;
     public static boolean nickTweaksChromaStatic = false;
+    public static double nickTweaksChromaStartHue = 0.0;
     public static boolean nickTweaksChromaGroupExpanded = false;
     public static int nickTweaksGradientStartColor = 0xFFFFFF;
     public static int nickTweaksGradientEndColor = 0xFFFFFF;
@@ -311,6 +313,7 @@ public class ConfigManager {
     public static double chromaFishingLineChromaSize = 3.1;
     public static double chromaFishingLineChromaSpeed = 1.0;
     public static boolean chromaFishingLineChromaStatic = false;
+    public static double chromaFishingLineChromaStartHue = 0.0;
     public static boolean chromaFishingLineChromaReverseDirection = false;
     public static boolean chromaFishingLineChromaGroupExpanded = false;
 
@@ -326,11 +329,12 @@ public class ConfigManager {
     public static int enchantLoreRainbowGradient = 100;
     public static int enchantLoreRainbowAngle = 45;
     public static boolean enchantLoreRainbowStatic = false;
+    public static double enchantLoreRainbowStartHue = 0.0;
     public static boolean enchantLoreRomanNumeralsGroupExpanded = false;
     public static boolean enchantLoreArabicNumerals = false;
     public static boolean enchantLoreDontReplaceRomanInItemName = false;
     public static String enchantLoreLayoutMode = "default";
-    public static int enchantLoreMissingKeybind = 341;
+    public static int enchantLoreMissingKeybind = InputConstants.KEY_LCONTROL;
     public static boolean nametagDefaultNametag = false;
     public static final String DEFAULT_BAITY_PRESENCE_SYNC_URL = "https://baity-sync-d7gx0aiqb6c3727d5-1502560706.ap-shanghai.app.tcloudbase.com";
     public static String baityPresenceSyncUrl = DEFAULT_BAITY_PRESENCE_SYNC_URL;
@@ -938,6 +942,9 @@ public class ConfigManager {
         registerField("PrismBreakChromaStatic", Boolean.class,
             c -> ConfigManager.prismBreakChromaStatic,
             (c, v) -> ConfigManager.prismBreakChromaStatic = (Boolean) v);
+        registerField("PrismBreakChromaStartHue", Double.class,
+            c -> ConfigManager.prismBreakChromaStartHue,
+            (c, v) -> ConfigManager.prismBreakChromaStartHue = ((Number) v).doubleValue());
         registerField("PrismBreakReplaceVanilla", Boolean.class,
             c -> ConfigManager.prismBreakReplaceVanilla,
             (c, v) -> ConfigManager.prismBreakReplaceVanilla = (Boolean) v);
@@ -1038,6 +1045,9 @@ public class ConfigManager {
         registerField("NickTweaksChromaStatic", Boolean.class,
             c -> ConfigManager.nickTweaksChromaStatic,
             (c, v) -> ConfigManager.nickTweaksChromaStatic = (Boolean) v);
+        registerField("NickTweaksChromaStartHue", Double.class,
+            c -> ConfigManager.nickTweaksChromaStartHue,
+            (c, v) -> ConfigManager.nickTweaksChromaStartHue = ((Number) v).doubleValue());
         registerField("NickTweaksChromaGroupExpanded", Boolean.class,
             c -> ConfigManager.nickTweaksChromaGroupExpanded,
             (c, v) -> ConfigManager.nickTweaksChromaGroupExpanded = (Boolean) v);
@@ -1074,6 +1084,9 @@ public class ConfigManager {
         registerField("ChromaFishingLineChromaStatic", Boolean.class,
             c -> ConfigManager.chromaFishingLineChromaStatic,
             (c, v) -> ConfigManager.chromaFishingLineChromaStatic = (Boolean) v);
+        registerField("ChromaFishingLineChromaStartHue", Double.class,
+            c -> ConfigManager.chromaFishingLineChromaStartHue,
+            (c, v) -> ConfigManager.chromaFishingLineChromaStartHue = ((Number) v).doubleValue());
         registerField("ChromaFishingLineChromaReverseDirection", Boolean.class,
             c -> ConfigManager.chromaFishingLineChromaReverseDirection,
             (c, v) -> ConfigManager.chromaFishingLineChromaReverseDirection = (Boolean) v);
@@ -1107,6 +1120,9 @@ public class ConfigManager {
         registerField("EnchantLoreRainbowStatic", Boolean.class,
             c -> ConfigManager.enchantLoreRainbowStatic,
             (c, v) -> ConfigManager.enchantLoreRainbowStatic = (Boolean) v);
+        registerField("EnchantLoreRainbowStartHue", Double.class,
+            c -> ConfigManager.enchantLoreRainbowStartHue,
+            (c, v) -> ConfigManager.enchantLoreRainbowStartHue = ((Number) v).doubleValue());
         registerField("EnchantLoreRomanNumeralsGroupExpanded", Boolean.class,
             c -> ConfigManager.enchantLoreRomanNumeralsGroupExpanded,
             (c, v) -> ConfigManager.enchantLoreRomanNumeralsGroupExpanded = (Boolean) v);
