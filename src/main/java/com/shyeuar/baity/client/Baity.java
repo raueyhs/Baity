@@ -129,8 +129,6 @@ public class Baity implements ClientModInitializer {
             com.shyeuar.baity.sync.SyncCommands.register(dispatcher)
         );
 
-        // 26.3 publishes AFTER_OPAQUE_TERRAIN while a render pass is still open, so the motion blur
-        // velocity pass is driven by MotionBlurMixin around LevelRenderer#executeSolid instead.
         LevelRenderEvents.COLLECT_SUBMITS.register(new com.shyeuar.baity.features.NametagRenderer());
         LevelRenderEvents.END_MAIN.register(new FancyDmgSplash());
         LevelRenderEvents.AFTER_SOLID_FEATURES.register(new com.shyeuar.baity.features.highlights.ShulkerHighlights());

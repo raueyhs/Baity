@@ -218,7 +218,6 @@ public class CommandKeybindsScreen extends Screen {
         g.text(this.font, "x", deleteX1 + 5, centerY - 4,
                 (deleteArmed || deleteHovered) ? 0xFFFF5555 : LinearTheme.TEXT_SECONDARY.getRGB(), false);
         if (deleteArmed && deleteHovered) {
-            // TODO(26.2 backport): two-step delete confirmation is new on this branch.
             String tip = "reclick to confirm";
             int tipWidth = this.font.width(tip);
             int tipX1 = (int) mouseX + 10;

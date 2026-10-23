@@ -35,16 +35,8 @@ public final class LegacyMusicPriority {
     private static final String STEREO_PANTS_ID = "MUSIC_PANTS";
     private static final double STEREO_PANTS_RANGE = 5.0;
 
-    // TODO(26.2 backport): the spade ability guard below only exists on this branch. 26.2 has no
-    // way to exclude the Ancestral/Archaic/Deific Spade echo notes, so it mutes Hub music during
-    // the ability; port this guard back together with the rest of the migration.
     private static final long SPADE_ABILITY_WINDOW_MS = 4000L;
 
-    // TODO(26.2 backport): 26.2 only ducks for a single 20-tick window, so the packed track keeps
-    // restarting at full volume while note-box music is still playing. This branch keeps an area
-    // level ducking state alive until the note-box music actually stops, and only refreshes the
-    // music volume while the fade is still changing, so the extra cost stays negligible.
-    // Port both back together with the spade guard.
     private static final long MUSIC_IDLE_MS = 8000L;
 
     private static final float MIN_VOLUME = 0.02f;
@@ -247,8 +239,6 @@ public final class LegacyMusicPriority {
         return suppressRemaining > 0 ? fadeFactor : 1.0f;
     }
 
-    // TODO(26.2 backport): the packed track is blocked while note-box music is playing instead of
-    // only being faded once, so it cannot restart at full volume between two tracks.
     public static boolean shouldBlockMusic(SoundInstance instance) {
         if (!ConfigManager.legacyMusicPriorityEnabled || instance == null || !duckingActive) {
             return false;
@@ -287,7 +277,6 @@ public final class LegacyMusicPriority {
         if (LocateUtils.isHubIsland(mc)) {
             return true;
         }
-        // TODO(26.2 backport): wilderness/carnival areas are only checked on this branch.
         String area = LocateUtils.areaIslandName(mc);
         if (area != null && (area.contains("Wilderness") || area.contains("Carnival"))) {
             return true;

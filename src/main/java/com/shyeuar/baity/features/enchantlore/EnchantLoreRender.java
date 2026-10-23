@@ -81,8 +81,6 @@ final class EnchantLoreRender {
         if (EnchantLoreColorSettings.isBold(tier)) {
             base = base.withBold(true);
         }
-        // TODO(26.2 backport): 26.2 gates the preview rainbow behind EnchantLore.isEnabled().
-        // This branch always shows it; backport the same behaviour when the migration is done.
         if (EnchantLoreColorSettings.isRainbow(tier)) {
             return rainbowText(text, base, nowMs, 0.0f);
         }
@@ -93,7 +91,6 @@ final class EnchantLoreRender {
         EnchantLore.Tier tier = EnchantLore.Tier.ULTIMATE;
         String text = EnchantLoreColorSettings.TIER_LABELS[tier.ordinal()];
         Style base = Style.EMPTY.withBold(true);
-        // TODO(26.2 backport): same as formatTierPreview above.
         if (EnchantLoreColorSettings.isRainbow(tier)) {
             return rainbowText(text, base, nowMs, 0.0f);
         }

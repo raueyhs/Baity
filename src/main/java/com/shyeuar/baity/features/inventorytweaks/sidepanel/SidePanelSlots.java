@@ -176,11 +176,8 @@ public final class SidePanelSlots {
         int srcV = mapSrcV(slot.y - 1, panelPixelHeight(petPanel), petPanel);
         int destH = SLOT_BASE_HEIGHT;
         if (isEquipmentKind(slot.kind)) {
-            // TODO(26.2 backport): the equipment slot bases also sit one pixel too low in 26.2.
             destY -= 1;
             if (slot.kind == SidePanel.SlotKind.GLOVES) {
-                // Lifting the bases leaves a one pixel row under the last slot; growing this same
-                // blit covers it without drawing that row on its own.
                 destH += 1;
             }
         }
@@ -195,8 +192,6 @@ public final class SidePanelSlots {
         );
     }
 
-    // TODO(26.2 backport): 26.2 has the same one-pixel source shift on the slot base texture;
-    // this compensation only exists on this branch and needs the same fix backported.
     private static boolean isEquipmentKind(SidePanel.SlotKind kind) {
         return kind == SidePanel.SlotKind.NECKLACE
                 || kind == SidePanel.SlotKind.CLOAK
@@ -204,8 +199,6 @@ public final class SidePanelSlots {
                 || kind == SidePanel.SlotKind.GLOVES;
     }
 
-    // TODO(26.2 backport): 26.2 has the same one-pixel source shift on the slot base texture;
-    // this compensation only exists on this branch and needs the same fix backported.
     private static void blitSlotBase(
             GuiGraphicsExtractor graphics,
             int destX,

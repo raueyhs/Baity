@@ -272,4 +272,4 @@ public class CrosshairMixin {
                 ((com.shyeuar.baity.mixin.accessor.LivingEntityAccessor) (Object) entity).baity$getSwingState())
                 .baity$getTicks();
     }
-}
+}

@@ -4,7 +4,6 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 /**
- * TODO(26.2 backport): hue band picker used by the static rainbow groups, new on this branch.
  * The value is the hue (0..1) the text starts at.
  */
 @Environment(EnvType.CLIENT)

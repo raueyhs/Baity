@@ -18,9 +18,6 @@ import java.nio.IntBuffer;
 @Environment(EnvType.CLIENT)
 public final class SoftFullscreen {
 
-    // TODO(26.2 backport): 26.3 manages the window through SDL, so the original windowed geometry
-    // is captured before the border is removed and restored on disable. 26.2 drives the window
-    // with Win32 directly and does not need this capture step.
     private static final int MIN_WINDOW_SIZE = 64;
     private static final int DEFAULT_WINDOW_WIDTH = 1280;
     private static final int DEFAULT_WINDOW_HEIGHT = 720;
@@ -90,13 +87,11 @@ public final class SoftFullscreen {
                 return;
             }
             if (justEnabled) {
-                // Enabling while fullscreen: leave it first so the borderless window can take over.
                 resumeFullscreenOnDisable = true;
                 leavingFullscreen = true;
                 client.options.fullscreen().set(false);
                 retryTicks = 3;
             }
-            // A manual F11 fullscreen wins while the feature is on, so keep vanilla fullscreen.
             return;
         }
         leavingFullscreen = false;
@@ -117,7 +112,6 @@ public final class SoftFullscreen {
         if (client == null) {
             return;
         }
-        // Remember where the manual toggle is heading so disabling later follows it.
         resumeFullscreenOnDisable = !isFullscreen(client);
         if (applied) {
             restoreWindow(client, false);
@@ -154,8 +148,6 @@ public final class SoftFullscreen {
                 savedHeight = 0;
                 return false;
             }
-            // A maximised window reports the display size; fall back to the default size but keep
-            // the maximised state so the window is maximised again on disable.
             int captureDisplay = SDLVideo.SDL_GetDisplayForWindow(handle);
             if (captureDisplay >= 0) {
                 try (MemoryStack stack = MemoryStack.stackPush()) {
@@ -252,7 +244,6 @@ public final class SoftFullscreen {
         applied = false;
 
         if (enterFullscreen) {
-            // Let SDL settle the restored window geometry before going back to fullscreen.
             pendingFullscreenTicks = 2;
         }
     }

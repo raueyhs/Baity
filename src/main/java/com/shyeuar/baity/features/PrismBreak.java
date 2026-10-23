@@ -70,7 +70,6 @@ public class PrismBreak {
         long key = localPos.asLong();
         float reach = resolveReach(key, localState.progress(), now);
         try (var _ = levelRenderer.collectPerFrameRenderThreadGizmos()) {
-            // TODO(26.2 backport): custom chroma start hue is new on this branch.
             float phase = ConfigManager.prismBreakChromaStatic
                     ? -(float) ConfigManager.prismBreakChromaStartHue
                     : (float) ((now / 1000.0) * (speed * 0.5));

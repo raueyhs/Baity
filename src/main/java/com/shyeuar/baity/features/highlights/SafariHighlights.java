@@ -453,8 +453,6 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
                 int ignoredOutlineColor
         ) {
             // TODO(26.3): renderType.outline() targets the second (outline) colour attachment and
-            // crashes in the solid pass, which only has one attachment. Submit the base render type
-            // until the outline attachment is wired up properly.
             target.submitModel(
                     model,
                     state,

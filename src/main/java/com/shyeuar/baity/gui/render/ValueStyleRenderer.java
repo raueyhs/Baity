@@ -674,7 +674,6 @@ public class ValueStyleRenderer {
    }
 
    
-   // TODO(26.2 backport): hue band picker rendering, new on this branch.
    public static void renderHueBandValue(GuiGraphicsExtractor context, Minecraft client,
                                          com.shyeuar.baity.gui.value.HueBandValue value, Theme theme,
                                          float x1, float y, float x2, float subOptionHeight,
@@ -1066,8 +1065,6 @@ public class ValueStyleRenderer {
        context.text(client.font, plus, tx, ty, 0xFFFFFFFF | (localAlpha << 24), false);
    }
 
-   // Item stacks need bound registries, but the ClickGUI can be opened from the main menu before
-   // that happens, so the icons are created on first use instead of during class initialisation.
    private static final class TextListIcons {
        static final net.minecraft.world.item.ItemStack MARKER = create(net.minecraft.world.item.Items.COMPASS);
        static final net.minecraft.world.item.ItemStack ACTIVE = create(net.minecraft.world.item.Items.CLOCK);

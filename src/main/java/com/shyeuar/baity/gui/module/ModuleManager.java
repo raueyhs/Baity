@@ -705,7 +705,6 @@ public class ModuleManager {
             }
         );
 
-        // TODO(26.2 backport): static rainbow groups with a hue band picker are new on this branch.
         GroupValue nickChromaStaticGroup = new GroupValue("static chroma group", "static chroma", ModuleCategory.RENDER)
             .setSubModuleSwitchChildName("static chroma")
             .addChild(new Option("static chroma", "enabled", ConfigManager.nickTweaksChromaStatic, ModuleCategory.RENDER))

@@ -32,8 +32,6 @@ public class LegacyMusicMixin {
         }
     }
 
-    // 26.3 resolves the Sound instance inside play(), so volume/pitch are not readable at HEAD
-    // anymore (they throw). Analyse the note after the sound has actually been started.
     @Inject(
         method = "play(Lnet/minecraft/client/resources/sounds/SoundInstance;)Lnet/minecraft/client/sounds/SoundEngine$PlayResult;",
         at = @At("RETURN")
@@ -63,9 +61,6 @@ public class LegacyMusicMixin {
         }
     }
 
-    // 26.3 resolves the volume through the (volume, source) overload, which is also the one used
-    // when refreshing category volumes, so the fade has to be applied here as well. 26.2 only had
-    // the SoundInstance overload.
     @Inject(
         method = "calculateVolume(FLnet/minecraft/sounds/SoundSource;)F",
         at = @At("RETURN"),

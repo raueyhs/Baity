@@ -242,7 +242,6 @@ public final class EnchantLore {
     static int rainbowRgbAt(float x, float y, long nowMs) {
         double speed = Math.max(0.1, ConfigManager.enchantLoreRainbowSpeed);
         int cycleMs = (int) (4000.0 / speed);
-        // TODO(26.2 backport): custom rainbow start hue is new on this branch.
         float time = ConfigManager.enchantLoreRainbowStatic
                 ? (float) ConfigManager.enchantLoreRainbowStartHue
                 : 1.0f - (nowMs % cycleMs) / (float) cycleMs;

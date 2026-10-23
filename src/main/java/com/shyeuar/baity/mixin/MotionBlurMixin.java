@@ -26,11 +26,6 @@ import java.util.OptionalDouble;
 
 public class MotionBlurMixin {
 
-    // 26.2 drives the velocity pass from LevelRenderEvents.AFTER_OPAQUE_TERRAIN, which runs outside
-    // any render pass there. 26.3 raises the same event inside the solid pass of the level frame
-    // graph, so the pass has to be split here: close the terrain pass, run the velocity pass, then
-    // reopen a pass for the solid features and resume classic transparency on it. Everything that
-    // computes the blur stays in MotionBlur; this mixin only moves the pass boundaries.
 
     private static final String RENDER_LEVEL =
             "render(Lcom/mojang/blaze3d/resource/GraphicsResourceAllocator;Z"
@@ -83,10 +78,6 @@ public class MotionBlurMixin {
                     cameraState.pos.z());
         }
 
-        // 26.2 runs the velocity pass between terrain and entities through the AFTER_OPAQUE_TERRAIN
-        // event, which fires outside any render pass there. 26.3 raises the same event inside the
-        // solid pass, so the terrain pass is closed first, the velocity pass runs, and the solid
-        // features continue in a fresh pass.
         @Redirect(
                 method = "executeSolid",
                 at = @At(

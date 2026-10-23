@@ -20,7 +20,6 @@ public class KeyMappingUtils {
         if (keyCode == InputConstants.KEY_SLASH) return null;
 
         switch (keyCode) {
-            // 控制键
             case InputConstants.KEY_ESCAPE: return "Escape";
             case InputConstants.KEY_BACKSPACE: return "Backspace";
             case InputConstants.KEY_LSHIFT: return "Left Shift";

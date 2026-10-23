@@ -1633,7 +1633,6 @@ public class ClickGuiInputHandler {
                     return true;
                 }
             } else if (button == 0 && style == ValueStyle.HUE_BAND && value instanceof com.shyeuar.baity.gui.value.HueBandValue hueBand) {
-                // TODO(26.2 backport): hue band picker interaction, new on this branch.
                 Minecraft client = Minecraft.getInstance();
                 if (client == null) return false;
                 int bandX1 = (int) (subX1 + 8 + client.font.width(hueBand.getDisplayName()) + 10);
