@@ -52,6 +52,10 @@ public final class SoftFullscreen {
     private static int savedHeight;
     private static boolean savedMaximized;
     private static int pendingWindowSync;
+    private static boolean resumeFullscreenOnDisable;
+    private static boolean leavingFullscreen;
+    private static boolean wasEnabled;
+    private static int pendingFullscreenTicks;
 
     private SoftFullscreen() {
     }
@@ -67,28 +71,46 @@ public final class SoftFullscreen {
 
         Module module = ModuleManager.getModuleByName("SoftFullscreen");
         boolean want = module != null && module.isEnabled();
-        boolean exclusive = client.getWindow().isFullscreen();
+        boolean justEnabled = want && !wasEnabled;
+        wasEnabled = want;
+
+        if (pendingFullscreenTicks > 0) {
+            pendingFullscreenTicks--;
+            if (pendingFullscreenTicks == 0) {
+                client.options.fullscreen().set(true);
+            }
+        }
 
         if (!want) {
-            if (applied) {
-                restoreWindow();
-            }
             pendingReapply = false;
             pendingWindowSync = 0;
             settleTicks = 0;
-            wasExclusive = exclusive;
+            leavingFullscreen = false;
+            boolean enterFullscreen = resumeFullscreenOnDisable;
+            resumeFullscreenOnDisable = false;
+            if (applied) {
+                restoreWindow(enterFullscreen);
+            } else if (enterFullscreen) {
+                client.options.fullscreen().set(true);
+            }
+            wasExclusive = client.getWindow().isFullscreen();
             return;
         }
 
-        if (exclusive) {
-            if (applied) {
-                restoreWindow();
+        if (client.getWindow().isFullscreen()) {
+            if (leavingFullscreen) {
+                return;
+            }
+            if (justEnabled) {
+                resumeFullscreenOnDisable = true;
+                leavingFullscreen = true;
+                client.options.fullscreen().set(false);
+                settleTicks = SETTLE_TICKS_AFTER_EXCLUSIVE;
             }
             wasExclusive = true;
-            pendingReapply = true;
-            settleTicks = SETTLE_TICKS_AFTER_EXCLUSIVE;
             return;
         }
+        leavingFullscreen = false;
 
         if (wasExclusive) {
             wasExclusive = false;
@@ -106,7 +128,6 @@ public final class SoftFullscreen {
                 pendingReapply = false;
             }
         }
-
         if (pendingWindowSync > 0) {
             pendingWindowSync--;
             if (pendingWindowSync == 0) {
@@ -120,14 +141,9 @@ public final class SoftFullscreen {
             return;
         }
 
-        if (client.getWindow().isFullscreen()) {
-            pendingReapply = true;
-            settleTicks = SETTLE_TICKS_AFTER_EXCLUSIVE;
-            return;
-        }
-
+        resumeFullscreenOnDisable = !client.getWindow().isFullscreen();
         if (applied) {
-            restoreWindow();
+            restoreWindow(false);
         }
         pendingReapply = true;
         settleTicks = SETTLE_TICKS_AFTER_EXCLUSIVE;
@@ -148,7 +164,7 @@ public final class SoftFullscreen {
         return true;
     }
 
-    private static void restoreWindow() {
+    private static void restoreWindow(boolean enterFullscreen) {
         Minecraft client = Minecraft.getInstance();
         if (client == null || client.getWindow() == null) {
             applied = false;
@@ -184,6 +200,9 @@ public final class SoftFullscreen {
         }
         applied = false;
         clearSaved();
+        if (enterFullscreen) {
+            pendingFullscreenTicks = 2;
+        }
     }
 
     private static void clearSaved() {
@@ -229,6 +248,10 @@ public final class SoftFullscreen {
         savedMaximized = hwnd != 0L && User32.IsZoomed(hwnd);
         savedWidth = Math.max(1, window.getWidth());
         savedHeight = Math.max(1, window.getHeight());
+        if (savedMaximized) {
+            savedWidth = 1280;
+            savedHeight = 720;
+        }
         savedLeft = window.getX();
         savedTop = window.getY();
     }
