@@ -182,6 +182,7 @@ public class ClickGui extends Screen {
     
     @Override
     public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
+        syncTextInputState();
         syncDragPositionFromMouse();
         if (rootComponent == null || graphics == null) {
             return;
@@ -189,6 +190,14 @@ public class ClickGui extends Screen {
         rootComponent.setGuiGraphics(graphics);
         rootComponent.update(delta, mouseX, mouseY);
         rootComponent.draw(mouseX, mouseY, delta, delta);
+    }
+
+    private void syncTextInputState() {
+        boolean focused = state.isSearchFocused()
+                || state.isEditingSlider()
+                || state.isEditingGradient()
+                || state.isEditingTextInput();
+        com.shyeuar.baity.utils.TextInputUtils.sync(focused, this);
     }
 
     private void syncDragPositionFromMouse() {
@@ -215,7 +224,7 @@ public class ClickGui extends Screen {
     
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean isInsideWindow) {
-        if (inputHandler().handleMouseClick(click.x(), click.y(), click.button())) {
+        if (inputHandler().handleMouseClick(click.x(), click.y(), com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()))) {
             return true;
         }
         return super.mouseClicked(click, isInsideWindow);
@@ -223,13 +232,14 @@ public class ClickGui extends Screen {
     
     @Override
     public boolean mouseReleased(MouseButtonEvent click) {
-        inputHandler().handleMouseRelease(click.button());
+        inputHandler().handleMouseRelease(com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()));
         return super.mouseReleased(click);
     }
 
     @Override
     public boolean mouseDragged(MouseButtonEvent click, double dx, double dy) {
         if (inputHandler().isWindowDragging()
+                || inputHandler().isPainterDragging()
                 || state.getDraggingSlider() != null
                 || state.getDraggingGradient() != null) {
             inputHandler().handleMouseMove(click.x(), click.y());
@@ -247,7 +257,7 @@ public class ClickGui extends Screen {
     @Override
     public boolean keyPressed(KeyEvent input) {
         int keyCode = input.input();
-        int scanCode = input.scancode();
+        int scanCode = input.keycode();
         int modifiers = input.modifiers();
         if (inputHandler().handleKeyPress(keyCode, scanCode, modifiers)) {
             return true;
@@ -281,6 +291,7 @@ public class ClickGui extends Screen {
     
     @Override
     public void onClose() {
+        com.shyeuar.baity.utils.TextInputUtils.sync(false, this);
         triggerPresenceSyncOnCloseIfNeeded();
         if (state.isEditingSlider()) {
             ClickGuiState.SliderInputInfo editInfo = state.getEditingSlider();
@@ -422,7 +433,7 @@ public class ClickGui extends Screen {
         }
 
         if ("FishHookTimer".equals(module.getName()) && "custom timer template".equals(buttonValue.getName())) {
-            net.minecraft.util.Util.getPlatform().openUri(
+            net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(this, 
                     java.net.URI.create(com.shyeuar.baity.features.fishing.FishHookTimerTemplateManager.DOCS_URL));
         }
     }

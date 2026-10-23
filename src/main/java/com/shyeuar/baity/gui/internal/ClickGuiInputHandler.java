@@ -25,7 +25,7 @@ import com.shyeuar.baity.utils.TimerUtils;
 import com.shyeuar.baity.utils.KeyMappingUtils;
 import com.shyeuar.baity.utils.SoundUtils;
 import com.shyeuar.baity.utils.VersionCheckUtils;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.List;
 import net.minecraft.client.Minecraft;
@@ -58,7 +58,7 @@ public class ClickGuiInputHandler {
             return true;
         }
         if ((state.isListeningForKey() || state.getListeningButtonValueName() != null) && button >= 2 && button <= 4) {
-            return handleMouseKeybindBinding(button);
+            return handleMouseKeybindBinding(com.shyeuar.baity.features.Keybinds.mouseKey(button));
         }
         
         ClickGuiLayout.ScaledCoordinates coords = ClickGuiLayout.getScaledCoordinates(state, mouseX, mouseY);
@@ -253,7 +253,7 @@ public class ClickGuiInputHandler {
     }
     
     public boolean handleKeyPress(int keyCode, int scanCode, int modifiers) {
-        if (ClickGuiOpenAnimation.isPhase1(state.getOpenAnimationElapsedMs()) && keyCode != GLFW.GLFW_KEY_ESCAPE) {
+        if (ClickGuiOpenAnimation.isPhase1(state.getOpenAnimationElapsedMs()) && keyCode != InputConstants.KEY_ESCAPE) {
             return true;
         }
         if (state.isSearchFocused()) {
@@ -320,7 +320,7 @@ public class ClickGuiInputHandler {
             }
         }
         
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == InputConstants.KEY_ESCAPE) {
             if (state.isListeningForInput()) {
                 state.setListeningForKey(false);
                 state.setListeningButtonValueName(null);
@@ -614,6 +614,10 @@ public class ClickGuiInputHandler {
         return state.isDragging();
     }
 
+    public boolean isPainterDragging() {
+        return painterDragModule != null;
+    }
+
     private void clearPainterDrag() {
         painterDragModule = null;
         painterDragValue = null;
@@ -626,10 +630,10 @@ public class ClickGuiInputHandler {
         if (painterDragModule == null || painterDragValue == null) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc == null || mc.getWindow() == null) return;
-        long win = mc.getWindow().handle();
-        if (win == 0L) return;
-        boolean leftDown = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
-        boolean rightDown = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_RIGHT) == GLFW.GLFW_PRESS;
+        boolean leftDown = com.shyeuar.baity.utils.KeyMappingUtils.isKeyPressed(mc.getWindow().handle(),
+                com.shyeuar.baity.features.Keybinds.mouseKey(0));
+        boolean rightDown = com.shyeuar.baity.utils.KeyMappingUtils.isKeyPressed(mc.getWindow().handle(),
+                com.shyeuar.baity.features.Keybinds.mouseKey(1));
         if ((painterDragButton == 0 && !leftDown) || (painterDragButton == 1 && !rightDown)) {
             clearPainterDrag();
             return;
@@ -975,13 +979,13 @@ public class ClickGuiInputHandler {
                 if (!latestTag.startsWith("v") && !latestTag.startsWith("V")) {
                     latestTag = "v" + latestTag;
                 }
-                String releaseTag = "baity-26.2-" + latestTag;
-                net.minecraft.util.Util.getPlatform().openUri(new java.net.URI("https://github.com/raueyhs/Baity/releases/tag/" + releaseTag));
+                String releaseTag = "baity-26.3-" + latestTag;
+                net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(net.minecraft.client.Minecraft.getInstance().gui.screen(), new java.net.URI("https://github.com/raueyhs/Baity/releases/tag/" + releaseTag));
                 return true;
             } catch (Exception e) {
                 if (client.player != null) {
                     client.player.sendSystemMessage(
-                        net.minecraft.network.chat.Component.literal("无法打开浏览器，请手动访问: https://github.com/raueyhs/Baity/releases/tag/baity-26.2-" + latest)
+                        net.minecraft.network.chat.Component.literal("无法打开浏览器，请手动访问: https://github.com/raueyhs/Baity/releases/tag/baity-26.3-" + latest)
                     );
                 }
                 return true;
@@ -1048,7 +1052,7 @@ public class ClickGuiInputHandler {
             coords.mouseY >= iconY && coords.mouseY < iconY + iconSize) {
             
             try {
-                net.minecraft.util.Util.getPlatform().openUri(new java.net.URI("https://github.com/raueyhs/Baity"));
+                net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(net.minecraft.client.Minecraft.getInstance().gui.screen(), new java.net.URI("https://github.com/raueyhs/Baity"));
                 return true;
             } catch (Exception e) {
                 net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
@@ -1076,7 +1080,7 @@ public class ClickGuiInputHandler {
         }
 
         try {
-            net.minecraft.util.Util.getPlatform().openUri(new java.net.URI(com.shyeuar.baity.config.DevConfig.getBilibiliSpaceUrl()));
+            net.minecraft.client.gui.screens.ConfirmLinkScreen.confirmLinkNow(net.minecraft.client.Minecraft.getInstance().gui.screen(), new java.net.URI(com.shyeuar.baity.config.DevConfig.getBilibiliSpaceUrl()));
         } catch (Exception e) {
             if (client.player != null) {
                 client.player.sendSystemMessage(
@@ -1893,7 +1897,7 @@ public class ClickGuiInputHandler {
     }
     
     private boolean handleClickGuiKeybindInput(int keyCode) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == InputConstants.KEY_ESCAPE) {
             state.setListeningForKey(false);
             return true;
         }
@@ -1918,7 +1922,7 @@ public class ClickGuiInputHandler {
     }
     
     private boolean handleButtonValueKeybindInput(int keyCode) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == InputConstants.KEY_ESCAPE) {
             state.clearListeningButtonValue();
             return true;
         }

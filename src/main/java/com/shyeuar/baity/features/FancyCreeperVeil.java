@@ -83,7 +83,7 @@ public class FancyCreeperVeil implements LevelRenderEvents.AfterTranslucentFeatu
             matrices.translate(posX, 0, posZ);
             double yawToPlayerRad = Math.atan2(-posX, -posZ);
             float yawToPlayerDeg = (float) Math.toDegrees(yawToPlayerRad);
-            matrices.mulPose(Axis.YP.rotationDegrees(yawToPlayerDeg));
+            matrices.rotate(Axis.YP.rotationDegrees(yawToPlayerDeg));
             
             submits.submitCustomGeometry(
                     matrices,

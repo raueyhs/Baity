@@ -45,8 +45,8 @@ public abstract class ChatChannelSwitcherMixin extends Screen {
 
     @Inject(method = "keyPressed", at = @At("HEAD"), cancellable = true)
     private void baity$handleChatChannelHotkeys(KeyEvent input, CallbackInfoReturnable<Boolean> cir) {
-        boolean altDown = (input.modifiers() & org.lwjgl.glfw.GLFW.GLFW_MOD_ALT) != 0;
-        boolean shiftDown = (input.modifiers() & org.lwjgl.glfw.GLFW.GLFW_MOD_SHIFT) != 0;
+        boolean altDown = input.hasAltDown();
+        boolean shiftDown = input.hasShiftDown();
         if (ChatChannelSwitcher.handleHotkey(this, this.input, input.input(), altDown, shiftDown)) {
             cir.setReturnValue(true);
         }

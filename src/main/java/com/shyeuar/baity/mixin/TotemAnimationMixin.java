@@ -3,7 +3,7 @@ package com.shyeuar.baity.mixin;
 import com.shyeuar.baity.items.CustomTotemItem;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,11 +11,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 @Environment(EnvType.CLIENT)
-@Mixin(GameRenderer.class)
+@Mixin(LocalPlayer.class)
 public class TotemAnimationMixin {
     
     @ModifyVariable(
-        method = "displayItemActivation",
+        method = "displayItemActivation(Lnet/minecraft/world/item/ItemStack;)V",
         at = @At("HEAD"),
         argsOnly = true
     )

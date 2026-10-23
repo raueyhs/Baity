@@ -82,8 +82,8 @@ public class CrosshairMixin {
         if (!bowOnly) {
             animatedGap += computeSwingBurstGap(mc.player, nowTick);
         } else {
-            lastSwinging = mc.player.swinging;
-            lastSwingTime = mc.player.swingTime;
+            lastSwinging = mc.player.isSwinging();
+            lastSwingTime = baity$swingTicks(mc.player);
         }
 
         boolean chroma = ModuleUtils.getOptionBoolean(crosshairModule, "chroma crosshair", false) || ConfigManager.crosshairChromaEnabled;
@@ -138,13 +138,13 @@ public class CrosshairMixin {
         ItemStack using = player.getUseItem();
         if (player.isUsingItem() && using != null && !using.isEmpty()
             && (using.is(Items.BOW) || using.is(Items.CROSSBOW) || using.is(Items.TRIDENT))) {
-            lastSwinging = player.swinging;
-            lastSwingTime = player.swingTime;
+            lastSwinging = player.isSwinging();
+            lastSwingTime = baity$swingTicks(player);
             return 0;
         }
 
-        boolean swinging = player.swinging;
-        int swingTime = player.swingTime;
+        boolean swinging = player.isSwinging();
+        int swingTime = baity$swingTicks(player);
         boolean swingStarted = swinging && (!lastSwinging || swingTime == 0 || swingTime < lastSwingTime);
         if (swingStarted) {
             swingBurstStartTick = nowTick;
@@ -267,4 +267,9 @@ public class CrosshairMixin {
         if (c == '_') return 63;
         return -1;
     }
-}
+    private static int baity$swingTicks(net.minecraft.world.entity.LivingEntity entity) {
+        return ((com.shyeuar.baity.mixin.accessor.SwingStateAccessor)
+                ((com.shyeuar.baity.mixin.accessor.LivingEntityAccessor) (Object) entity).baity$getSwingState())
+                .baity$getTicks();
+    }
+}

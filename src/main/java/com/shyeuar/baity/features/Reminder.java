@@ -612,19 +612,19 @@ public class Reminder {
 
     private void showCookieAnimation(Minecraft client, net.minecraft.client.player.LocalPlayer player) {
         if (client.level == null) return;
-        client.gameRenderer.displayItemActivation(getCookieDisplayIcon());
+        client.player.displayItemActivation(getCookieDisplayIcon());
         client.particleEngine.createTrackingEmitter(player, ParticleTypes.OMINOUS_SPAWNING, 10);
     }
 
     private void showGodPotionAnimation(Minecraft client, net.minecraft.client.player.LocalPlayer player) {
         if (client.level == null) return;
-        client.gameRenderer.displayItemActivation(getGodPotionDisplayIcon());
+        client.player.displayItemActivation(getGodPotionDisplayIcon());
         client.particleEngine.createTrackingEmitter(player, ParticleTypes.OMINOUS_SPAWNING, 10);
     }
 
     private void showKatAnimation(Minecraft client, net.minecraft.client.player.LocalPlayer player) {
         if (client.level == null) return;
-        client.gameRenderer.displayItemActivation(getKatDisplayIcon());
+        client.player.displayItemActivation(getKatDisplayIcon());
         client.particleEngine.createTrackingEmitter(player, ParticleTypes.OMINOUS_SPAWNING, 10);
     }
 

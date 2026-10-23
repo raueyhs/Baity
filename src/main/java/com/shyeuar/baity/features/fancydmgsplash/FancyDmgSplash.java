@@ -330,8 +330,8 @@ public class FancyDmgSplash implements LevelRenderEvents.EndMain {
         try {
             matrices.translate(x, y, z);
             
-            matrices.mulPose(new Quaternionf().rotationY((float) Math.toRadians(-cameraYaw)));
-            matrices.mulPose(new Quaternionf().rotationX((float) Math.toRadians(cameraPitch)));
+            matrices.rotate(new Quaternionf().rotationY((float) Math.toRadians(-cameraYaw)));
+            matrices.rotate(new Quaternionf().rotationX((float) Math.toRadians(cameraPitch)));
             
             matrices.scale(-finalScale, -finalScale, finalScale);
             
@@ -397,8 +397,8 @@ public class FancyDmgSplash implements LevelRenderEvents.EndMain {
         try {
             matrices.translate(x, y, z);
             
-            matrices.mulPose(new Quaternionf().rotationY((float) Math.toRadians(-cameraYaw)));
-            matrices.mulPose(new Quaternionf().rotationX((float) Math.toRadians(cameraPitch)));
+            matrices.rotate(new Quaternionf().rotationY((float) Math.toRadians(-cameraYaw)));
+            matrices.rotate(new Quaternionf().rotationX((float) Math.toRadians(cameraPitch)));
             
             matrices.scale(-finalScale, -finalScale, finalScale);
             

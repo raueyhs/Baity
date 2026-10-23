@@ -50,6 +50,9 @@ public class Skin3DRenderer {
 
     public static void injectMesh(ModelPart part, VoxelMesh mesh, OffsetProvider offset) {
         if ((Object) part instanceof MeshInjector injector) {
+            if (injector.baity$getInjectedMesh() == mesh && injector.baity$getOffsetProvider() == offset) {
+                return;
+            }
             injector.baity$setInjectedMesh(mesh, offset);
         }
     }
@@ -382,7 +385,7 @@ public class Skin3DRenderer {
                 matrices.translate(x / 16.0f, y / 16.0f, z / 16.0f);
             }
             if (xRot != 0 || yRot != 0 || zRot != 0) {
-                matrices.mulPose(new Quaternionf().rotationZYX(zRot, yRot, xRot));
+                matrices.rotate(new Quaternionf().rotationZYX(zRot, yRot, xRot));
             }
         }
 

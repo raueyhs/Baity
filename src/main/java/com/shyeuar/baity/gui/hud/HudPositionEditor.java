@@ -156,7 +156,7 @@ public class HudPositionEditor extends Screen {
         double[] mousePos = HudScreenUtils.getMousePosPrecise();
         double mouseX = mousePos[0];
         double mouseY = mousePos[1];
-        int button = click.button();
+        int button = com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button());
         
         List<HudElement> elements = manager.getElements();
         boolean clickedOnElement = false;
@@ -208,7 +208,7 @@ public class HudPositionEditor extends Screen {
     
     @Override
     public boolean mouseReleased(net.minecraft.client.input.MouseButtonEvent click) {
-        if (click.button() == 0) {
+        if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) == 0) {
             for (HudElement element : manager.getElements()) {
                 if (element.isClicked()) {
                     ConfigManager.saveConfig();
@@ -221,7 +221,7 @@ public class HudPositionEditor extends Screen {
     
     @Override
     public boolean mouseDragged(net.minecraft.client.input.MouseButtonEvent click, double dx, double dy) {
-        if (click.button() == 0 && updateDraggedElements()) {
+        if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) == 0 && updateDraggedElements()) {
             return true;
         }
         return super.mouseDragged(click, dx, dy);

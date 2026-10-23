@@ -7,8 +7,11 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(Window.class)
 public interface WindowInvoker {
     @Invoker("onFramebufferResize")
-    void baity$onFramebufferResize(long window, int width, int height);
+    void baity$onFramebufferResize(int width, int height);
 
     @Invoker("onResize")
-    void baity$onResize(long window, int width, int height);
+    void baity$onResize(int width, int height);
+
+    @Invoker("syncWindow")
+    void baity$syncWindow();
 }

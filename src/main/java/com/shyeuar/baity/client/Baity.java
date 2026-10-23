@@ -122,17 +122,15 @@ public class Baity implements ClientModInitializer {
             
             FishHookTimer.getInstance().tick();
             PaperDoll.getInstance().clientTick();
+            com.shyeuar.baity.utils.WeatherAttributeSync.tick(client);
         });
         
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) ->
             com.shyeuar.baity.sync.SyncCommands.register(dispatcher)
         );
 
-        LevelRenderEvents.AFTER_OPAQUE_TERRAIN.register(ctx -> {
-            if (com.shyeuar.baity.features.MotionBlur.isActive()) {
-                com.shyeuar.baity.features.MotionBlur.onAfterOpaqueTerrain();
-            }
-        });
+        // 26.3 publishes AFTER_OPAQUE_TERRAIN while a render pass is still open, so the motion blur
+        // velocity pass is driven by MotionBlurMixin around LevelRenderer#executeSolid instead.
         LevelRenderEvents.COLLECT_SUBMITS.register(new com.shyeuar.baity.features.NametagRenderer());
         LevelRenderEvents.END_MAIN.register(new FancyDmgSplash());
         LevelRenderEvents.AFTER_SOLID_FEATURES.register(new com.shyeuar.baity.features.highlights.ShulkerHighlights());

@@ -1,7 +1,7 @@
 package com.shyeuar.baity.features.inventorytweaks.sidepanel;
 
 import com.shyeuar.baity.mixin.accessor.AbstractContainerScreenInvoker;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;

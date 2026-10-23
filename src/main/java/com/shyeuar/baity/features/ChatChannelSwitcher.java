@@ -17,7 +17,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -193,17 +193,17 @@ public final class ChatChannelSwitcher implements HudElement {
             }
 
             Minecraft client = Minecraft.getInstance();
-            if (click.button() == 0 && client.player != null) {
+            if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) == 0 && client.player != null) {
                 handlePermanentSwitch(client, chatField, button.command());
                 return true;
             }
 
-            if (click.button() == 1) {
+            if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) == 1) {
                 handleTemporarySwitch(chatField, button.command(), button.autofillCommand());
                 return true;
             }
 
-            if (click.button() == 2) {
+            if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) == 2) {
                 ConfigManager.chatChannelSwitcherHintHidden = !ConfigManager.chatChannelSwitcherHintHidden;
                 ConfigManager.requestSave();
                 chatField.setFocused(true);
@@ -436,10 +436,10 @@ public final class ChatChannelSwitcher implements HudElement {
 
     private int hotbarIndexFromKey(int keyCode) {
         return switch (keyCode) {
-            case GLFW.GLFW_KEY_W -> 0;
-            case GLFW.GLFW_KEY_A -> 1;
-            case GLFW.GLFW_KEY_S -> 2;
-            case GLFW.GLFW_KEY_D -> 3;
+            case InputConstants.KEY_W -> 0;
+            case InputConstants.KEY_A -> 1;
+            case InputConstants.KEY_S -> 2;
+            case InputConstants.KEY_D -> 3;
             default -> -1;
         };
     }

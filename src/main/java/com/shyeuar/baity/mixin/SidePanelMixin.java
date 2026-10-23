@@ -1,6 +1,6 @@
 package com.shyeuar.baity.mixin;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanel;
 import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanelEquipment;
 import com.shyeuar.baity.features.inventorytweaks.sidepanel.SidePanelPets;
@@ -46,7 +46,7 @@ public class SidePanelMixin {
             method = "extractBackground",
             at = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/blaze3d/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V",
+                target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;blit(Lcom/mojang/renderpearl/api/pipeline/RenderPipeline;Lnet/minecraft/resources/Identifier;IIFFIIII)V",
                 ordinal = 0
             )
         )
@@ -104,9 +104,9 @@ public class SidePanelMixin {
         }
 
         @Inject(method = "slotClicked", at = @At("HEAD"))
-        private void baity$trackPetsMenuClick(Slot slot, int slotId, int button, ContainerInput actionType, CallbackInfo ci) {
+        private void baity$trackPetsMenuClick(Slot slot, int slotId, MouseButtonEvent click, ContainerInput actionType, CallbackInfo ci) {
             AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>) (Object) this;
-            SidePanelPets.trackMenuSlotClick(screen, slotId, button);
+            SidePanelPets.trackMenuSlotClick(screen, slotId, com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()));
             SidePanelEquipment.onMenuSlotClick(screen, slot);
         }
 
@@ -118,7 +118,7 @@ public class SidePanelMixin {
             }
             SidePanel.SlotKind slotKind = SidePanelSlots.hoveredSlotKindAt(leftPos, topPos, click.x(), click.y());
             if (slotKind != null) {
-                SidePanel.onSlotClick(slotKind, click.button());
+                SidePanel.onSlotClick(slotKind, com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()));
                 cir.setReturnValue(true);
                 return;
             }

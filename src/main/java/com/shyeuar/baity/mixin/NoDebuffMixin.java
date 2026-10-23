@@ -39,7 +39,7 @@ public class NoDebuffMixin {
 
         @Shadow @Final private FogRenderer fogRenderer;
 
-        @WrapOperation(method = "renderLevel(Lnet/minecraft/client/DeltaTracker;)V", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;rotate(FLorg/joml/Vector3fc;)Lorg/joml/Matrix4f;", ordinal = 0), require = 1)
+        @WrapOperation(method = "renderLevel()V", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;rotate(FLorg/joml/Vector3fc;)Lorg/joml/Matrix4f;", ordinal = 0), require = 1)
         private Matrix4f baity$preventNauseaRotation(Matrix4f matrix, float angle, Vector3fc axis, Operation<Matrix4f> original) {
             if (shouldRemoveNausea()) {
                 return matrix;
@@ -47,7 +47,7 @@ public class NoDebuffMixin {
             return original.call(matrix, angle, axis);
         }
 
-        @WrapOperation(method = "renderLevel(Lnet/minecraft/client/DeltaTracker;)V", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;rotate(FLorg/joml/Vector3fc;)Lorg/joml/Matrix4f;", ordinal = 1), require = 1)
+        @WrapOperation(method = "renderLevel()V", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;rotate(FLorg/joml/Vector3fc;)Lorg/joml/Matrix4f;", ordinal = 1), require = 1)
         private Matrix4f baity$preventNauseaRotationSecond(Matrix4f matrix, float angle, Vector3fc axis, Operation<Matrix4f> original) {
             if (shouldRemoveNausea()) {
                 return matrix;
@@ -55,7 +55,7 @@ public class NoDebuffMixin {
             return original.call(matrix, angle, axis);
         }
 
-        @WrapOperation(method = "renderLevel(Lnet/minecraft/client/DeltaTracker;)V", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;scale(FFF)Lorg/joml/Matrix4f;"), require = 1)
+        @WrapOperation(method = "renderLevel()V", at = @At(value = "INVOKE", target = "Lorg/joml/Matrix4f;scale(FFF)Lorg/joml/Matrix4f;"), require = 1)
         private Matrix4f baity$preventNauseaScaling(Matrix4f matrix, float x, float y, float z, Operation<Matrix4f> original) {
             if (shouldRemoveNausea()) {
                 return matrix;
@@ -63,8 +63,8 @@ public class NoDebuffMixin {
             return original.call(matrix, x, y, z);
         }
 
-        @Inject(method = "renderLevel(Lnet/minecraft/client/DeltaTracker;)V", at = @At("HEAD"), require = 1)
-        private void baity$clearBlindnessFog(DeltaTracker deltaTracker, CallbackInfo ci) {
+        @Inject(method = "renderLevel()V", at = @At("HEAD"), require = 1)
+        private void baity$clearBlindnessFog(CallbackInfo ci) {
             var fogEnvironments = FogRendererAccessor.baity$getFogEnvironments();
             if (shouldRemoveBlindness()) {
                 fogEnvironments.removeIf(env -> env instanceof BlindnessFogEnvironment);
@@ -113,7 +113,7 @@ public class NoDebuffMixin {
     @Mixin(Camera.class)
     public static class CameraMixin {
 
-        @WrapOperation(method = "extractRenderState(Lnet/minecraft/client/renderer/state/level/CameraRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;hasEffect(Lnet/minecraft/core/Holder;)Z", ordinal = 1), require = 1)
+        @WrapOperation(method = "extractRenderState(Lnet/minecraft/client/renderer/state/level/CameraRenderState;Lnet/minecraft/client/DeltaTracker;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;hasEffect(Lnet/minecraft/core/Holder;)Z", ordinal = 1), require = 1)
         private boolean baity$allowSkyDuringDarkness(LivingEntity entity, Holder<MobEffect> effect, Operation<Boolean> original) {
             if (shouldRemoveDarkness()) {
                 return false;

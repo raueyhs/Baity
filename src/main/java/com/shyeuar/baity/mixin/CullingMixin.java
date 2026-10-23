@@ -69,9 +69,9 @@ public class CullingMixin {
     
     @Mixin(WeatherEffectRenderer.class)
     public static class RemoveRainSnowVisualMixin {
-        
+
         @Inject(
-            method = "render(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/state/level/WeatherRenderState;)V",
+            method = "prepare(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/client/renderer/state/level/WeatherRenderState;)V",
             at = @At("HEAD"),
             cancellable = true
         )
@@ -79,35 +79,64 @@ public class CullingMixin {
                 Vec3 cameraPosition,
                 WeatherRenderState renderState,
                 CallbackInfo ci) {
-            Module m = ModuleManager.getModuleByName("Culling");
-            if (m == null || !m.isEnabled()) return;
-            if (!ConfigManager.cullingRemoveRainSnow) return;
-            ci.cancel();
+            if (shouldSkipRainSnow()) {
+                ci.cancel();
+            }
         }
 
         @Inject(
-            method = "tickRainParticles(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/Camera;ILnet/minecraft/server/level/ParticleStatus;I)V",
+            method = "render(Lnet/minecraft/client/renderer/state/level/WeatherRenderState;Lcom/mojang/renderpearl/api/commands/RenderPass;)V",
             at = @At("HEAD"),
             cancellable = true
         )
-        private void baity$skipRainSnowParticles(
-                ClientLevel level,
-                Camera camera,
-                int ticks,
-                ParticleStatus particleStatus,
-                int weatherRadius,
+        private void baity$skipRainSnowDraw(
+                WeatherRenderState renderState,
+                com.mojang.renderpearl.api.commands.RenderPass pass,
                 CallbackInfo ci) {
+            if (shouldSkipRainSnow()) {
+                ci.cancel();
+            }
+        }
+
+        @Inject(
+            method = "renderOit(Lnet/minecraft/client/renderer/oit/OitStage;Lnet/minecraft/client/renderer/state/level/WeatherRenderState;Lcom/mojang/renderpearl/api/commands/RenderPass;)V",
+            at = @At("HEAD"),
+            cancellable = true
+        )
+        private void baity$skipRainSnowDrawOit(
+                net.minecraft.client.renderer.oit.OitStage stage,
+                WeatherRenderState renderState,
+                com.mojang.renderpearl.api.commands.RenderPass pass,
+                CallbackInfo ci) {
+            if (shouldSkipRainSnow()) {
+                ci.cancel();
+            }
+        }
+
+        private static boolean shouldSkipRainSnow() {
             Module m = ModuleManager.getModuleByName("Culling");
-            if (m == null || !m.isEnabled()) return;
-            if (!ConfigManager.cullingRemoveRainSnow) return;
-            ci.cancel();
+            return m != null && m.isEnabled() && ConfigManager.cullingRemoveRainSnow;
+        }
+    }
+
+    @Mixin(net.minecraft.world.attribute.WeatherAttributes.class)
+    public static class WeatherAttributeLayersMixin {
+
+        @Inject(method = "addBuiltinLayers", at = @At("HEAD"), cancellable = true, require = 1)
+        private static void baity$skipWeatherAttributeLayers(
+                net.minecraft.world.attribute.EnvironmentAttributeSystem.Builder builder,
+                net.minecraft.world.attribute.WeatherAttributes.WeatherAccess access,
+                CallbackInfo ci) {
+            if (ModuleUtils.shouldRemoveCullingWeatherFilter()) {
+                ci.cancel();
+            }
         }
     }
 
     @Mixin(net.minecraft.world.attribute.EnvironmentAttributeSystem.class)
     public static class RemoveWeatherFilterMixin {
 
-        @ModifyExpressionValue(method = "addDefaultLayers", require = 1, at = @At(value = "INVOKE",
+        @ModifyExpressionValue(method = "addDynamicLayers", require = 1, at = @At(value = "INVOKE",
                 target = "Lnet/minecraft/world/level/Level;canHaveWeather()Z"))
         private static boolean baity$skipWeatherLayerForClientOnly(
                 boolean original,
@@ -137,10 +166,10 @@ public class CullingMixin {
 
         @Inject(method = "applyWeatherDarken", at = @At("HEAD"), cancellable = true, require = 1)
         private static void baity$skipWeatherDarken(
-                int color,
+                org.joml.Vector3fc color,
                 float rainLevel,
                 float thunderLevel,
-                CallbackInfoReturnable<Integer> cir) {
+                CallbackInfoReturnable<org.joml.Vector3fc> cir) {
             if (!ModuleUtils.shouldRemoveCullingWeatherFilter()) return;
             cir.setReturnValue(color);
         }

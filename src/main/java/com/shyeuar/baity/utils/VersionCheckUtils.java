@@ -17,7 +17,7 @@ public class VersionCheckUtils {
     private static final Logger LOGGER = LoggerFactory.getLogger("Baity/VersionCheck");
 
     private static final String GITHUB_API_URL = "https://api.github.com/repos/raueyhs/Baity/releases";
-    private static final String MC_VERSION_PREFIX = "26.2";
+    private static final String MC_VERSION_PREFIX = "26.3";
     private static final Pattern MOD_VERSION_PATTERN = Pattern.compile("(?i)\\bv([0-9]+\\.[0-9]+\\.[0-9]+)\\b");
     private static final Map<String, String> GITHUB_HEADERS = Map.of(
             "Accept", "application/vnd.github.v3+json"

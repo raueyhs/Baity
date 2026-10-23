@@ -1,5 +1,6 @@
 package com.shyeuar.baity.features;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.shyeuar.baity.config.ConfigManager;
 import com.shyeuar.baity.gui.render.GuiRenderUtil;
 import com.shyeuar.baity.gui.theme.LinearTheme;
@@ -13,7 +14,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.Options;
 import net.minecraft.client.gui.screens.inventory.AbstractSignEditScreen;
 import net.minecraft.client.input.KeyEvent;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLKeyboard;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,7 @@ public final class NumInputer {
         if (!ConfigManager.numInputerEnabled) {
             return false;
         }
-        if ((event.modifiers() & GLFW.GLFW_MOD_ALT) == 0) {
+        if (!event.hasAltDown()) {
             return false;
         }
 
@@ -95,7 +96,7 @@ public final class NumInputer {
         if (client == null || client.getWindow() == null) {
             return false;
         }
-        return isAltDown(client.getWindow().handle());
+        return isAltDown();
     }
 
     public static void render(AbstractSignEditScreen screen, GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
@@ -231,8 +232,8 @@ public final class NumInputer {
             return;
         }
 
-        long window = client.getWindow().handle();
-        boolean down = GLFW.glfwGetMouseButton(window, GLFW.GLFW_MOUSE_BUTTON_LEFT) == GLFW.GLFW_PRESS;
+        boolean down = com.shyeuar.baity.utils.KeyMappingUtils.isKeyPressed(client.getWindow().handle(),
+                com.shyeuar.baity.features.Keybinds.mouseKey(0));
         if (down && !leftMouseWasDown) {
             var mouseHandler = client.mouseHandler;
             var mcWindow = client.getWindow();
@@ -241,9 +242,9 @@ public final class NumInputer {
         leftMouseWasDown = down;
     }
 
-    private static boolean isAltDown(long window) {
-        return GLFW.glfwGetKey(window, GLFW.GLFW_KEY_LEFT_ALT) == GLFW.GLFW_PRESS
-            || GLFW.glfwGetKey(window, GLFW.GLFW_KEY_RIGHT_ALT) == GLFW.GLFW_PRESS;
+    private static boolean isAltDown() {
+        return SDLKeyboard.SDL_GetKeyboardState().get(InputConstants.KEY_LALT) != 0
+            || SDLKeyboard.SDL_GetKeyboardState().get(InputConstants.KEY_RALT) != 0;
     }
 
     private void handleClick(AbstractSignEditScreen screen, double mouseX, double mouseY) {

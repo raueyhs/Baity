@@ -9,15 +9,12 @@ import com.shyeuar.baity.render.interfaces.EntityRenderStateInterface;
 import com.shyeuar.baity.features.smolpeople.SmolPeopleNametag;
 import com.shyeuar.baity.utils.NametagUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.SubmitNodeCollection;
 import net.minecraft.client.renderer.entity.EntityRenderer;
-import net.minecraft.client.renderer.entity.LivingEntityRenderer;
 import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
-import net.minecraft.client.renderer.feature.NameTagFeatureRenderer;
 import net.minecraft.client.renderer.feature.phase.SimpleFeatureRenderPhase;
 import net.minecraft.client.renderer.feature.submit.SubmitNode;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
@@ -26,7 +23,6 @@ import net.minecraft.world.entity.Avatar;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import org.joml.Matrix4fc;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -39,8 +35,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 public class NametagMixin {
 
-    private static final String SUBMIT_NAME_DISPLAY = "submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;I)V";
-    private static final String ENTITY_SUBMIT_NAME_DISPLAY = "submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;I)V";
+    private static final String SUBMIT_NAME_DISPLAY_OFFSET = "submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;I)V";
 
     @Mixin(EntityRenderer.class)
     public abstract static class ExtractMixin<T extends Entity, S extends EntityRenderState> {
@@ -61,15 +56,15 @@ public class NametagMixin {
         }
     }
 
-    @Mixin(LivingEntityRenderer.class)
+    @Mixin(EntityRenderer.class)
     public static class SubmitMixin {
 
         @Inject(
-            method = SUBMIT_NAME_DISPLAY,
+            method = SUBMIT_NAME_DISPLAY_OFFSET,
             at = @At("HEAD")
         )
         private void baity$beginNameTagSubmit(
-            LivingEntityRenderState state,
+            EntityRenderState state,
             PoseStack matrices,
             SubmitNodeCollector queue,
             CameraRenderState cameraState,
@@ -86,18 +81,21 @@ public class NametagMixin {
         }
 
         @Inject(
-            method = SUBMIT_NAME_DISPLAY,
+            method = SUBMIT_NAME_DISPLAY_OFFSET,
             at = @At("HEAD"),
             cancellable = true
         )
         private void baity$hideOriginalNameTag(
-            LivingEntityRenderState state,
+            EntityRenderState state,
             PoseStack matrices,
             SubmitNodeCollector queue,
             CameraRenderState cameraState,
             int lineOffset,
             CallbackInfo ci
         ) {
+            if (!(state instanceof LivingEntityRenderState livingState)) {
+                return;
+            }
             if (RenderScope.isPaperDollRender()) {
                 ci.cancel();
                 return;
@@ -113,7 +111,7 @@ public class NametagMixin {
                 return;
             }
 
-            int entityId = baity$resolveEntityId(state);
+            int entityId = baity$resolveEntityId(livingState);
             Minecraft mc = Minecraft.getInstance();
 
             if (NametagUtils.isDefaultNametagMode()
@@ -133,15 +131,18 @@ public class NametagMixin {
         }
 
         @Inject(
-            method = SUBMIT_NAME_DISPLAY,
+            method = SUBMIT_NAME_DISPLAY_OFFSET,
             at = @At("RETURN")
         )
         private void baity$endNameTagSubmit(CallbackInfo ci) {
             RenderScope.exitNameTagSubmit();
         }
 
-        private static int baity$resolveEntityId(LivingEntityRenderState state) {
-            return RenderScope.resolveLivingEntityRenderStateId(state);
+        private static int baity$resolveEntityId(EntityRenderState state) {
+            if (state instanceof LivingEntityRenderState livingState) {
+                return RenderScope.resolveLivingEntityRenderStateId(livingState);
+            }
+            return -1;
         }
     }
 
@@ -149,7 +150,7 @@ public class NametagMixin {
     public static class EntitySubmitMixin {
 
         @Inject(
-            method = ENTITY_SUBMIT_NAME_DISPLAY,
+            method = SUBMIT_NAME_DISPLAY_OFFSET,
             at = @At("HEAD")
         )
         private void baity$offsetMirrorArmorStandNametag(
@@ -246,7 +247,8 @@ public class NametagMixin {
         public SimpleFeatureRenderPhase afterTerrain;
 
         @Redirect(
-            method = "submitText(Lcom/mojang/blaze3d/vertex/PoseStack;FFLnet/minecraft/util/FormattedCharSequence;ZLnet/minecraft/client/gui/Font$DisplayMode;IIII)V",
+            method = {"submitTextPart(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/gui/Font$DisplayMode;ILnet/minecraft/client/renderer/feature/TextFeatureRenderer$Content;)V",
+                      "submitNameTagPart(Lnet/minecraft/client/renderer/feature/TextFeatureRenderer$Submit;)V"},
             at = @At(
                 value = "INVOKE",
                 target = "Lnet/minecraft/client/renderer/feature/phase/SimpleFeatureRenderPhase;submit(Lnet/minecraft/client/renderer/feature/submit/SubmitNode;)V"
@@ -309,64 +311,21 @@ public class NametagMixin {
             return NametagUtils.applyNickProcessedText(originalComponent);
         }
 
-        @ModifyVariable(
-            method = "submitNameTag(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/phys/Vec3;ILnet/minecraft/network/chat/Component;ZILnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
-            at = @At("STORE"),
-            ordinal = 0
-        )
-        private float baity$recalculateCenteredOffset(
-            float originalOffset,
-            PoseStack poseStack,
-            net.minecraft.world.phys.Vec3 vec3,
-            int lineOffset,
-            Component component,
-            boolean seeThrough,
-            int light,
-            CameraRenderState cameraState
-        ) {
-            if (!NametagUtils.shouldApplyNametagLayoutCompat() || component == null) {
-                return originalOffset;
-            }
-            Minecraft mc = Minecraft.getInstance();
-            if (mc == null || mc.font == null) {
-                return originalOffset;
-            }
-            Component target = NametagUtils.applyNickProcessedText(component);
-            return -mc.font.width(target.getVisualOrderText()) / 2.0F;
-        }
-
         @Redirect(
             method = "submitNameTag(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/phys/Vec3;ILnet/minecraft/network/chat/Component;ZILnet/minecraft/client/renderer/state/level/CameraRenderState;)V",
             at = @At(
-                value = "NEW",
-                target = "net/minecraft/client/renderer/feature/NameTagFeatureRenderer$Submit"
+                value = "INVOKE",
+                target = "Lnet/minecraft/client/renderer/state/OptionsRenderState;getBackgroundOpacity(F)F"
             )
         )
-        private NameTagFeatureRenderer.Submit baity$createNameTagSubmit(
-            Matrix4fc pose,
-            float x,
-            float y,
-            Component text,
-            int lightCoords,
-            int color,
-            int backgroundColor,
-            Font.DisplayMode displayMode
+        private float baity$transparentizeOtherTags(
+            net.minecraft.client.renderer.state.OptionsRenderState optionsState,
+            float opacity
         ) {
-            int finalBackgroundColor = backgroundColor;
             if (NametagUtils.isNametagModuleActive() && ConfigManager.nametagTransparentizeOtherTags) {
-                finalBackgroundColor = 0;
+                return 0f;
             }
-
-            return new NameTagFeatureRenderer.Submit(
-                pose,
-                x,
-                y,
-                text,
-                lightCoords,
-                color,
-                finalBackgroundColor,
-                displayMode
-            );
+            return opacity;
         }
     }
 }

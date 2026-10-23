@@ -7,51 +7,36 @@ import com.mojang.blaze3d.platform.Window;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWNativeWin32;
+import org.lwjgl.sdl.SDLEvents;
+import org.lwjgl.sdl.SDL_Rect;
+import org.lwjgl.sdl.SDLVideo;
 import org.lwjgl.system.MemoryStack;
 import org.lwjgl.system.Platform;
-import org.lwjgl.system.windows.MONITORINFOEX;
-import org.lwjgl.system.windows.RECT;
-import org.lwjgl.system.windows.User32;
+
+import java.nio.IntBuffer;
 
 @Environment(EnvType.CLIENT)
 public final class SoftFullscreen {
 
-    private static final int WS_CAPTION = 0x00C00000;
-    private static final int WS_THICKFRAME = 0x00040000;
-    private static final int WS_SYSMENU = 0x00080000;
-    private static final int WS_MAXIMIZEBOX = 0x00010000;
-    private static final int WS_MINIMIZEBOX = 0x00020000;
-    private static final int STYLE_CLEAR = WS_CAPTION | WS_THICKFRAME | WS_SYSMENU | WS_MAXIMIZEBOX | WS_MINIMIZEBOX;
-
-    private static final int WS_EX_DLGMODALFRAME = 0x00000001;
-    private static final int WS_EX_TOOLWINDOW = 0x00000080;
-    private static final int WS_EX_WINDOWEDGE = 0x00000100;
-    private static final int WS_EX_CLIENTEDGE = 0x00000200;
-    private static final int WS_EX_STATICEDGE = 0x00020000;
-    private static final int WS_EX_APPWINDOW = 0x00040000;
-    private static final int WS_EX_LAYERED = 0x00080000;
-    private static final int WS_EX_COMPOSITED = 0x02000000;
-    private static final int EXSTYLE_CLEAR = WS_EX_DLGMODALFRAME | WS_EX_COMPOSITED | WS_EX_WINDOWEDGE
-            | WS_EX_CLIENTEDGE | WS_EX_LAYERED | WS_EX_STATICEDGE | WS_EX_TOOLWINDOW | WS_EX_APPWINDOW;
-
-    private static final int POS_FLAGS = User32.SWP_SHOWWINDOW | User32.SWP_NOOWNERZORDER | User32.SWP_NOSENDCHANGING;
-    private static final int SETTLE_TICKS_AFTER_EXCLUSIVE = 3;
-    private static final int SYNC_TICKS_AFTER_WIN32_RESIZE = 2;
+    // TODO(26.2 backport): 26.3 manages the window through SDL, so the original windowed geometry
+    // is captured before the border is removed and restored on disable. 26.2 drives the window
+    // with Win32 directly and does not need this capture step.
+    private static final int MIN_WINDOW_SIZE = 64;
+    private static final int DEFAULT_WINDOW_WIDTH = 1280;
+    private static final int DEFAULT_WINDOW_HEIGHT = 720;
 
     private static boolean applied;
-    private static boolean wasExclusive;
-    private static boolean pendingReapply;
-    private static int settleTicks;
-    private static long savedStyle;
-    private static long savedExStyle;
     private static int savedLeft;
     private static int savedTop;
     private static int savedWidth;
     private static int savedHeight;
     private static boolean savedMaximized;
-    private static int pendingWindowSync;
+    private static int retryTicks;
+    private static boolean resumeFullscreenOnDisable;
+    private static boolean leavingFullscreen;
+    private static boolean wasEnabled;
+    private static int pendingRestoreSync;
+    private static int pendingFullscreenTicks;
 
     private SoftFullscreen() {
     }
@@ -67,137 +52,221 @@ public final class SoftFullscreen {
 
         Module module = ModuleManager.getModuleByName("SoftFullscreen");
         boolean want = module != null && module.isEnabled();
-        boolean exclusive = client.getWindow().isFullscreen();
+
+        Window window = client.getWindow();
+        if (window.getWidth() <= 0 || window.getHeight() <= 0) {
+            recoverZeroSizedWindow(client);
+        }
+
+        if (pendingRestoreSync > 0) {
+            pendingRestoreSync--;
+            syncMinecraftWindow(client);
+        }
+        if (pendingFullscreenTicks > 0) {
+            pendingFullscreenTicks--;
+            if (pendingFullscreenTicks == 0) {
+                client.options.fullscreen().set(true);
+            }
+        }
+
+        boolean justEnabled = want && !wasEnabled;
+        wasEnabled = want;
 
         if (!want) {
+            retryTicks = 0;
+            leavingFullscreen = false;
+            boolean enterFullscreen = resumeFullscreenOnDisable;
+            resumeFullscreenOnDisable = false;
             if (applied) {
-                restoreWindow();
+                restoreWindow(client, enterFullscreen);
+            } else if (enterFullscreen) {
+                client.options.fullscreen().set(true);
             }
-            pendingReapply = false;
-            pendingWindowSync = 0;
-            settleTicks = 0;
-            wasExclusive = exclusive;
             return;
         }
 
-        if (exclusive) {
-            if (applied) {
-                restoreWindow();
+        if (isFullscreen(client)) {
+            if (leavingFullscreen) {
+                return;
             }
-            wasExclusive = true;
-            pendingReapply = true;
-            settleTicks = SETTLE_TICKS_AFTER_EXCLUSIVE;
+            if (justEnabled) {
+                // Enabling while fullscreen: leave it first so the borderless window can take over.
+                resumeFullscreenOnDisable = true;
+                leavingFullscreen = true;
+                client.options.fullscreen().set(false);
+                retryTicks = 3;
+            }
+            // A manual F11 fullscreen wins while the feature is on, so keep vanilla fullscreen.
             return;
         }
+        leavingFullscreen = false;
 
-        if (wasExclusive) {
-            wasExclusive = false;
-            pendingReapply = true;
-            settleTicks = SETTLE_TICKS_AFTER_EXCLUSIVE;
-        }
-
-        if (settleTicks > 0) {
-            settleTicks--;
+        if (applied) {
             return;
         }
-
-        if (pendingReapply || !applied) {
-            if (tryApply(client)) {
-                pendingReapply = false;
-            }
+        if (retryTicks > 0) {
+            retryTicks--;
+            return;
         }
-
-        if (pendingWindowSync > 0) {
-            pendingWindowSync--;
-            if (pendingWindowSync == 0) {
-                syncMinecraftWindow(client);
-            }
+        if (!applyBorderless(client)) {
+            retryTicks = 2;
         }
     }
 
     public static void onBeforeToggleFullScreen(Minecraft client) {
-        if (!isWindows() || client == null || client.getWindow() == null) {
+        if (client == null) {
             return;
         }
-
-        if (client.getWindow().isFullscreen()) {
-            pendingReapply = true;
-            settleTicks = SETTLE_TICKS_AFTER_EXCLUSIVE;
-            return;
-        }
-
+        // Remember where the manual toggle is heading so disabling later follows it.
+        resumeFullscreenOnDisable = !isFullscreen(client);
         if (applied) {
-            restoreWindow();
+            restoreWindow(client, false);
         }
-        pendingReapply = true;
-        settleTicks = SETTLE_TICKS_AFTER_EXCLUSIVE;
     }
 
-    private static boolean tryApply(Minecraft client) {
-        if (client.getWindow().isFullscreen()) {
+    private static boolean applyBorderless(Minecraft client) {
+        Window window = client.getWindow();
+        long handle = window.handle();
+        if (handle == 0L) {
             return false;
         }
-        long hwnd = hwnd(client.getWindow().handle());
-        if (hwnd == 0L) {
-            return false;
+
+        if (savedWidth <= 0) {
+            savedMaximized = (SDLVideo.SDL_GetWindowFlags(handle) & SDLVideo.SDL_WINDOW_MAXIMIZED) != 0L;
+            if (savedMaximized) {
+                SDLVideo.SDL_RestoreWindow(handle);
+                SDLVideo.SDL_SyncWindow(handle);
+            }
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                IntBuffer positionX = stack.mallocInt(1);
+                IntBuffer positionY = stack.mallocInt(1);
+                IntBuffer sizeWidth = stack.mallocInt(1);
+                IntBuffer sizeHeight = stack.mallocInt(1);
+                SDLVideo.SDL_GetWindowPosition(handle, positionX, positionY);
+                SDLVideo.SDL_GetWindowSize(handle, sizeWidth, sizeHeight);
+                savedLeft = positionX.get(0);
+                savedTop = positionY.get(0);
+                savedWidth = sizeWidth.get(0);
+                savedHeight = sizeHeight.get(0);
+            }
+            if (savedWidth < MIN_WINDOW_SIZE || savedHeight < MIN_WINDOW_SIZE) {
+                savedWidth = 0;
+                savedHeight = 0;
+                return false;
+            }
+            // A maximised window reports the display size; fall back to the default size but keep
+            // the maximised state so the window is maximised again on disable.
+            int captureDisplay = SDLVideo.SDL_GetDisplayForWindow(handle);
+            if (captureDisplay >= 0) {
+                try (MemoryStack stack = MemoryStack.stackPush()) {
+                    SDL_Rect bounds = SDL_Rect.malloc(stack);
+                    if (SDLVideo.SDL_GetDisplayBounds(captureDisplay, bounds)
+                            && savedWidth >= bounds.w() - 2 && savedHeight >= bounds.h() - 2) {
+                        savedWidth = DEFAULT_WINDOW_WIDTH;
+                        savedHeight = DEFAULT_WINDOW_HEIGHT;
+                        savedMaximized = true;
+                    }
+                }
+            }
         }
-        if (!captureAndBorderless(client, hwnd)) {
-            return false;
+
+        int x = 0;
+        int y = 0;
+        int width = Math.max(1, window.getScreenWidth());
+        int height = Math.max(1, window.getScreenHeight());
+        int display = SDLVideo.SDL_GetDisplayForWindow(handle);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            SDL_Rect bounds = SDL_Rect.malloc(stack);
+            if (display >= 0 && SDLVideo.SDL_GetDisplayBounds(display, bounds)) {
+                x = bounds.x();
+                y = bounds.y();
+                width = Math.max(1, bounds.w());
+                height = Math.max(1, bounds.h());
+            }
         }
-        applied = true;
-        return true;
+
+        SDLVideo.SDL_SetWindowBordered(handle, false);
+        SDLVideo.SDL_SetWindowPosition(handle, x, y);
+        SDLVideo.SDL_SetWindowSize(handle, width, height);
+        SDLVideo.SDL_SyncWindow(handle);
+        syncWindow(window);
+        syncMinecraftWindow(client);
+
+        int actualWidth;
+        int actualHeight;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer sizeWidth = stack.mallocInt(1);
+            IntBuffer sizeHeight = stack.mallocInt(1);
+            SDLVideo.SDL_GetWindowSize(handle, sizeWidth, sizeHeight);
+            actualWidth = sizeWidth.get(0);
+            actualHeight = sizeHeight.get(0);
+        }
+        applied = actualWidth == width && actualHeight == height;
+        return applied;
     }
 
-    private static void restoreWindow() {
-        Minecraft client = Minecraft.getInstance();
+    private static void restoreWindow(Minecraft client, boolean enterFullscreen) {
         if (client == null || client.getWindow() == null) {
             applied = false;
-            clearSaved();
             return;
         }
 
-        long hwnd = hwnd(client.getWindow().handle());
-        if (hwnd != 0L && savedStyle != 0L) {
-            if (User32.IsZoomed(hwnd)) {
-                User32.ShowWindow(hwnd, User32.SW_RESTORE);
-            }
-            User32.SetWindowLongPtr(null, hwnd, User32.GWL_STYLE, savedStyle);
-            User32.SetWindowLongPtr(null, hwnd, User32.GWL_EXSTYLE, savedExStyle);
-            User32.SetWindowPos(
-                    null,
-                    hwnd,
-                    User32.HWND_TOP,
-                    savedLeft,
-                    savedTop,
-                    savedWidth,
-                    savedHeight,
-                    POS_FLAGS | User32.SWP_NOZORDER
-            );
-            if (savedMaximized) {
-                User32.ShowWindow(hwnd, User32.SW_MAXIMIZE);
-            } else {
-                Window window = client.getWindow();
-                window.setWindowed(savedWidth, savedHeight);
-                GLFW.glfwSetWindowPos(window.handle(), savedLeft, savedTop);
-            }
-            scheduleWindowSync();
-        }
-        applied = false;
-        clearSaved();
-    }
+        Window window = client.getWindow();
+        long handle = window.handle();
+        if (handle != 0L) {
+            SDLVideo.SDL_RestoreWindow(handle);
+            SDLVideo.SDL_SetWindowBordered(handle, true);
 
-    private static void clearSaved() {
-        savedStyle = 0L;
-        savedExStyle = 0L;
-        savedLeft = 0;
-        savedTop = 0;
+            boolean hasSavedGeometry = savedWidth >= MIN_WINDOW_SIZE && savedHeight >= MIN_WINDOW_SIZE;
+            int targetWidth = hasSavedGeometry ? savedWidth : DEFAULT_WINDOW_WIDTH;
+            int targetHeight = hasSavedGeometry ? savedHeight : DEFAULT_WINDOW_HEIGHT;
+            int targetX = savedLeft;
+            int targetY = savedTop;
+            if (!hasSavedGeometry) {
+                int display = SDLVideo.SDL_GetDisplayForWindow(handle);
+                try (MemoryStack stack = MemoryStack.stackPush()) {
+                    SDL_Rect bounds = SDL_Rect.malloc(stack);
+                    if (display >= 0 && SDLVideo.SDL_GetDisplayBounds(display, bounds)) {
+                        targetX = bounds.x() + Math.max(0, (bounds.w() - targetWidth) / 2);
+                        targetY = bounds.y() + Math.max(0, (bounds.h() - targetHeight) / 2);
+                    }
+                }
+            }
+            SDLVideo.SDL_SetWindowSize(handle, targetWidth, targetHeight);
+            SDLVideo.SDL_SetWindowPosition(handle, targetX, targetY);
+            SDLVideo.SDL_SyncWindow(handle);
+            if (savedMaximized) {
+                SDLVideo.SDL_MaximizeWindow(handle);
+                SDLVideo.SDL_SyncWindow(handle);
+            }
+            syncWindow(window);
+            syncMinecraftWindow(client);
+            if (window.getWidth() <= 0 || window.getHeight() <= 0) {
+                recoverZeroSizedWindow(client);
+            }
+            pendingRestoreSync = 3;
+        }
         savedWidth = 0;
         savedHeight = 0;
         savedMaximized = false;
+        applied = false;
+
+        if (enterFullscreen) {
+            // Let SDL settle the restored window geometry before going back to fullscreen.
+            pendingFullscreenTicks = 2;
+        }
     }
 
-    private static void scheduleWindowSync() {
-        pendingWindowSync = SYNC_TICKS_AFTER_WIN32_RESIZE;
+    private static void recoverZeroSizedWindow(Minecraft client) {
+        Window window = client.getWindow();
+        if (window == null || window.handle() == 0L) {
+            return;
+        }
+        int width = window.getScreenWidth() > 0 ? window.getScreenWidth() : DEFAULT_WINDOW_WIDTH;
+        int height = window.getScreenHeight() > 0 ? window.getScreenHeight() : DEFAULT_WINDOW_HEIGHT;
+        SDLVideo.SDL_SetWindowSize(window.handle(), width, height);
+        SDLVideo.SDL_SyncWindow(window.handle());
+        syncMinecraftWindow(client);
     }
 
     private static void syncMinecraftWindow(Minecraft client) {
@@ -207,81 +276,45 @@ public final class SoftFullscreen {
             return;
         }
 
-        GLFW.glfwPollEvents();
+        SDLEvents.SDL_PumpEvents();
 
-        int[] framebufferWidth = new int[1];
-        int[] framebufferHeight = new int[1];
-        int[] windowWidth = new int[1];
-        int[] windowHeight = new int[1];
-        GLFW.glfwGetFramebufferSize(handle, framebufferWidth, framebufferHeight);
-        GLFW.glfwGetWindowSize(handle, windowWidth, windowHeight);
-        if (framebufferWidth[0] <= 0 || framebufferHeight[0] <= 0) {
+        int framebufferWidth;
+        int framebufferHeight;
+        int windowWidth;
+        int windowHeight;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            IntBuffer fbWidth = stack.mallocInt(1);
+            IntBuffer fbHeight = stack.mallocInt(1);
+            IntBuffer winWidth = stack.mallocInt(1);
+            IntBuffer winHeight = stack.mallocInt(1);
+            SDLVideo.SDL_GetWindowSizeInPixels(handle, fbWidth, fbHeight);
+            SDLVideo.SDL_GetWindowSize(handle, winWidth, winHeight);
+            framebufferWidth = fbWidth.get(0);
+            framebufferHeight = fbHeight.get(0);
+            windowWidth = winWidth.get(0);
+            windowHeight = winHeight.get(0);
+        }
+        if (framebufferWidth <= 0 || framebufferHeight <= 0) {
             return;
         }
 
         WindowInvoker invoker = (WindowInvoker) (Object) window;
-        invoker.baity$onResize(handle, windowWidth[0], windowHeight[0]);
-        invoker.baity$onFramebufferResize(handle, framebufferWidth[0], framebufferHeight[0]);
+        invoker.baity$onResize(windowWidth, windowHeight);
+        invoker.baity$onFramebufferResize(framebufferWidth, framebufferHeight);
     }
 
-    private static void captureWindowState(Minecraft client, long hwnd) {
-        Window window = client.getWindow();
-        savedMaximized = hwnd != 0L && User32.IsZoomed(hwnd);
-        savedWidth = Math.max(1, window.getWidth());
-        savedHeight = Math.max(1, window.getHeight());
-        savedLeft = window.getX();
-        savedTop = window.getY();
-    }
-
-    private static boolean captureAndBorderless(Minecraft client, long hwnd) {
-        long style = User32.GetWindowLongPtr(hwnd, User32.GWL_STYLE);
-        long exStyle = User32.GetWindowLongPtr(hwnd, User32.GWL_EXSTYLE);
-        captureWindowState(client, hwnd);
-
-        savedStyle = style;
-        savedExStyle = exStyle;
-
-        long newStyle = style & ~STYLE_CLEAR;
-        long newExStyle = exStyle & ~EXSTYLE_CLEAR;
-        User32.SetWindowLongPtr(null, hwnd, User32.GWL_STYLE, newStyle);
-        User32.SetWindowLongPtr(null, hwnd, User32.GWL_EXSTYLE, newExStyle);
-
-        int x;
-        int y;
-        int w;
-        int h;
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            MONITORINFOEX info = MONITORINFOEX.calloc(stack);
-            info.cbSize(MONITORINFOEX.SIZEOF);
-            long monitor = User32.MonitorFromWindow(hwnd, User32.MONITOR_DEFAULTTONEAREST);
-            if (monitor == 0L || !User32.GetMonitorInfo(monitor, info)) {
-                User32.SetWindowLongPtr(null, hwnd, User32.GWL_STYLE, savedStyle);
-                User32.SetWindowLongPtr(null, hwnd, User32.GWL_EXSTYLE, savedExStyle);
-                clearSaved();
-                return false;
-            }
-            RECT monitorRect = info.rcMonitor();
-            x = monitorRect.left();
-            y = monitorRect.top();
-            w = Math.max(1, monitorRect.right() - monitorRect.left());
-            h = Math.max(1, monitorRect.bottom() - monitorRect.top());
-        }
-
-        User32.SetWindowPos(null, hwnd, User32.HWND_TOP, x, y, w, h, POS_FLAGS);
-        User32.ShowWindow(hwnd, User32.SW_MAXIMIZE);
-        scheduleWindowSync();
-        return true;
-    }
-
-    private static long hwnd(long glfwWindow) {
-        if (glfwWindow == 0L) {
-            return 0L;
+    private static void syncWindow(Window window) {
+        if (window == null) {
+            return;
         }
         try {
-            return GLFWNativeWin32.glfwGetWin32Window(glfwWindow);
+            ((WindowInvoker) (Object) window).baity$syncWindow();
         } catch (Throwable ignored) {
-            return 0L;
         }
+    }
+
+    private static boolean isFullscreen(Minecraft client) {
+        return client.options != null && Boolean.TRUE.equals(client.options.fullscreen().get());
     }
 
     private static boolean isWindows() {

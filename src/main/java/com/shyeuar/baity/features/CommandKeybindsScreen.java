@@ -15,7 +15,7 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,6 +114,7 @@ public class CommandKeybindsScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
+        com.shyeuar.baity.utils.TextInputUtils.sync(focusedIndex >= 0, this);
         scrollRow = Math.max(0, Math.min(scrollRow, maxScrollRow()));
 
         Minecraft mc = Minecraft.getInstance();
@@ -392,7 +393,7 @@ public class CommandKeybindsScreen extends Screen {
         int cancelX2 = saveX1 - FOOTER_BUTTON_GAP;
         int cancelX1 = cancelX2 - FOOTER_BUTTON_WIDTH;
 
-        if (click.button() == 0 && GuiRenderUtil.isHovered(addX1, FOOTER_TOP, addX2,
+        if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) == 0 && GuiRenderUtil.isHovered(addX1, FOOTER_TOP, addX2,
                 FOOTER_TOP + BUTTON_HEIGHT, mouseX, mouseY)) {
             commitFocusedInput();
             drafts.add(new Keybinds.CommandBinding(List.of(), true, "", false, true, 0, Keybinds.CONTEXT_GLOBAL));
@@ -401,13 +402,13 @@ public class CommandKeybindsScreen extends Screen {
             scrollRow = maxScrollRow();
             return true;
         }
-        if (click.button() == 0 && GuiRenderUtil.isHovered(saveX1, FOOTER_TOP, saveX2,
+        if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) == 0 && GuiRenderUtil.isHovered(saveX1, FOOTER_TOP, saveX2,
                 FOOTER_TOP + BUTTON_HEIGHT, mouseX, mouseY)) {
             SoundUtils.playWoodenButton();
             saveAndClose();
             return true;
         }
-        if (click.button() == 0 && GuiRenderUtil.isHovered(cancelX1, FOOTER_TOP, cancelX2,
+        if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) == 0 && GuiRenderUtil.isHovered(cancelX1, FOOTER_TOP, cancelX2,
                 FOOTER_TOP + BUTTON_HEIGHT, mouseX, mouseY)) {
             cancelAndClose();
             return true;
@@ -491,7 +492,7 @@ public class CommandKeybindsScreen extends Screen {
         int keyCode = input.input();
 
         if (bindingIndex >= 0) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            if (keyCode == InputConstants.KEY_ESCAPE) {
                 bindingIndex = -1;
                 return true;
             }
@@ -520,7 +521,7 @@ public class CommandKeybindsScreen extends Screen {
             }
         }
 
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == InputConstants.KEY_ESCAPE) {
             cancelAndClose();
             return true;
         }
@@ -537,6 +538,7 @@ public class CommandKeybindsScreen extends Screen {
 
     @Override
     public void onClose() {
+        com.shyeuar.baity.utils.TextInputUtils.sync(false, this);
         cancelAndClose();
     }
 

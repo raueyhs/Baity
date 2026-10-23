@@ -41,9 +41,9 @@ public final class InvisibugHighlightsMixin {
 
             if (!LocateUtils.isGalatea(MC)) return;
 
-            if (packet.getParticle().getType() != ParticleTypes.CRIT) return;
+            if (packet.particle().getType() != ParticleTypes.CRIT) return;
 
-            if (packet.getCount() != 1) return;
+            if (packet.count() != 1) return;
 
             try {
                 java.lang.reflect.Method getSpeedMethod = null;
@@ -100,7 +100,7 @@ public final class InvisibugHighlightsMixin {
                 return;
             }
 
-            Vec3 particleLocation = new Vec3(packet.getX(), packet.getY(), packet.getZ());
+            Vec3 particleLocation = new Vec3(packet.x(), packet.y(), packet.z());
 
             InvisibugHighlights.onParticleAt(particleLocation);
         }

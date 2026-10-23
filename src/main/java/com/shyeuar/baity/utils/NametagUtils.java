@@ -67,7 +67,7 @@ public final class NametagUtils {
 
         Vec3 camPos = camera.position();
         try {
-            return mc.getEntityRenderDispatcher().shouldRender(player, frustum, camPos.x, camPos.y, camPos.z);
+            return mc.getEntityRenderDispatcher().shouldRender(player, frustum, camPos.x, camPos.y, camPos.z, 0.0f);
         } catch (Throwable ignored) {
             return true;
         }

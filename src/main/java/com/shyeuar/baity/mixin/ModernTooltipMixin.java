@@ -22,7 +22,7 @@ import java.util.List;
 @Mixin(GuiGraphicsExtractor.class)
 public abstract class ModernTooltipMixin {
 
-    private static final String TOOLTIP = "tooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;Lnet/minecraft/resources/Identifier;)V";
+    private static final String TOOLTIP = "tooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;IILnet/minecraft/client/gui/screens/inventory/tooltip/ClientTooltipPositioner;Lnet/minecraft/resources/Identifier;Z)V";
     private static final String EXTRACT_BACKGROUND = "Lnet/minecraft/client/gui/screens/inventory/tooltip/TooltipRenderUtil;extractTooltipBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIIILnet/minecraft/resources/Identifier;)V";
     private static final String POP_MATRIX = "Lorg/joml/Matrix3x2fStack;popMatrix()Lorg/joml/Matrix3x2fStack;";
 
@@ -44,6 +44,7 @@ public abstract class ModernTooltipMixin {
             int y,
             ClientTooltipPositioner positioner,
             Identifier texture,
+            boolean animate,
             CallbackInfo ci
     ) {
         if (!ScrollableTooltip.isActive()) {
@@ -69,6 +70,7 @@ public abstract class ModernTooltipMixin {
             int y,
             ClientTooltipPositioner positioner,
             Identifier texture,
+            boolean animate,
             CallbackInfo ci
     ) {
         if (ScrollableTooltip.isActive()) {
@@ -124,6 +126,7 @@ public abstract class ModernTooltipMixin {
             int y,
             ClientTooltipPositioner positioner,
             Identifier texture,
+            boolean animate,
             CallbackInfo ci
     ) {
         if (ScrollableTooltip.isActive()) {

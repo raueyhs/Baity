@@ -78,7 +78,7 @@ public class NametagRenderer implements LevelRenderEvents.CollectSubmits {
         PoseStack matrices = context.poseStack();
         if (matrices == null) {
             matrices = new PoseStack();
-            matrices.mulPose(new org.joml.Quaternionf().rotationXYZ(
+            matrices.rotate(new org.joml.Quaternionf().rotationXYZ(
                     (float) Math.toRadians(cameraPitch),
                     (float) Math.toRadians(cameraYaw + 180.0f),
                     0.0f
@@ -132,8 +132,8 @@ public class NametagRenderer implements LevelRenderEvents.CollectSubmits {
             heightOffset = SmolPeopleNametag.adjustNametagHeight(heightOffset, player.getId());
 
             matrices.translate(0, heightOffset, 0);
-            matrices.mulPose(new org.joml.Quaternionf().rotationY(-cameraYaw * 0.017453292F));
-            matrices.mulPose(new org.joml.Quaternionf().rotationX(cameraPitch * 0.017453292F));
+            matrices.rotate(new org.joml.Quaternionf().rotationY(-cameraYaw * 0.017453292F));
+            matrices.rotate(new org.joml.Quaternionf().rotationX(cameraPitch * 0.017453292F));
 
             assert mc.player != null;
             boolean focusPlayerNametag = FocusPlayerNametag.isActive();

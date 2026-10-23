@@ -199,9 +199,9 @@ public class CustomHandHoldingManager {
     public void applyRotation(PoseStack poseStack, HumanoidArm hand) {
         int handDirection = hand == HumanoidArm.RIGHT ? 1 : -1;
 
-        poseStack.mulPose(Axis.XP.rotationDegrees(currentRotX));
-        poseStack.mulPose(Axis.YP.rotationDegrees(currentRotY * handDirection));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(currentRotZ * handDirection));
+        poseStack.rotate(Axis.XP.rotationDegrees(currentRotX));
+        poseStack.rotate(Axis.YP.rotationDegrees(currentRotY * handDirection));
+        poseStack.rotate(Axis.ZP.rotationDegrees(currentRotZ * handDirection));
     }
 
     public void applyScale(PoseStack poseStack) {

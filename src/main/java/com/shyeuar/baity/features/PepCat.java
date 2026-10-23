@@ -135,7 +135,7 @@ public class PepCat {
             }
             
             ItemStack catItem = createCustomCatItem();
-            client.gameRenderer.displayItemActivation(catItem);
+            client.player.displayItemActivation(catItem);
             client.particleEngine.createTrackingEmitter(client.player, ParticleTypes.OMINOUS_SPAWNING, 10);
         }
     }

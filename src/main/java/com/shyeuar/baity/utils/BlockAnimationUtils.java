@@ -128,16 +128,19 @@ public final class BlockAnimationUtils {
 
     public static boolean isNotSwinging(Player player) {
         if (player == null) return false;
-        int swingDuration = ((com.shyeuar.baity.mixin.accessor.LivingEntityAccessor) (Object) player).baity$getCurrentSwingDuration();
-        return !player.swinging || player.swingTime >= swingDuration / 2 || player.swingTime < 0;
+        if (!player.isSwinging()) return true;
+        net.minecraft.world.entity.LivingEntity.SwingDescription swing = player.getCurrentSwing();
+        if (swing == null) return true;
+        int swingTime = ((com.shyeuar.baity.mixin.accessor.SwingStateAccessor)
+                ((com.shyeuar.baity.mixin.accessor.LivingEntityAccessor) (Object) player).baity$getSwingState())
+                .baity$getTicks();
+        return swingTime >= swing.durationTicks() / 2 || swingTime < 0;
     }
 
     public static void fakeHandSwing(Player player, InteractionHand hand) {
         if (player == null || hand == null) return;
         if (isNotSwinging(player)) {
-            player.swingTime = -1;
-            player.swinging = true;
-            player.swingingArm = hand;
+            player.swing(hand, net.minecraft.world.item.component.SwingAnimation.DEFAULT, false);
         }
     }
 
@@ -153,7 +156,7 @@ public final class BlockAnimationUtils {
             BlockHitResult bhr = (BlockHitResult) hitResult;
             BlockPos pos = bhr.getBlockPos();
             if (!level.getBlockState(pos).isAir()) {
-                level.addBreakingBlockEffect(pos, bhr.getDirection());
+                level.addBreakingBlockEffects(pos, bhr.getDirection(), false);
             }
         }
     }

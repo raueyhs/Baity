@@ -136,7 +136,7 @@ public class SmolFriendsScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean isInsideWindow) {
-        if (click.button() != 0) {
+        if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) != 0) {
             return super.mouseClicked(click, isInsideWindow);
         }
 

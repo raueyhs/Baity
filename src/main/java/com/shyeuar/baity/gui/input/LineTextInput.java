@@ -6,7 +6,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.InputQuirks;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
+import org.lwjgl.sdl.SDLKeyboard;
 
 import java.util.function.BiPredicate;
 
@@ -57,10 +58,10 @@ public final class LineTextInput {
     }
 
     public KeyResult handleKey(int keyCode, int modifiers) {
-        if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+        if (keyCode == InputConstants.KEY_ESCAPE) {
             return KeyResult.CANCEL;
         }
-        if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
+        if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
             return KeyResult.COMMIT;
         }
         if (isCopyShortcut(keyCode)) {
@@ -71,15 +72,15 @@ public final class LineTextInput {
             pasteFromClipboard();
             return KeyResult.HANDLED;
         }
-        if (keyCode == GLFW.GLFW_KEY_LEFT) {
+        if (keyCode == InputConstants.KEY_LEFT) {
             moveCaretLeft();
             return KeyResult.HANDLED;
         }
-        if (keyCode == GLFW.GLFW_KEY_RIGHT) {
+        if (keyCode == InputConstants.KEY_RIGHT) {
             moveCaretRight();
             return KeyResult.HANDLED;
         }
-        if (keyCode == GLFW.GLFW_KEY_BACKSPACE || (isMac() && keyCode == GLFW.GLFW_KEY_DELETE)) {
+        if (keyCode == InputConstants.KEY_BACKSPACE || (isMac() && keyCode == InputConstants.KEY_DELETE)) {
             deleteBehindCaret(isPrimaryModifierDown());
             return KeyResult.HANDLED;
         }
@@ -569,28 +570,23 @@ public final class LineTextInput {
         return System.getProperty("os.name", "").toLowerCase().contains("mac");
     }
 
-    private static long windowHandle() {
-        Minecraft client = Minecraft.getInstance();
-        return client.getWindow().handle();
-    }
-
     private static boolean isKeyDown(int key) {
-        return GLFW.glfwGetKey(windowHandle(), key) == GLFW.GLFW_PRESS;
+        return SDLKeyboard.SDL_GetKeyboardState().get(key) != 0;
     }
 
     private static boolean isPrimaryModifierDown() {
         if (InputQuirks.REPLACE_CTRL_KEY_WITH_CMD_KEY) {
-            return isKeyDown(GLFW.GLFW_KEY_LEFT_SUPER) || isKeyDown(GLFW.GLFW_KEY_RIGHT_SUPER);
+            return isKeyDown(InputConstants.KEY_LGUI) || isKeyDown(InputConstants.KEY_RGUI);
         }
-        return isKeyDown(GLFW.GLFW_KEY_LEFT_CONTROL) || isKeyDown(GLFW.GLFW_KEY_RIGHT_CONTROL);
+        return isKeyDown(InputConstants.KEY_LCONTROL) || isKeyDown(InputConstants.KEY_RCONTROL);
     }
 
     private static boolean isCopyShortcut(int keyCode) {
-        return keyCode == GLFW.GLFW_KEY_C && isPrimaryModifierDown();
+        return keyCode == InputConstants.KEY_C && isPrimaryModifierDown();
     }
 
     private static boolean isPasteShortcut(int keyCode) {
-        return keyCode == GLFW.GLFW_KEY_V && isPrimaryModifierDown();
+        return keyCode == InputConstants.KEY_V && isPrimaryModifierDown();
     }
 
     private static String getClipboard() {

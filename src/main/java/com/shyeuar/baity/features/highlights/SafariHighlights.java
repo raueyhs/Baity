@@ -1,11 +1,11 @@
 package com.shyeuar.baity.features.highlights;
 
-import com.mojang.blaze3d.PrimitiveTopology;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.DepthStencilState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.CompareOp;
+import com.mojang.renderpearl.api.pipeline.PrimitiveTopology;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.CompareOp;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.shyeuar.baity.config.ConfigManager;
@@ -32,9 +32,9 @@ import net.minecraft.client.renderer.entity.EntityRenderDispatcher;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
 import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
 import net.minecraft.client.renderer.rendertype.LayeringTransform;
-import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.texture.UvMapping;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
@@ -97,6 +97,7 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
             RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
                     .withLocation("pipeline/baity_safari_lines")
                     .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false, 0f, 0f))
+                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .build()
     );
 
@@ -104,7 +105,6 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
             "baity_safari_lines",
             RenderSetup.builder(BAITY_SAFARI_LINES)
                     .setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-                    .setOutputTarget(OutputTarget.ITEM_ENTITY_TARGET)
                     .createRenderSetup()
     );
 
@@ -123,7 +123,6 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
             "baity_safari_fill",
             RenderSetup.builder(BAITY_SAFARI_FILL)
                     .setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-                    .setOutputTarget(OutputTarget.ITEM_ENTITY_TARGET)
                     .createRenderSetup()
     );
 
@@ -223,7 +222,7 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
         for (SafariPlayerTarget target : targets.players()) {
             Player player = target.player();
             if (!player.isAlive()) continue;
-            if (!dispatcher.shouldRender(player, frustum, cameraPos.x, cameraPos.y, cameraPos.z)) continue;
+            if (!dispatcher.shouldRender(player, frustum, cameraPos.x, cameraPos.y, cameraPos.z, partialTick)) continue;
             drawEntityModel(
                     player,
                     partialTick,
@@ -238,7 +237,7 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
         for (SafariMobTarget target : targets.mobs()) {
             Mob mob = target.mob();
             if (!mob.isAlive()) continue;
-            if (!dispatcher.shouldRender(mob, frustum, cameraPos.x, cameraPos.y, cameraPos.z)) continue;
+            if (!dispatcher.shouldRender(mob, frustum, cameraPos.x, cameraPos.y, cameraPos.z, partialTick)) continue;
             drawEntityModel(
                     mob,
                     partialTick,
@@ -450,22 +449,23 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
                 int lightCoords,
                 int overlayCoords,
                 int tintedColor,
-                TextureAtlasSprite textureAtlasSprite,
-                int ignoredOutlineColor,
-                ModelFeatureRenderer.CrumblingOverlay crumblingOverlay
+                UvMapping uvMapping,
+                int ignoredOutlineColor
         ) {
-            renderType.outline().ifPresent(outlineRenderType -> target.submitModel(
+            // TODO(26.3): renderType.outline() targets the second (outline) colour attachment and
+            // crashes in the solid pass, which only has one attachment. Submit the base render type
+            // until the outline attachment is wired up properly.
+            target.submitModel(
                     model,
                     state,
                     poseStack,
-                    outlineRenderType,
+                    renderType,
                     lightCoords,
                     overlayCoords,
                     tintedColor,
-                    textureAtlasSprite,
-                    color,
-                    crumblingOverlay
-            ));
+                    uvMapping,
+                    color
+            );
         }
 
         @Override
@@ -475,29 +475,27 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
                 RenderType renderType,
                 int lightCoords,
                 int overlayCoords,
-                TextureAtlasSprite textureAtlasSprite,
+                UvMapping uvMapping,
                 int tintedColor,
-                ModelFeatureRenderer.CrumblingOverlay crumblingOverlay,
                 int ignoredOutlineColor
         ) {
-            renderType.outline().ifPresent(outlineRenderType -> target.submitModelPart(
+            target.submitModelPart(
                     modelPart,
                     poseStack,
-                    outlineRenderType,
+                    renderType,
                     lightCoords,
                     overlayCoords,
-                    textureAtlasSprite,
+                    uvMapping,
                     tintedColor,
-                    crumblingOverlay,
                     color
-            ));
+            );
         }
 
         private static final class SafariMobOrderedCollector extends SubmitNodeCollection {
             private final SafariMobModelCollector parent;
 
             private SafariMobOrderedCollector(SafariMobModelCollector parent) {
-                super();
+                super(false, new net.minecraft.client.renderer.feature.phase.TranslucentFeatureRenderPhase());
                 this.parent = parent;
             }
 
@@ -510,11 +508,10 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
                     int lightCoords,
                     int overlayCoords,
                     int tintedColor,
-                    TextureAtlasSprite textureAtlasSprite,
-                    int ignoredOutlineColor,
-                    ModelFeatureRenderer.CrumblingOverlay crumblingOverlay
+                    UvMapping uvMapping,
+                    int ignoredOutlineColor
             ) {
-                parent.submitModel(model, state, poseStack, renderType, lightCoords, overlayCoords, tintedColor, textureAtlasSprite, ignoredOutlineColor, crumblingOverlay);
+                parent.submitModel(model, state, poseStack, renderType, lightCoords, overlayCoords, tintedColor, uvMapping, ignoredOutlineColor);
             }
 
             @Override
@@ -524,16 +521,14 @@ public final class SafariHighlights implements LevelRenderEvents.AfterSolidFeatu
                     RenderType renderType,
                     int lightCoords,
                     int overlayCoords,
-                    TextureAtlasSprite textureAtlasSprite,
+                    UvMapping uvMapping,
                     int tintedColor,
-                    ModelFeatureRenderer.CrumblingOverlay crumblingOverlay,
                     int ignoredOutlineColor
             ) {
-                parent.submitModelPart(modelPart, poseStack, renderType, lightCoords, overlayCoords, textureAtlasSprite, tintedColor, crumblingOverlay, ignoredOutlineColor);
+                parent.submitModelPart(modelPart, poseStack, renderType, lightCoords, overlayCoords, uvMapping, tintedColor, ignoredOutlineColor);
             }
         }
     }
-
     private static void drawFilledBox(
             PoseStack matrices,
             SubmitNodeCollector submits,

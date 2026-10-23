@@ -3,7 +3,6 @@ package com.shyeuar.baity.features.legacytweaks.blockanimation;
 import com.shyeuar.baity.features.CustomHandHoldingManager;
 import com.shyeuar.baity.gui.module.Module;
 import com.shyeuar.baity.gui.module.ModuleManager;
-import com.shyeuar.baity.mixin.accessor.LivingEntityAccessor;
 import com.shyeuar.baity.utils.BlockAnimationUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.Mth;
@@ -69,12 +68,16 @@ public final class BlockAnimationCircleController {
     }
 
     private static int getSwingSilenceTicks(Player player) {
-        int dur = ((LivingEntityAccessor) (Object) player).baity$getCurrentSwingDuration();
-        return Math.max(1, dur);
+        return Math.max(1, currentSwingDurationTicks(player));
+    }
+
+    private static int currentSwingDurationTicks(Player player) {
+        net.minecraft.world.entity.LivingEntity.SwingDescription swing = player.getCurrentSwing();
+        return swing != null ? swing.durationTicks() : 6;
     }
 
     private static int getCircleRotationDurationTicks(Player player) {
-        int vanillaOrReported = ((LivingEntityAccessor) (Object) player).baity$getCurrentSwingDuration();
+        int vanillaOrReported = currentSwingDurationTicks(player);
         if (vanillaOrReported < 1) {
             vanillaOrReported = 1;
         }

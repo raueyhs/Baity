@@ -9,7 +9,7 @@ import com.shyeuar.baity.utils.KeyMappingUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
 
 @Environment(EnvType.CLIENT)
 public final class RadialMenu {
@@ -80,7 +80,7 @@ public final class RadialMenu {
         long windowHandle = client.getWindow().handle();
         double centerX = client.getWindow().getScreenWidth() / 2.0;
         double centerY = client.getWindow().getScreenHeight() / 2.0;
-        GLFW.glfwSetCursorPos(windowHandle, centerX, centerY);
+        SDLMouse.SDL_WarpMouseInWindow(windowHandle, (float) centerX, (float) centerY);
         client.gui.setScreen(new DynamicRadialMenuScreen(keybind, preset, preset.rootLayerId, null));
     }
 

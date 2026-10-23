@@ -1030,23 +1030,33 @@ public class ValueStyleRenderer {
        context.text(client.font, plus, tx, ty, 0xFFFFFFFF | (localAlpha << 24), false);
    }
 
-   private static final net.minecraft.world.item.ItemStack TEXT_LIST_MARKER_ICON =
-           new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.COMPASS);
-   private static final net.minecraft.world.item.ItemStack TEXT_LIST_ACTIVE_ICON =
-           new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.CLOCK);
-   private static final net.minecraft.world.item.ItemStack TEXT_LIST_REMOVE_ICON =
-           new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.STRUCTURE_VOID);
-   private static final net.minecraft.world.item.ItemStack TEXT_LIST_REMOVE_ICON_HOVER =
-           glintIcon(net.minecraft.world.item.Items.STRUCTURE_VOID);
-   private static final net.minecraft.world.item.ItemStack TEXT_LIST_CONFIRM_ICON =
-           glintIcon(net.minecraft.world.item.Items.BARRIER);
-   private static final String ADD_BUTTON_TEXT = "Add";
+   // Item stacks need bound registries, but the ClickGUI can be opened from the main menu before
+   // that happens, so the icons are created on first use instead of during class initialisation.
+   private static final class TextListIcons {
+       static final net.minecraft.world.item.ItemStack MARKER = create(net.minecraft.world.item.Items.COMPASS);
+       static final net.minecraft.world.item.ItemStack ACTIVE = create(net.minecraft.world.item.Items.CLOCK);
+       static final net.minecraft.world.item.ItemStack REMOVE = create(net.minecraft.world.item.Items.STRUCTURE_VOID);
+       static final net.minecraft.world.item.ItemStack REMOVE_HOVER = glint(net.minecraft.world.item.Items.STRUCTURE_VOID);
+       static final net.minecraft.world.item.ItemStack CONFIRM = glint(net.minecraft.world.item.Items.BARRIER);
 
-   private static net.minecraft.world.item.ItemStack glintIcon(net.minecraft.world.item.Item item) {
-       net.minecraft.world.item.ItemStack stack = new net.minecraft.world.item.ItemStack(item);
-       stack.set(net.minecraft.core.component.DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
-       return stack;
+       private static net.minecraft.world.item.ItemStack create(net.minecraft.world.item.Item item) {
+           try {
+               return new net.minecraft.world.item.ItemStack(item);
+           } catch (Throwable ignored) {
+               return null;
+           }
+       }
+
+       private static net.minecraft.world.item.ItemStack glint(net.minecraft.world.item.Item item) {
+           net.minecraft.world.item.ItemStack stack = create(item);
+           if (stack != null) {
+               stack.set(net.minecraft.core.component.DataComponents.ENCHANTMENT_GLINT_OVERRIDE, true);
+           }
+           return stack;
+       }
    }
+
+   private static final String ADD_BUTTON_TEXT = "Add";
 
    public static float getTextListHeight(com.shyeuar.baity.gui.value.TextListValue value, float subOptionHeight) {
        return com.shyeuar.baity.gui.value.TextListValue.getHeight(value, subOptionHeight);
@@ -1106,9 +1116,12 @@ public class ValueStyleRenderer {
 
            float markerCenterX = layout.markerX1() + iconSize * 0.5f;
            float markerCenterY = layout.iconY(row) + iconSize * 0.5f;
-           com.shyeuar.baity.gui.radial.RadialWheelRenderer.drawItemStackIcon(
-                   context, value.matchesCurrentArea(row) ? TEXT_LIST_ACTIVE_ICON : TEXT_LIST_MARKER_ICON,
-                   markerCenterX, markerCenterY, (int) iconSize);
+           net.minecraft.world.item.ItemStack markerIcon = value.matchesCurrentArea(row)
+                   ? TextListIcons.ACTIVE : TextListIcons.MARKER;
+           if (markerIcon != null) {
+               com.shyeuar.baity.gui.radial.RadialWheelRenderer.drawItemStackIcon(
+                       context, markerIcon, markerCenterX, markerCenterY, (int) iconSize);
+           }
 
            float lineY = layout.lineY(row);
            boolean editingRow = rowEditing && editingTextInput.isRow(row);
@@ -1128,8 +1141,11 @@ public class ValueStyleRenderer {
    private static void drawTextListRemoveIcon(GuiGraphicsExtractor context, float x1, float textY, float iconSize,
                                               boolean hovered, boolean armed) {
        net.minecraft.world.item.ItemStack icon = armed
-               ? TEXT_LIST_CONFIRM_ICON
-               : hovered ? TEXT_LIST_REMOVE_ICON_HOVER : TEXT_LIST_REMOVE_ICON;
+               ? TextListIcons.CONFIRM
+               : hovered ? TextListIcons.REMOVE_HOVER : TextListIcons.REMOVE;
+       if (icon == null) {
+           return;
+       }
        float centerX = x1 + iconSize * 0.5f;
        float centerY = textY + com.shyeuar.baity.gui.value.TextListValue.FONT_LINE_HEIGHT * 0.5f;
        com.shyeuar.baity.gui.radial.RadialWheelRenderer.drawItemStackIcon(context, icon, centerX, centerY, (int) iconSize);

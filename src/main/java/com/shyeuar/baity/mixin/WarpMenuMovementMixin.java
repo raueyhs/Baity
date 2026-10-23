@@ -8,7 +8,7 @@ import net.minecraft.client.player.ClientInput;
 import net.minecraft.client.player.KeyboardInput;
 import net.minecraft.world.entity.player.Input;
 import net.minecraft.world.phys.Vec2;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLKeyboard;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -21,16 +21,15 @@ public class WarpMenuMovementMixin extends ClientInput {
     private void allowMovementInWarpMenu(CallbackInfo ci) {
         Minecraft client = Minecraft.getInstance();
         if (client.gui.screen() instanceof DynamicRadialMenuScreen) {
-            long window = client.getWindow().handle();
             Options options = client.options;
 
-            boolean forward = isKeyPressed(window, options.keyUp);
-            boolean back = isKeyPressed(window, options.keyDown);
-            boolean left = isKeyPressed(window, options.keyLeft);
-            boolean right = isKeyPressed(window, options.keyRight);
-            boolean jump = isKeyPressed(window, options.keyJump);
-            boolean sneak = isKeyPressed(window, options.keyShift);
-            boolean sprint = isKeyPressed(window, options.keySprint);
+            boolean forward = isKeyPressed(options.keyUp);
+            boolean back = isKeyPressed(options.keyDown);
+            boolean left = isKeyPressed(options.keyLeft);
+            boolean right = isKeyPressed(options.keyRight);
+            boolean jump = isKeyPressed(options.keyJump);
+            boolean sneak = isKeyPressed(options.keyShift);
+            boolean sprint = isKeyPressed(options.keySprint);
 
             if (options.toggleSprint().get() && forward && !back) {
                 sprint = true;
@@ -44,9 +43,9 @@ public class WarpMenuMovementMixin extends ClientInput {
         }
     }
 
-    private static boolean isKeyPressed(long window, KeyMapping keyBinding) {
+    private static boolean isKeyPressed(KeyMapping keyBinding) {
         int keyCode = keyBinding.getDefaultKey().getValue();
-        return GLFW.glfwGetKey(window, keyCode) == GLFW.GLFW_PRESS;
+        return SDLKeyboard.SDL_GetKeyboardState().get(keyCode) != 0;
     }
 
     private static float getMovementMultiplier(boolean positive, boolean negative) {

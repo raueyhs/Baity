@@ -1,5 +1,6 @@
 package com.shyeuar.baity.config;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -43,7 +44,7 @@ public class ConfigManager {
     public static String crosshairActiveLayer = "";
     public static boolean crosshairPainterInitialized = false;
     public static boolean guiEnabled = true;
-    public static int guiKeyCode = 345;
+    public static int guiKeyCode = InputConstants.KEY_RCONTROL;
     public static boolean nametagEnabled = false;
     public static boolean nametagShowDistance = false;
     public static boolean nametagShowOwnNametag = true;
@@ -76,7 +77,7 @@ public class ConfigManager {
     public static boolean customHandHoldingNoSwing = false;
     
     public static boolean radialMenuEnabled = false;
-    public static int radialMenuKeybind = 4;
+    public static int radialMenuKeybind = -5;
     public static String radialMenuActivePresetId = "default";
     public static boolean numInputerEnabled = false;
     public static boolean chatChannelSwitcherEnabled = false;
@@ -92,18 +93,18 @@ public class ConfigManager {
     public static boolean keybindsWardrobeEnabled = true;
     public static boolean keybindsWardrobeAutoCloseOnUse = false;
     public static boolean keybindsWardrobePreventUnequip = false;
-    public static int keybindsWardrobeHoldToUnequip = 341;
+    public static int keybindsWardrobeHoldToUnequip = InputConstants.KEY_LCONTROL;
     public static boolean keybindsEquipmentGroupExpanded = false;
     public static boolean keybindsEquipmentEnabled = true;
     public static boolean keybindsEquipmentAutoCloseOnUse = false;
     public static boolean keybindsEquipmentPreventUnequip = false;
-    public static int keybindsEquipmentHoldToUnequip = 341;
+    public static int keybindsEquipmentHoldToUnequip = InputConstants.KEY_LCONTROL;
     public static boolean keybindsLoadoutGroupExpanded = false;
     public static boolean keybindsLoadoutEnabled = true;
     public static boolean keybindsLoadoutAutoCloseOnUse = false;
-    public static int keybindsLoadoutSlot10Key = 48;
-    public static int keybindsLoadoutSlot11Key = 45;
-    public static int keybindsLoadoutSlot12Key = 61;
+    public static int keybindsLoadoutSlot10Key = InputConstants.KEY_0;
+    public static int keybindsLoadoutSlot11Key = InputConstants.KEY_MINUS;
+    public static int keybindsLoadoutSlot12Key = InputConstants.KEY_EQUALS;
     public static String keybindsCommandBindings = "";
     public static boolean keybindsCommand1Enabled = true;
     public static boolean keybindsCommand2Enabled = true;
@@ -169,6 +170,8 @@ public class ConfigManager {
     public static double cameraNoClipDistance = 4.0;
 
     public static boolean softFullscreenEnabled = false;
+    public static boolean keyCodeFormatMigrated = false;
+    public static boolean keyCodeFormatMigratedV2 = false;
     public static boolean inventoryTweaksEnabled = false;
     public static boolean inventoryMiddleClickGroupExpanded = false;
     public static boolean middleClickGuiEnabled = false;
@@ -195,7 +198,7 @@ public class ConfigManager {
     public static boolean modernTooltipEnabled = false;
     public static boolean smoothTooltipEnabled = true;
     public static boolean scrollableTooltipEnabled = true;
-    public static int scrollableTooltipHorizontalKey = 341;
+    public static int scrollableTooltipHorizontalKey = InputConstants.KEY_LCONTROL;
     public static boolean scrollableTooltipGroupExpanded = false;
     public static boolean scrollableTooltipKeepScrollInGui = false;
     public static boolean noDebuffEnabled = false;
@@ -749,6 +752,12 @@ public class ConfigManager {
         registerField("SoftFullscreen", Boolean.class,
             c -> ConfigManager.softFullscreenEnabled,
             (c, v) -> ConfigManager.softFullscreenEnabled = (Boolean) v);
+        registerField("KeyCodeFormatMigrated", Boolean.class,
+            c -> ConfigManager.keyCodeFormatMigrated,
+            (c, v) -> ConfigManager.keyCodeFormatMigrated = (Boolean) v);
+        registerField("KeyCodeFormatMigratedV2", Boolean.class,
+            c -> ConfigManager.keyCodeFormatMigratedV2,
+            (c, v) -> ConfigManager.keyCodeFormatMigratedV2 = (Boolean) v);
         registerField("InventoryTweaks", Boolean.class,
             c -> ConfigManager.inventoryTweaksEnabled,
             (c, v) -> ConfigManager.inventoryTweaksEnabled = (Boolean) v);
@@ -1156,13 +1165,13 @@ public class ConfigManager {
                 return Integer.parseInt(raw);
             } catch (NumberFormatException ignored) {
                 return switch (raw.toLowerCase(java.util.Locale.ROOT)) {
-                    case "shift" -> 340;
-                    case "alt" -> 342;
-                    default -> 341;
+                    case "shift" -> InputConstants.KEY_LSHIFT;
+                    case "alt" -> InputConstants.KEY_LALT;
+                    default -> InputConstants.KEY_LCONTROL;
                 };
             }
         }
-        return 341;
+        return InputConstants.KEY_LCONTROL;
     }
 
     private static void registerDroppedItemRarityScaleFields() {
@@ -1296,6 +1305,7 @@ public class ConfigManager {
 
             Path jsonPath = baityDir.resolve(CONFIG_JSON_FILE_NAME);
             Path txtPath = baityDir.resolve(LEGACY_CONFIG_TXT_FILE_NAME);
+            boolean loadedFromFile = Files.exists(jsonPath);
             Set<String> seenKeys = new HashSet<>();
 
             // TODO(future): Transitional config.txt migration — can be removed in a future release when ready.
@@ -1314,6 +1324,20 @@ public class ConfigManager {
             }
 
             applyPostLoadLegacyDefaults(seenKeys);
+
+            // TODO(migration-26.3): One-time key code conversion from 26.2 GLFW values; remove together with KeyCodeMigration.
+            if (loadedFromFile && !seenKeys.contains("KeyCodeFormatMigrated")) {
+                if (KeyCodeMigration.migrateAll()) {
+                    saveConfig();
+                }
+            }
+            if (!seenKeys.contains("KeyCodeFormatMigratedV2")) {
+                ConfigManager.radialMenuKeybind = KeyCodeMigration.migrateMouseArtifact(ConfigManager.radialMenuKeybind);
+                ConfigManager.middleClickGuiHoldToCancel = KeyCodeMigration.migrate(ConfigManager.middleClickGuiHoldToCancel);
+                ConfigManager.keyCodeFormatMigratedV2 = true;
+                saveConfig();
+            }
+            // END TODO(migration-26.3)
 
             boolean needSave = false;
             if (!seenKeys.contains("BaityPresenceTokenExpiresAt")) {

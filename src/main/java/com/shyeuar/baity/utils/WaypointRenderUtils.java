@@ -1,8 +1,10 @@
 package com.shyeuar.baity.utils;
 
-import com.mojang.blaze3d.pipeline.DepthStencilState;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.CompareOp;
+import com.mojang.renderpearl.api.pipeline.DepthStencilState;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.ColorTargetState;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.CompareOp;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -10,7 +12,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.rendertype.LayeringTransform;
-import net.minecraft.client.renderer.rendertype.OutputTarget;
 import net.minecraft.client.renderer.rendertype.RenderSetup;
 import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.util.ARGB;
@@ -34,6 +35,7 @@ public final class WaypointRenderUtils {
             RenderPipeline.builder(RenderPipelines.LINES_SNIPPET)
                     .withLocation("pipeline/baity_waypoint_lines")
                     .withDepthStencilState(new DepthStencilState(CompareOp.ALWAYS_PASS, false, 0f, 0f))
+                    .withColorTargetState(new ColorTargetState(BlendFunction.TRANSLUCENT))
                     .build()
     );
 
@@ -41,7 +43,6 @@ public final class WaypointRenderUtils {
             "baity_waypoint_lines",
             RenderSetup.builder(BAITY_WAYPOINT_LINES)
                     .setLayeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-                    .setOutputTarget(OutputTarget.ITEM_ENTITY_TARGET)
                     .createRenderSetup()
     );
 
@@ -80,8 +81,8 @@ public final class WaypointRenderUtils {
         matrices.pushPose();
         try {
             matrices.translate(worldPos.x - cameraPos.x, worldPos.y - cameraPos.y, worldPos.z - cameraPos.z);
-            matrices.mulPose(new Quaternionf().rotationY((float) Math.toRadians(-cameraYaw)));
-            matrices.mulPose(new Quaternionf().rotationX((float) Math.toRadians(cameraPitch)));
+            matrices.rotate(new Quaternionf().rotationY((float) Math.toRadians(-cameraYaw)));
+            matrices.rotate(new Quaternionf().rotationX((float) Math.toRadians(cameraPitch)));
             matrices.scale(-scale, -scale, scale);
 
             for (TextSegment segment : segments) {

@@ -27,7 +27,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -111,10 +110,6 @@ public final class Keybinds {
     }
 
     private static boolean isBindingKeyPressed(long windowHandle, int keyCode) {
-        if (isMouseKey(keyCode)) {
-            return org.lwjgl.glfw.GLFW.glfwGetMouseButton(windowHandle, mouseButtonOf(keyCode))
-                    == org.lwjgl.glfw.GLFW.GLFW_PRESS;
-        }
         return KeyMappingUtils.isKeyPressed(windowHandle, keyCode);
     }
 
@@ -780,15 +775,15 @@ public final class Keybinds {
     }
 
     private static void leftClickSlot(int containerId, int slotIndex) {
-        clickSlot(containerId, slotIndex, GLFW.GLFW_MOUSE_BUTTON_LEFT, ContainerInput.PICKUP);
+        clickSlot(containerId, slotIndex, 0, ContainerInput.PICKUP);
     }
 
     private static void clickNavigationSlot(int containerId, int slotIndex, ItemStack stack) {
         boolean extraLines = getLoreLineCount(stack) > 1;
         if (extraLines) {
-            clickSlot(containerId, slotIndex, GLFW.GLFW_MOUSE_BUTTON_LEFT, ContainerInput.PICKUP);
+            clickSlot(containerId, slotIndex, 0, ContainerInput.PICKUP);
         } else {
-            clickSlot(containerId, slotIndex, GLFW.GLFW_MOUSE_BUTTON_MIDDLE, ContainerInput.CLONE);
+            clickSlot(containerId, slotIndex, 2, ContainerInput.CLONE);
         }
     }
 

@@ -9,11 +9,14 @@ import net.minecraft.client.model.ArmedModel;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.player.FirstPersonHandsAndItems;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer;
 import net.minecraft.client.renderer.entity.layers.ItemInHandLayer;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
 import net.minecraft.client.renderer.entity.state.HumanoidRenderState;
-import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.state.level.FirstPersonHandsAndItemsRenderState;
+import net.minecraft.client.renderer.state.level.PlayerRenderState;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.HitResult;
@@ -33,7 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class BlockAnimationMixin {
 
-    @Mixin(value = ItemInHandRenderer.class, priority = 500)
+    @Mixin(value = FirstPersonHandsAndItemsRenderer.class, priority = 500)
     public static abstract class ItemInHandRendererMixin {
         @Shadow
         @Final
@@ -45,78 +48,24 @@ public abstract class BlockAnimationMixin {
         @Invoker("applyItemArmTransform")
         public abstract void baity$callApplyItemArmTransform(com.mojang.blaze3d.vertex.PoseStack poseStack, HumanoidArm hand, float equippedProgress);
 
-        @Inject(method = "itemUsed(Lnet/minecraft/world/InteractionHand;)V", at = @At("HEAD"), cancellable = true)
-        private void baity$itemUsed(InteractionHand interactionHand, CallbackInfo callback) {
-            if (!BlockAnimationUtils.isFeatureActive()) return;
-            if (!BlockAnimationUtils.isNoReequipWhenUsingEnabled()) return;
-
-            if (this.minecraft.player != null && this.minecraft.player.isUsingItem() 
-                    && this.minecraft.player.getUsedItemHand() == interactionHand) {
-                if (BlockAnimationUtils.isUsingConsumableAnimation(this.minecraft.player)) return;
-                if (BlockAnimationUtils.isPlayerBlockingWithSword(this.minecraft.player)) {
-                    callback.cancel();
-                }
-            }
-        }
-
-        @WrapOperation(
-            method = "submitArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;isUsingItem()Z")
-        )
-        private boolean baity$wrapIsUsingItem(net.minecraft.client.player.AbstractClientPlayer player, Operation<Boolean> original) {
-            if (player != null && BlockAnimationUtils.isUsingConsumableAnimation(player)) {
-                return original.call(player);
-            }
-            if (player != null && BlockAnimationUtils.isPlayerBlockingWithSword(player)) {
-                return true;
-            }
-            return original.call(player);
-        }
-
-        @WrapOperation(
-            method = "submitArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;getUseItemRemainingTicks()I")
-        )
-        private int baity$wrapGetItemUseTimeLeft(net.minecraft.client.player.AbstractClientPlayer player, Operation<Integer> original) {
-            if (player != null && BlockAnimationUtils.isUsingConsumableAnimation(player)) {
-                return original.call(player);
-            }
-            if (player != null && BlockAnimationUtils.isPlayerBlockingWithSword(player)) {
-                return BlockAnimationUtils.DEFAULT_ITEM_USE_DURATION;
-            }
-            return original.call(player);
-        }
-
-        @WrapOperation(
-            method = "submitArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/player/AbstractClientPlayer;getUsedItemHand()Lnet/minecraft/world/InteractionHand;")
-        )
-        private InteractionHand baity$wrapGetActiveHand(net.minecraft.client.player.AbstractClientPlayer player, Operation<InteractionHand> original) {
-            if (player != null && BlockAnimationUtils.isUsingConsumableAnimation(player)) {
-                return original.call(player);
-            }
-            if (player != null && BlockAnimationUtils.isPlayerBlockingWithSword(player)) {
-                InteractionHand blockingHand = BlockAnimationUtils.getBlockingHand(player);
-                if (blockingHand != null) {
-                    return blockingHand;
-                }
-            }
-            return original.call(player);
-        }
-
-        @Inject(method = "submitArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V", at = @At("HEAD"), cancellable = true)
-        private void baity$submitArmWithItem(net.minecraft.client.player.AbstractClientPlayer player, float partialTicks, float pitch,
-                InteractionHand interactionHand, float swingProgress, net.minecraft.world.item.ItemStack stack, float equippedProgress, 
+        @Inject(method = "submitArmWithItem(Lnet/minecraft/client/renderer/state/level/PlayerRenderState;Lnet/minecraft/client/renderer/state/level/FirstPersonHandsAndItemsRenderState;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V", at = @At("HEAD"), cancellable = true)
+        private void baity$submitArmWithItem(PlayerRenderState playerState, FirstPersonHandsAndItemsRenderState handsState,
+                float partialTicks, float pitch, InteractionHand interactionHand, float swingProgress,
+                net.minecraft.world.item.ItemStack stack, float equippedProgress,
                 com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector, 
                 int combinedLight, CallbackInfo callback) {
             
-            ItemInHandRenderer itemInHandRenderer = (ItemInHandRenderer) (Object) this;
+            LocalPlayer player = minecraft.player;
+            if (player == null) return;
+
+            FirstPersonHandsAndItemsRenderer itemInHandRenderer = (FirstPersonHandsAndItemsRenderer) (Object) this;
             com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationRenderer.RenderResult result = 
                     com.shyeuar.baity.features.legacytweaks.blockanimation.BlockAnimationRenderer.renderFirstPerson(
                             itemInHandRenderer,
                             interactionHand,
                             player,
                             interactionHand == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite(),
+                            handsState,
                             stack,
                             poseStack,
                             submitNodeCollector,
@@ -133,18 +82,19 @@ public abstract class BlockAnimationMixin {
         }
 
         @Inject(
-            method = "submitArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
+            method = "submitArmWithItem(Lnet/minecraft/client/renderer/state/level/PlayerRenderState;Lnet/minecraft/client/renderer/state/level/FirstPersonHandsAndItemsRenderState;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
             at = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
+                target = "Lnet/minecraft/client/renderer/item/ItemStackRenderState;submit(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;III)V",
                 shift = At.Shift.BEFORE
             )
         )
-        private void baity$applyConsumableUseSwingBeforeRenderItem(net.minecraft.client.player.AbstractClientPlayer player, float partialTicks, float pitch,
-                InteractionHand interactionHand, float swingProgress, net.minecraft.world.item.ItemStack stack,
-                float equippedProgress, com.mojang.blaze3d.vertex.PoseStack poseStack,
-                net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector, int combinedLight,
-                CallbackInfo callback) {
+        private void baity$applyConsumableUseSwingBeforeRenderItem(PlayerRenderState playerState, FirstPersonHandsAndItemsRenderState handsState,
+                float partialTicks, float pitch, InteractionHand interactionHand, float swingProgress,
+                net.minecraft.world.item.ItemStack stack, float equippedProgress,
+                com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector,
+                int combinedLight, CallbackInfo callback) {
+            LocalPlayer player = minecraft.player;
             if (!BlockAnimationUtils.isFeatureActive()) return;
             if (player == null || !player.isUsingItem()) return;
             if (player.getUsedItemHand() != interactionHand) return;
@@ -154,17 +104,18 @@ public abstract class BlockAnimationMixin {
         }
 
         @Inject(
-            method = "submitArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
+            method = "submitArmWithItem(Lnet/minecraft/client/renderer/state/level/PlayerRenderState;Lnet/minecraft/client/renderer/state/level/FirstPersonHandsAndItemsRenderState;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
             at = @At(
                 value = "INVOKE",
-                target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V"
+                target = "Lnet/minecraft/client/renderer/item/ItemStackRenderState;submit(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;III)V"
             )
         )
-        private void baity$keepSwingWhileUsingBow(net.minecraft.client.player.AbstractClientPlayer player, float partialTicks, float pitch,
-                                                   InteractionHand interactionHand, float swingProgress, net.minecraft.world.item.ItemStack stack,
-                                                   float equippedProgress, com.mojang.blaze3d.vertex.PoseStack poseStack,
-                                                   net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector, int combinedLight,
-                                                   CallbackInfo callback) {
+        private void baity$keepSwingWhileUsingBow(PlayerRenderState playerState, FirstPersonHandsAndItemsRenderState handsState,
+                float partialTicks, float pitch, InteractionHand interactionHand, float swingProgress,
+                net.minecraft.world.item.ItemStack stack, float equippedProgress,
+                com.mojang.blaze3d.vertex.PoseStack poseStack, net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector,
+                int combinedLight, CallbackInfo callback) {
+            LocalPlayer player = minecraft.player;
             if (!BlockAnimationUtils.isFeatureActive()) return;
             if (player == null) return;
             if (swingProgress <= 0.0f) return;
@@ -173,6 +124,24 @@ public abstract class BlockAnimationMixin {
 
             HumanoidArm arm = interactionHand == InteractionHand.MAIN_HAND ? player.getMainArm() : player.getMainArm().getOpposite();
             this.baity$callApplyItemArmAttackTransform(poseStack, arm, swingProgress);
+        }
+    }
+
+    @Mixin(FirstPersonHandsAndItems.class)
+    public static abstract class FirstPersonHandsAndItemsMixin {
+        @Inject(method = "itemUsed(Lnet/minecraft/world/InteractionHand;)V", at = @At("HEAD"), cancellable = true)
+        private void baity$itemUsed(InteractionHand interactionHand, CallbackInfo callback) {
+            if (!BlockAnimationUtils.isFeatureActive()) return;
+            if (!BlockAnimationUtils.isNoReequipWhenUsingEnabled()) return;
+
+            Minecraft mc = Minecraft.getInstance();
+            if (mc.player != null && mc.player.isUsingItem() 
+                    && mc.player.getUsedItemHand() == interactionHand) {
+                if (BlockAnimationUtils.isUsingConsumableAnimation(mc.player)) return;
+                if (BlockAnimationUtils.isPlayerBlockingWithSword(mc.player)) {
+                    callback.cancel();
+                }
+            }
         }
     }
 
@@ -220,20 +189,36 @@ public abstract class BlockAnimationMixin {
             int prevSwingTime = baity$lastSwingTime;
             InteractionHand prevSwingArm = baity$lastSwingArm;
 
-            baity$lastSwinging = this.player.swinging;
-            baity$lastSwingTime = this.player.swingTime;
-            baity$lastSwingArm = this.player.swingingArm;
+            baity$lastSwinging = this.player.isSwinging();
+            baity$lastSwingTime = baity$swingTicks(this.player);
+            baity$lastSwingArm = baity$currentSwingHand(this.player);
 
             if (!this.player.isUsingItem()) return;
             ItemStack using = this.player.getUseItem();
             if (using == null || using.isEmpty()) return;
             if (!(using.is(Items.BOW) || using.is(Items.CROSSBOW))) return;
 
-            if (prevSwinging && !this.player.swinging) {
-                this.player.swinging = true;
-                this.player.swingTime = prevSwingTime;
-                this.player.swingingArm = prevSwingArm;
+            if (prevSwinging && !this.player.isSwinging()) {
+                baity$restartSwing(this.player, prevSwingArm, prevSwingTime);
             }
+        }
+
+        private static int baity$swingTicks(LocalPlayer player) {
+            return ((com.shyeuar.baity.mixin.accessor.SwingStateAccessor)
+                    ((com.shyeuar.baity.mixin.accessor.LivingEntityAccessor) (Object) player).baity$getSwingState())
+                    .baity$getTicks();
+        }
+
+        private static InteractionHand baity$currentSwingHand(LocalPlayer player) {
+            net.minecraft.world.entity.LivingEntity.SwingDescription swing = player.getCurrentSwing();
+            return swing != null ? swing.hand() : InteractionHand.MAIN_HAND;
+        }
+
+        private static void baity$restartSwing(LocalPlayer player, InteractionHand hand, int ticks) {
+            net.minecraft.world.entity.LivingEntity.SwingState swingState =
+                    ((com.shyeuar.baity.mixin.accessor.LivingEntityAccessor) (Object) player).baity$getSwingState();
+            swingState.startIfAble(hand, net.minecraft.world.item.component.SwingAnimation.DEFAULT, 6);
+            ((com.shyeuar.baity.mixin.accessor.SwingStateAccessor) swingState).baity$setTicks(ticks);
         }
     }
 
@@ -260,7 +245,7 @@ public abstract class BlockAnimationMixin {
             if (BlockAnimationUtils.isUsingConsumableAnimation(mc.player)) return;
             if (!BlockAnimationUtils.isPlayerBlockingWithSword(mc.player)) return;
 
-            avatarState.attackTime = 0f;
+            avatarState.swingAnimation = 0f;
         }
 
         @Inject(method = "setupAnim", at = @At("TAIL"))
@@ -354,8 +339,8 @@ public abstract class BlockAnimationMixin {
 
     @Mixin(net.minecraft.world.entity.LivingEntity.class)
     public static class LivingEntitySwingMixin {
-        @Inject(method = "swing(Lnet/minecraft/world/InteractionHand;Z)V", at = @At("HEAD"))
-        private void baity$queueCircleSpinWhileBlocking(InteractionHand hand, boolean fromServer, CallbackInfo ci) {
+        @Inject(method = "swing(Lnet/minecraft/world/InteractionHand;Lnet/minecraft/world/item/component/SwingAnimation;Z)V", at = @At("HEAD"))
+        private void baity$queueCircleSpinWhileBlocking(InteractionHand hand, net.minecraft.world.item.component.SwingAnimation animation, boolean fromServer, CallbackInfo ci) {
             net.minecraft.world.entity.LivingEntity self = (net.minecraft.world.entity.LivingEntity) (Object) this;
             if (self.level() == null || !self.level().isClientSide()) return;
             if (!(self instanceof LocalPlayer player)) return;

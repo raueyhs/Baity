@@ -12,7 +12,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import org.lwjgl.sdl.SDLMouse;
 
 @Environment(EnvType.CLIENT)
 public class DynamicRadialMenuScreen extends Screen {
@@ -51,7 +51,7 @@ public class DynamicRadialMenuScreen extends Screen {
     protected void init() {
         super.init();
         if (savedMouseX >= 0 && savedMouseY >= 0 && this.minecraft != null) {
-            GLFW.glfwSetCursorPos(this.minecraft.getWindow().handle(), savedMouseX, savedMouseY);
+            SDLMouse.SDL_WarpMouseInWindow(this.minecraft.getWindow().handle(), (float) savedMouseX, (float) savedMouseY);
             savedMouseX = -1;
             savedMouseY = -1;
         }
@@ -132,7 +132,7 @@ public class DynamicRadialMenuScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent click, boolean isInsideWindow) {
-        if (click.button() == 0 && parentScreen != null) {
+        if (com.shyeuar.baity.utils.MouseButtonUtils.fromSdl(click.button()) == 0 && parentScreen != null) {
             activateSelection(this.minecraft, true);
             return true;
         }

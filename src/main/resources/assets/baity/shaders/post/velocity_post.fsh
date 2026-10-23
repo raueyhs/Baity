@@ -1,4 +1,5 @@
 #version 330
+#extension GL_ARB_separate_shader_objects : require
 
 uniform sampler2D MainSampler;
 uniform sampler2D MainDepthSampler;
@@ -14,7 +15,7 @@ layout(std140) uniform PostRenderBlurUniforms {
     int   sampleCount;
 };
 
-in vec2 texCoord;
+layout(location = 0) in vec2 texCoord;
 layout(location = 0) out vec4 color;
 
 vec3 reproject(vec3 screenPos) {

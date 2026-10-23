@@ -1,6 +1,6 @@
 package com.shyeuar.baity.gui.render;
 
-import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.shyeuar.baity.gui.render.state.CircleElementRenderState;
 import com.shyeuar.baity.gui.render.state.RingElementRenderState;
 import com.shyeuar.baity.mixin.accessor.GuiGraphicsExtractorAccessor;

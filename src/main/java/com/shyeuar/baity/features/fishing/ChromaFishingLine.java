@@ -130,7 +130,7 @@ public final class ChromaFishingLine implements LevelRenderEvents.EndMain {
                     continue;
                 }
                 float partialTick = MC.getDeltaTracker().getGameTimeDeltaPartialTick(false);
-                float swing = owner.getAttackAnim(partialTick);
+                float swing = owner.getSwingAnimation(partialTick);
                 Vec3 hand = invoker.baity$invokeGetPlayerHandPos(owner, swing, partialTick);
                 Vec3 hookPos = hook.getPosition(partialTick).add(0.0, 0.25, 0.0);
                 origin = hand.subtract(hookPos);

@@ -44,10 +44,10 @@ dependencies {
 
     include(implementation(annotationProcessor("io.github.llamalad7:mixinextras-fabric:0.4.1")))
 
-    compileOnly("com.terraformersmc:modmenu:20.0.1") {
+    compileOnly("com.terraformersmc:modmenu:21.0.0") {
         exclude(group: "net.fabricmc.fabric-api")
     }
-    localRuntime("com.terraformersmc:modmenu:20.0.1") {
+    localRuntime("com.terraformersmc:modmenu:21.0.0") {
         exclude(group: "net.fabricmc.fabric-api")
     }
 

@@ -7,8 +7,9 @@ import com.shyeuar.baity.utils.BlockAnimationUtils;
 import com.shyeuar.baity.render.RenderScope;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.ArmedModel;
-import net.minecraft.client.player.AbstractClientPlayer;
-import net.minecraft.client.renderer.ItemInHandRenderer;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.FirstPersonHandsAndItemsRenderer;
+import net.minecraft.client.renderer.state.level.FirstPersonHandsAndItemsRenderState;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.resources.model.cuboid.ItemTransform;
 import net.minecraft.client.renderer.entity.state.AvatarRenderState;
@@ -17,7 +18,6 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix3f;
@@ -41,10 +41,11 @@ public final class BlockAnimationRenderer {
         INTERRUPT
     }
 
-    public static RenderResult renderFirstPerson(ItemInHandRenderer itemInHandRenderer,
+    public static RenderResult renderFirstPerson(FirstPersonHandsAndItemsRenderer itemInHandRenderer,
             InteractionHand interactionHand,
-            AbstractClientPlayer player,
+            LocalPlayer player,
             HumanoidArm humanoidArm,
+            FirstPersonHandsAndItemsRenderState handState,
             ItemStack itemStack,
             PoseStack poseStack,
             SubmitNodeCollector submitNodeCollector,
@@ -83,7 +84,6 @@ public final class BlockAnimationRenderer {
 
         boolean mainHand = interactionHand == InteractionHand.MAIN_HAND;
         HumanoidArm handSide = mainHand ? player.getMainArm() : player.getMainArm().getOpposite();
-        boolean isHandSideRight = handSide == HumanoidArm.RIGHT;
 
         com.shyeuar.baity.gui.module.Module chModule =
                 com.shyeuar.baity.gui.module.ModuleManager.getModuleByName("CustomHandHolding");
@@ -112,13 +112,10 @@ public final class BlockAnimationRenderer {
             ch.applyScale(poseStack);
         }
 
-        itemInHandRenderer.renderItem(player,
-                renderStack,
-                isHandSideRight ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND :
-                        ItemDisplayContext.FIRST_PERSON_LEFT_HAND,
-                poseStack,
-                submitNodeCollector,
-                combinedLight);
+        ItemStackRenderState renderState = mainHand
+                ? handState.mainHandRenderState
+                : handState.offHandRenderState;
+        renderState.submit(poseStack, submitNodeCollector, combinedLight, OverlayTexture.NO_OVERLAY, 0);
 
         poseStack.popPose();
 
@@ -130,7 +127,7 @@ public final class BlockAnimationRenderer {
     }
 
     private static void applySpinModeItemRotationFirstPerson(PoseStack poseStack, HumanoidArm handSide,
-            float partialTick, AbstractClientPlayer player, boolean blockingNow) {
+            float partialTick, LocalPlayer player, boolean blockingNow) {
         if (!BlockAnimationUtils.isSpinAnimaMode()) return;
         float dir = handSide == HumanoidArm.RIGHT ? 1f : -1f;
         if (BlockAnimationUtils.isRotorAnimaMode()) {
@@ -176,17 +173,17 @@ public final class BlockAnimationRenderer {
         Matrix4f mat = new Matrix4f(poseStack.last().pose());
         Matrix3f linear = new Matrix3f(mat);
         if (Math.abs(linear.determinant()) < 1e-8f) {
-            poseStack.mulPose(Axis.ZP.rotation(dir * angle));
+            poseStack.rotate(Axis.ZP.rotation(dir * angle));
             return;
         }
         orthonormalize3x3Rotation(linear);
         Vector3f axisLocal = linear.transpose().transform(w, new Vector3f());
         if (axisLocal.lengthSquared() < 1e-12f) {
-            poseStack.mulPose(Axis.ZP.rotation(dir * angle));
+            poseStack.rotate(Axis.ZP.rotation(dir * angle));
             return;
         }
         axisLocal.normalize();
-        poseStack.mulPose(new Quaternionf().rotationAxis(dir * angle, axisLocal.x, axisLocal.y, axisLocal.z));
+        poseStack.rotate(new Quaternionf().rotationAxis(dir * angle, axisLocal.x, axisLocal.y, axisLocal.z));
     }
 
     private static void orthonormalize3x3Rotation(Matrix3f m) {
@@ -211,9 +208,9 @@ public final class BlockAnimationRenderer {
     public static void applyBlockingTransformOnly(PoseStack matrixStack, HumanoidArm hand) {
         int direction = hand == HumanoidArm.RIGHT ? 1 : -1;
         matrixStack.translate(direction * -0.14142136F, 0.08F, 0.14142136F);
-        matrixStack.mulPose(Axis.XP.rotationDegrees(-102.25F));
-        matrixStack.mulPose(Axis.YP.rotationDegrees(direction * 13.365F));
-        matrixStack.mulPose(Axis.ZP.rotationDegrees(direction * 78.05F));
+        matrixStack.rotate(Axis.XP.rotationDegrees(-102.25F));
+        matrixStack.rotate(Axis.YP.rotationDegrees(direction * 13.365F));
+        matrixStack.rotate(Axis.ZP.rotationDegrees(direction * 78.05F));
     }
 
     public static void renderThirdPerson(AvatarRenderState renderState,
@@ -224,7 +221,7 @@ public final class BlockAnimationRenderer {
             SubmitNodeCollector submitNodeCollector,
             int packedLight,
             ItemStack itemStack,
-            AbstractClientPlayer player,
+            LocalPlayer player,
             boolean blockingNow) {
 
         poseStack.pushPose();
@@ -269,7 +266,7 @@ public final class BlockAnimationRenderer {
     }
 
     private static void applySpinModeItemRotationThirdPerson(PoseStack poseStack, boolean leftHand, float partialTick,
-            AbstractClientPlayer player, boolean blockingNow) {
+            LocalPlayer player, boolean blockingNow) {
         if (!BlockAnimationUtils.isSpinAnimaMode()) return;
         float dir = leftHand ? -1f : 1f;
         if (BlockAnimationUtils.isRotorAnimaMode()) {
@@ -283,7 +280,7 @@ public final class BlockAnimationRenderer {
 
     private static void applyCircleSpinItemLocalZ(PoseStack poseStack, float dir, float angle) {
         if (Math.abs(angle) < 1e-5f) return;
-        poseStack.mulPose(Axis.ZP.rotation(dir * angle));
+        poseStack.rotate(Axis.ZP.rotation(dir * angle));
     }
 
     private static void applyRotorThirdPersonGripAdjustments(
@@ -299,28 +296,28 @@ public final class BlockAnimationRenderer {
         if (blockingHand == InteractionHand.OFF_HAND) {
             pitchDeg = -pitchDeg;
         }
-        poseStack.mulPose(Axis.XP.rotationDegrees(pitchDeg));
+        poseStack.rotate(Axis.XP.rotationDegrees(pitchDeg));
     }
 
     private static void applyThirdPersonBlockTransform(PoseStack poseStack, boolean leftHand) {
         poseStack.translate((leftHand ? 1.0F : -1.0F) / 16.0F, 0.4375F, 0.0625F);
         poseStack.translate(leftHand ? -0.035F : 0.05F, leftHand ? 0.045F : 0.0F, leftHand ? -0.135F : -0.1F);
-        poseStack.mulPose(Axis.YP.rotationDegrees((leftHand ? -1.0F : 1.0F) * -50.0F));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-10.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees((leftHand ? -1.0F : 1.0F) * -60.0F));
+        poseStack.rotate(Axis.YP.rotationDegrees((leftHand ? -1.0F : 1.0F) * -50.0F));
+        poseStack.rotate(Axis.XP.rotationDegrees(-10.0F));
+        poseStack.rotate(Axis.ZP.rotationDegrees((leftHand ? -1.0F : 1.0F) * -60.0F));
         poseStack.translate(0.0F, 0.1875F, 0.0F);
 
         poseStack.scale(0.625F, 0.625F, 0.625F);
-        poseStack.mulPose(Axis.XP.rotationDegrees(180.0F));
-        poseStack.mulPose(Axis.XN.rotationDegrees(-100.0F));
-        poseStack.mulPose(Axis.YN.rotationDegrees(leftHand ? 35.0F : 45.0F));
+        poseStack.rotate(Axis.XP.rotationDegrees(180.0F));
+        poseStack.rotate(Axis.XN.rotationDegrees(-100.0F));
+        poseStack.rotate(Axis.YN.rotationDegrees(leftHand ? 35.0F : 45.0F));
         poseStack.translate(0.0F, -0.3F, 0.0F);
         poseStack.scale(1.5F, 1.5F, 1.5F);
-        poseStack.mulPose(Axis.YN.rotationDegrees(50.0F));
-        poseStack.mulPose(Axis.ZP.rotationDegrees(335.0F));
+        poseStack.rotate(Axis.YN.rotationDegrees(50.0F));
+        poseStack.rotate(Axis.ZP.rotationDegrees(335.0F));
         poseStack.translate(-0.9375F, -0.0625F, 0.0F);
         poseStack.translate(0.5F, 0.5F, 0.25F);
-        poseStack.mulPose(Axis.YN.rotationDegrees(180.0F));
+        poseStack.rotate(Axis.YN.rotationDegrees(180.0F));
         poseStack.translate(0.0F, 0.0F, 0.28125F);
     }
 
@@ -336,7 +333,7 @@ public final class BlockAnimationRenderer {
             poseStack.scale(1.0F / itemTransform.scale().x(),
                     1.0F / itemTransform.scale().y(),
                     1.0F / itemTransform.scale().z());
-            poseStack.mulPose(quaternion);
+            poseStack.rotate(quaternion);
             poseStack.translate((leftHand ? -1.0F : 1.0F) * -itemTransform.translation().x(),
                     -itemTransform.translation().y(),
                     -itemTransform.translation().z());
@@ -354,7 +351,7 @@ public final class BlockAnimationRenderer {
             poseStack.translate((leftHand ? -1.0F : 1.0F) * itemTransform.translation().x(),
                     itemTransform.translation().y(),
                     itemTransform.translation().z());
-            poseStack.mulPose(quaternion);
+            poseStack.rotate(quaternion);
             poseStack.scale(itemTransform.scale().x(), itemTransform.scale().y(), itemTransform.scale().z());
         }
     }
@@ -382,7 +379,7 @@ public final class BlockAnimationRenderer {
             ItemTransform transformOrNull,
             boolean leftHand,
             float partialTick,
-            AbstractClientPlayer player,
+            LocalPlayer player,
             boolean blockingNow) {
         float angle = BlockAnimationCircleController.getRenderRadians(partialTick);
         if (Math.abs(angle) < 1e-5f) {

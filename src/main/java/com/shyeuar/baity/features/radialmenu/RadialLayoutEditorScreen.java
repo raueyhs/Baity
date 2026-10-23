@@ -18,7 +18,7 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,6 +84,7 @@ public class RadialLayoutEditorScreen extends Screen {
 
     @Override
     public void extractRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float delta) {
+        com.shyeuar.baity.utils.TextInputUtils.sync(focusField != FocusField.NONE, this);
         this.extractMenuBackground(guiGraphics);
         Minecraft mc = Minecraft.getInstance();
         float sr = ClickGuiState.fixedScaleRatio(mc);
@@ -406,10 +407,10 @@ public class RadialLayoutEditorScreen extends Screen {
     public boolean mouseClicked(MouseButtonEvent click, boolean isInsideWindow) {
         commitInputs();
         focusField = FocusField.NONE;
-        if (click.button() == 0) {
+        if (click.button() == 1) {
             return handlePrimaryClick(click) || super.mouseClicked(click, isInsideWindow);
         }
-        if (click.button() == 1) {
+        if (click.button() == 3) {
             return handleSecondaryClick(click) || super.mouseClicked(click, isInsideWindow);
         }
         return super.mouseClicked(click, isInsideWindow);
@@ -417,7 +418,7 @@ public class RadialLayoutEditorScreen extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent click) {
-        if (click.button() == 0 && dragSlotIndex >= 0) {
+        if (click.button() == 1 && dragSlotIndex >= 0) {
             commitDrag();
             dragSlotIndex = -1;
             dragHoverSlotIndex = -1;
@@ -428,7 +429,7 @@ public class RadialLayoutEditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent click, double deltaX, double deltaY) {
-        if (click.button() == 0 && dragSlotIndex >= 0) {
+        if (click.button() == 1 && dragSlotIndex >= 0) {
             float[] local = toLocal((float) click.x(), (float) click.y());
             RadialMenuModels.RadialPreset preset = RadialPresetStore.getActivePreset();
             if (preset != null) {
@@ -478,7 +479,7 @@ public class RadialLayoutEditorScreen extends Screen {
                 return true;
             }
         }
-        if (input.input() == GLFW.GLFW_KEY_ESCAPE) {
+        if (input.input() == InputConstants.KEY_ESCAPE) {
             commitInputs();
             SoundUtils.playWoodenButton();
             onClose();
@@ -498,6 +499,7 @@ public class RadialLayoutEditorScreen extends Screen {
 
     @Override
     public void onClose() {
+        com.shyeuar.baity.utils.TextInputUtils.sync(false, this);
         commitInputs();
         if (this.minecraft != null && parentScreen != null) {
             this.minecraft.gui.setScreen(parentScreen);

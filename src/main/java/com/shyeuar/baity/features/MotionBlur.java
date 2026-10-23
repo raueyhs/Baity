@@ -1,10 +1,12 @@
 package com.shyeuar.baity.features;
 
-import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.pipeline.RenderTarget;
+import com.mojang.blaze3d.platform.Monitor;
+import com.mojang.blaze3d.platform.VideoMode;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.shyeuar.baity.config.ConfigManager;
@@ -22,9 +24,6 @@ import net.minecraft.client.renderer.PostPass;
 import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
-import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFW;
-import org.lwjgl.glfw.GLFWVidMode;
 
 import java.lang.reflect.Method;
 import java.util.HashSet;
@@ -65,6 +64,7 @@ public final class MotionBlur {
     private static float frameFps;
     private static long monitorLastHandle;
     private static int monitorRefreshRate = 60;
+
     private static long monitorLastCheckNano;
 
     private static GraphicsResourceAllocator frameAllocator;
@@ -109,6 +109,10 @@ public final class MotionBlur {
         rememberFrame(scratchModelView, scratchProjection, camX, camY, camZ);
     }
 
+    public static boolean needsPreEntityVelocity() {
+        return isActive() && frameAllocator != null;
+    }
+
     public static void onAfterOpaqueTerrain() {
         applyBlur(useSinglePassBlur() ? VELOCITY_F5 : VELOCITY_PRE, preEntityUbo);
     }
@@ -138,6 +142,8 @@ public final class MotionBlur {
         float fpsOverRefresh = monitorRefreshRate > 0 ? frameFps / monitorRefreshRate : 1.0f;
         if (fpsOverRefresh < 1.0f) {
             fpsOverRefresh = 1.0f;
+        } else if (fpsOverRefresh > 2.0f) {
+            fpsOverRefresh = 2.0f;
         }
         float blendFactor = strength * fpsOverRefresh;
         int sampleAmount = fpsOverRefresh > 1.0f ? (int) (100 * fpsOverRefresh) : 100;
@@ -240,38 +246,11 @@ public final class MotionBlur {
         monitorLastCheckNano = now;
 
         Minecraft client = Minecraft.getInstance();
-        long window = client.getWindow().handle();
-        long monitor = GLFW.glfwGetWindowMonitor(window);
-        if (monitor == 0) {
-            int[] winX = new int[1];
-            int[] winY = new int[1];
-            GLFW.glfwGetWindowPos(window, winX, winY);
-            int centerX = winX[0] + client.getWindow().getScreenWidth() / 2;
-            int centerY = winY[0] + client.getWindow().getScreenHeight() / 2;
-            monitor = GLFW.glfwGetPrimaryMonitor();
-            PointerBuffer monitors = GLFW.glfwGetMonitors();
-            if (monitors != null) {
-                for (int i = 0; i < monitors.limit(); i++) {
-                    long candidate = monitors.get(i);
-                    int[] monitorX = new int[1];
-                    int[] monitorY = new int[1];
-                    GLFW.glfwGetMonitorPos(candidate, monitorX, monitorY);
-                    GLFWVidMode mode = GLFW.glfwGetVideoMode(candidate);
-                    if (mode == null) {
-                        continue;
-                    }
-                    if (centerX >= monitorX[0] && centerX < monitorX[0] + mode.width()
-                            && centerY >= monitorY[0] && centerY < monitorY[0] + mode.height()) {
-                        monitor = candidate;
-                        break;
-                    }
-                }
-            }
-        }
-        if (monitor != monitorLastHandle) {
-            GLFWVidMode vidMode = GLFW.glfwGetVideoMode(monitor);
-            monitorRefreshRate = vidMode != null ? vidMode.refreshRate() : 60;
-            monitorLastHandle = monitor;
+        Monitor monitor = client.getWindow().findBestMonitor();
+        if (monitor != null && monitor.id() != monitorLastHandle) {
+            VideoMode mode = monitor.currentMode();
+            monitorRefreshRate = mode != null ? (int) mode.getRefreshRate() : 60;
+            monitorLastHandle = monitor.id();
         }
     }
 

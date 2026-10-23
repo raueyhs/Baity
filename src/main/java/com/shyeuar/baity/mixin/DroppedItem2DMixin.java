@@ -69,8 +69,8 @@ public class DroppedItem2DMixin {
         poseStack.translate(0.0F, bob + baseOffset, 0.0F);
         float yaw = camera.yRot();
         float pitch = camera.xRot();
-        poseStack.mulPose(Axis.YP.rotationDegrees(180.0F - yaw));
-        poseStack.mulPose(Axis.XP.rotationDegrees(-pitch));
+        poseStack.rotate(Axis.YP.rotationDegrees(180.0F - yaw));
+        poseStack.rotate(Axis.XP.rotationDegrees(-pitch));
         poseStack.scale(1.0F, 1.0F, 0.01F);
         ItemEntityRenderer.submitMultipleFromCount(poseStack, submitNodeCollector, state.lightCoords, state, this.random, box);
         poseStack.popPose();
